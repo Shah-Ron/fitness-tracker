@@ -23,6 +23,10 @@ tools\build_phone.py  merges the food lists, copies icons and data, stamps sw.js
 
 **What stays.** Every rule in the Engines section, the data model (as collections instead of tables, hard deletes instead of soft), the screens, the seed content and the unit-test expectations, which become a Node test file for `engine.js`.
 
+**Also added on 26 September 2026.** An Android package (`android\`, a WebView shell with camera, Downloads and a native Open Food Facts call) built and signed by `.github\workflows\android.yml` and attached to GitHub Releases, so the phone installs it from the Releases page; four training splits in `data\programme.json` (`splits`) chosen in Settings; 130 Kerala and Indian dishes in `data\foods_indian.csv`; online food search moved to Open Food Facts' newer service with the classic endpoint as fallback.
+
+**Verified.** Browser self-test of the on-device engine (51 checks, `tools\selftest.html`), every screen rendered headlessly with data, Python suite green, web app live at https://shah-ron.github.io/fitness-tracker/, release v1.3 with a signed APK. Not yet verified on a physical phone: installing the APK, camera barcode scanning inside the WebView, and the Downloads-folder backup.
+
 ## Status, 24 September 2026
 
 Built and smoke-tested from this plan in one session. Everything below was implemented with these deliberate differences:

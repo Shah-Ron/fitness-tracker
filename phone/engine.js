@@ -566,8 +566,11 @@ const Engine = (() => {
     if (s.date === today) return;
     const t = db.all("plan_sessions").find(x => x.date === today); if (!t) throw new PlanError("Today is not in the plan yet.", 409);
     if (db.all("workouts").some(w => w.session_id === t.id)) throw new PlanError("You have already started today's session.", 409);
-    db.update("plan_sessions", s.id, { date: today, day_offset: t.day_offset, week_id: t.week_id, moved_from: s.date, status: "planned" });
-    db.update("plan_sessions", t.id, { date: s.date, day_offset: s.day_offset, week_id: s.week_id, moved_from: today, status: t.status === "void" ? "void" : "planned" });
+    // Rows are live objects, so copy the source's place before the first update overwrites it.
+    const from = { date: s.date, day_offset: s.day_offset, week_id: s.week_id };
+    const to = { day_offset: t.day_offset, week_id: t.week_id, status: t.status };
+    db.update("plan_sessions", s.id, { date: today, day_offset: to.day_offset, week_id: to.week_id, moved_from: from.date, status: "planned" });
+    db.update("plan_sessions", t.id, { date: from.date, day_offset: from.day_offset, week_id: from.week_id, moved_from: today, status: to.status === "void" ? "void" : "planned" });
     sweepMissed(db, today);
   }
   function markRest(db, sessionId) {
