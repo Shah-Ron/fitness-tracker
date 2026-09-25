@@ -4,6 +4,12 @@
         <item name="android:statusBarColor">#3E6B48</item>
         <item name="android:navigationBarColor">#F2F1EC</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowBackground">#F2F1EC</item>
+    </style>
+    <style name="Theme.Fitness.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#3E6B48</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Fitness</item>
     </style>
     <color name="ic_launcher_background">#3E6B48</color>
 </resources>

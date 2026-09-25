@@ -1,10 +1,10 @@
 /* Fitness Tracker service worker, phone edition.
    Everything the app needs is precached, so once it has loaded on the phone
-   it opens with no connection at all. The build stamps d29b2b2e336f so any change
+   it opens with no connection at all. The build stamps d2713ebce657 so any change
    to the app rolls the cache. There is no server to talk to; nothing is proxied. */
 "use strict";
 
-const VERSION = "d29b2b2e336f";
+const VERSION = "d2713ebce657";
 const CACHE = "fitness-phone-" + VERSION;
 const FILES = ["./", "./index.html", "./app.js", "./engine.js", "./store.js", "./local-api.js", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./version.json",

@@ -58,6 +58,18 @@ async function keepAwake(on) {
 const wantAwake = () => !!W && (!S || S.settings.keep_awake !== false);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && wantAwake()) keepAwake(true); });
 
+/* Haptics: the Android app has real effects, a browser gets the vibrate API. */
+function haptic(kind) {
+  if (IS_ANDROID_APP && window.Android.haptic) { try { window.Android.haptic(kind); } catch (e) {} return; }
+  if (navigator.vibrate) navigator.vibrate(kind === "double" ? [200, 100, 200] : kind === "heavy" ? 60 : 15);
+}
+/* The Android back button closes a sheet or returns to Today before it leaves the app. */
+window.__androidBack = () => {
+  if (!$("#sheetBack").hidden) { closeSheet(); return true; }
+  if (UI.tab !== "today") { switchTab("today"); return true; }
+  return false;
+};
+
 /* ---------------------------------------------------------- local api */
 async function api(method, path, body) {
   try { return await LocalApi.call(method, path, body); }
@@ -322,6 +334,7 @@ function startSession(id) {
   const today = todayIso();
   const items = JSON.parse(JSON.stringify(s.items));
   W = { client_id: uid(), session_id: s.id, date: today, started_at: nowIso(), title: s.title, kind: s.kind, is_deload: s.is_deload, items, sets: {}, cardio: [], skipped: {}, open: {}, local: true };
+  if (IS_ANDROID_APP && window.Android.requestNotifications) { try { window.Android.requestNotifications(); } catch (e) {} }
   saveW();
   mutate("workout", W.client_id, { session_id: s.id, date: today, started_at: W.started_at });
   switchTab("workout");
@@ -517,6 +530,7 @@ function logSet(it, reps, weight, rpe, is_warmup, quiet) {
   const rec = { client_id: cid, set_no: is_warmup ? list.filter(s => s.is_warmup).length + 1 : set_no, reps, weight, rpe, is_warmup, done_at: nowIso() };
   list.push(rec);
   W.local = true;
+  haptic("light");
   saveW();
   mutate("set", cid, { workout_client_id: W.client_id, plan_item_id: it.adhoc ? null : it.id, exercise_id: it.exercise_id, set_no: rec.set_no, reps, weight_kg: weight, rpe, is_warmup, done_at: rec.done_at });
   renderWorkout();
@@ -592,15 +606,25 @@ function logCardioSheet(it) {
   });
 }
 /* Rest timer in the sticky bar. */
+function scheduleRestAlarm() {
+  if (!IS_ANDROID_APP || !window.Android.scheduleRest) return;
+  try { window.Android.scheduleRest(REST.end, "Next set, " + REST.label); } catch (e) {}
+}
+function cancelRestAlarm() {
+  if (!IS_ANDROID_APP || !window.Android.cancelRest) return;
+  try { window.Android.cancelRest(); } catch (e) {}
+}
 function startRest(sec, label) {
   REST.total = sec; REST.end = Date.now() + sec * 1000; REST.finished = false; REST.label = label || "Rest";
   const bar = $("#timerbar"); bar.hidden = false;
   clearInterval(REST.timer);
+  scheduleRestAlarm();
   const draw = () => {
     const left = Math.ceil((REST.end - Date.now()) / 1000);
     if (left <= 0 && !REST.finished) {
       REST.finished = true;
-      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      cancelRestAlarm();
+      haptic("double");
       beep();
       bar.innerHTML = `<span class="t">Go</span><span class="l">${esc(REST.label)}</span><span class="spacer"></span><button class="primary" id="restClose">Next set</button>`;
       $("#restClose").addEventListener("click", stopRest);
@@ -609,13 +633,13 @@ function startRest(sec, label) {
       return;
     }
     bar.innerHTML = `<span class="t num">${mmss(left)}</span><span class="l">rest, ${esc(REST.label)}</span><span class="spacer"></span><button id="restPlus">+30 s</button><button id="restSkip">Skip</button>`;
-    $("#restPlus").addEventListener("click", () => { REST.end += 30000; draw(); });
+    $("#restPlus").addEventListener("click", () => { REST.end += 30000; scheduleRestAlarm(); draw(); });
     $("#restSkip").addEventListener("click", stopRest);
   };
   draw();
   REST.timer = setInterval(draw, 500);
 }
-function stopRest() { clearInterval(REST.timer); REST.finished = false; $("#timerbar").hidden = true; }
+function stopRest() { clearInterval(REST.timer); REST.finished = false; $("#timerbar").hidden = true; cancelRestAlarm(); }
 function beep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -637,7 +661,7 @@ function intervalTimer(it) {
     const draw = () => {
       const left = Math.ceil((end - Date.now()) / 1000);
       if (left <= 0) {
-        if (navigator.vibrate) navigator.vibrate(phase === "work" ? [300] : [150, 100, 150]);
+        haptic(phase === "work" ? "heavy" : "double");
         beep();
         if (phase === "work") { phase = "rest"; end = Date.now() + p.rest_sec * 1000; }
         else { round++; if (round > rounds) { clearInterval(timer); $("#iv-phase", sh).textContent = "Finished"; $("#iv-t", sh).textContent = "Done"; return; } phase = "work"; end = Date.now() + p.work_sec * 1000; }

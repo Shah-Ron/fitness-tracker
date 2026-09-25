@@ -1,12 +1,22 @@
 package io.github.shahron.fitness
 
 import android.Manifest
+import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.MediaStore
+import android.view.View
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
@@ -20,6 +30,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.webkit.WebViewAssetLoader
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -29,17 +40,26 @@ import kotlin.concurrent.thread
 /**
  * The whole app is the web page in assets. This activity gives it a secure
  * origin (https://appassets.androidplatform.net), the camera for barcode
- * scanning, a way to save backups into Downloads, and a native HTTP call for
- * Open Food Facts so the newer search service can be used.
+ * scanning, a way to save backups into Downloads, a native HTTP call for
+ * Open Food Facts, haptics, the keep-screen-on flag, and a rest-timer alarm
+ * that fires even when the screen is off.
  */
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var pendingPermission: PermissionRequest? = null
 
+    companion object {
+        const val CHANNEL_REST = "rest"
+        const val REQ_CAMERA = 1
+        const val REQ_NOTIFY = 2
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         web = WebView(this)
         setContentView(web)
+        createChannels()
 
         val s = web.settings
         s.javaScriptEnabled = true
@@ -49,6 +69,8 @@ class MainActivity : AppCompatActivity() {
         s.allowFileAccess = false
         s.allowContentAccess = false
         s.userAgentString = s.userAgentString + " FitnessTrackerApp/1.0"
+        web.overScrollMode = View.OVER_SCROLL_NEVER
+        web.isHapticFeedbackEnabled = true
 
         val loader = WebViewAssetLoader.Builder()
             .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
@@ -71,15 +93,20 @@ class MainActivity : AppCompatActivity() {
                     request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE))
                 } else {
                     pendingPermission = request
-                    ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.CAMERA), 1)
+                    ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.CAMERA), REQ_CAMERA)
                 }
             }
         }
         web.addJavascriptInterface(Bridge(), "Android")
 
+        // Back closes a sheet or returns to Today before it ever leaves the app.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (web.canGoBack()) web.goBack() else finish()
+                web.evaluateJavascript("(window.__androidBack ? window.__androidBack() : false)") { handled ->
+                    if (handled != "true") {
+                        if (web.canGoBack()) web.goBack() else moveTaskToBack(true)
+                    }
+                }
             }
         })
 
@@ -94,6 +121,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQ_CAMERA) return
         val req = pendingPermission ?: return
         pendingPermission = null
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -103,6 +131,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun createChannels() {
+        val nm = getSystemService(NotificationManager::class.java)
+        val ch = NotificationChannel(CHANNEL_REST, "Rest timer", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Tells you when the rest between sets is over"
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 200, 100, 200)
+        }
+        nm.createNotificationChannel(ch)
+    }
+
+    private fun vibrator(): Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION") getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    }
+
+    private fun restPendingIntent(): PendingIntent =
+        PendingIntent.getBroadcast(this, 7, Intent(this, RestAlarmReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
     inner class Bridge {
         /** Keeps the screen on while a workout is open, so the rest timer is never missed. */
         @JavascriptInterface
@@ -111,6 +158,43 @@ class MainActivity : AppCompatActivity() {
                 if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
+        }
+
+        /** Short, distinct vibrations: "light" for a tick, "heavy" for a phase change, "double" for a timer ending. */
+        @JavascriptInterface
+        fun haptic(kind: String) {
+            val v = vibrator() ?: return
+            val effect = when (kind) {
+                "light" -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                "heavy" -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+                else -> VibrationEffect.createWaveform(longArrayOf(0, 200, 100, 200), -1)
+            }
+            v.vibrate(effect)
+        }
+
+        /** Asks for notification permission on Android 13 and later; earlier versions do not need it. */
+        @JavascriptInterface
+        fun requestNotifications() {
+            if (Build.VERSION.SDK_INT < 33) return
+            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+            runOnUiThread { ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIFY) }
+        }
+
+        /** An alarm at the given time that posts a rest-over notification, screen off or not. */
+        @JavascriptInterface
+        fun scheduleRest(atMillis: Long, label: String) {
+            val am = getSystemService(AlarmManager::class.java)
+            val intent = Intent(this@MainActivity, RestAlarmReceiver::class.java).putExtra("label", label)
+            val pi = PendingIntent.getBroadcast(this@MainActivity, 7, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
+            if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, pi)
+            else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, pi)
+        }
+
+        @JavascriptInterface
+        fun cancelRest() {
+            getSystemService(AlarmManager::class.java).cancel(restPendingIntent())
+            androidx.core.app.NotificationManagerCompat.from(this@MainActivity).cancel(RestAlarmReceiver.NOTIFY_ID)
         }
 
         /** Writes a backup or CSV into the phone's Downloads folder. */
