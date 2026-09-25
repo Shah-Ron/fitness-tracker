@@ -26,7 +26,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
+      - name: Android SDK pieces
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          MGR=$(ls -d "$SDK"/cmdline-tools/*/bin/sdkmanager | tail -1)
+          yes | "$MGR" --licenses > /dev/null 2>&1 || true
+          "$MGR" "platforms;android-34" "build-tools;34.0.0" "platform-tools" > /dev/null
 
       - uses: gradle/actions/setup-gradle@v4
         with:

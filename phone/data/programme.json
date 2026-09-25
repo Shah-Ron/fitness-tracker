@@ -61,6 +61,136 @@
     "lower_b",
     "zone2"
   ],
+  "splits": {
+    "upper_lower": {
+      "name": "Upper / Lower",
+      "description": "Alternate upper body and lower body days so every muscle group is trained twice a week.",
+      "templates": {
+        "3": [
+          "upper_a",
+          "lower_a",
+          "upper_b"
+        ],
+        "4": [
+          "upper_a",
+          "lower_a",
+          "upper_b",
+          "lower_b"
+        ],
+        "5": [
+          "upper_a",
+          "lower_a",
+          "conditioning",
+          "upper_b",
+          "lower_b"
+        ],
+        "6": [
+          "upper_a",
+          "lower_a",
+          "conditioning",
+          "upper_b",
+          "lower_b",
+          "zone2"
+        ]
+      }
+    },
+    "full_body": {
+      "name": "Full body",
+      "description": "Train the whole body in every lifting session, which suits people who can only get to the gym a few times a week.",
+      "templates": {
+        "3": [
+          "full_a",
+          "full_b",
+          "full_c"
+        ],
+        "4": [
+          "full_a",
+          "full_b",
+          "conditioning",
+          "full_c"
+        ],
+        "5": [
+          "full_a",
+          "full_b",
+          "conditioning",
+          "full_c",
+          "zone2"
+        ],
+        "6": [
+          "full_a",
+          "full_b",
+          "conditioning",
+          "full_c",
+          "zone2",
+          "full_d"
+        ]
+      }
+    },
+    "ppl": {
+      "name": "Push / Pull / Legs",
+      "description": "Rotate pushing, pulling and leg sessions so each movement pattern gets a full day of its own.",
+      "templates": {
+        "3": [
+          "push_a",
+          "pull_a",
+          "legs_a"
+        ],
+        "4": [
+          "push_a",
+          "pull_a",
+          "legs_a",
+          "conditioning"
+        ],
+        "5": [
+          "push_a",
+          "pull_a",
+          "legs_a",
+          "push_b",
+          "pull_b"
+        ],
+        "6": [
+          "push_a",
+          "pull_a",
+          "legs_a",
+          "push_b",
+          "pull_b",
+          "legs_b"
+        ]
+      }
+    },
+    "bro": {
+      "name": "Bro split",
+      "description": "Give each muscle group its own day, which suits people who like to train five or six days a week.",
+      "templates": {
+        "3": [
+          "push_a",
+          "pull_a",
+          "legs_a"
+        ],
+        "4": [
+          "chest",
+          "back",
+          "legs",
+          "shoulders_arms"
+        ],
+        "5": [
+          "chest",
+          "back",
+          "shoulders",
+          "legs",
+          "arms"
+        ],
+        "6": [
+          "chest",
+          "back",
+          "shoulders",
+          "legs",
+          "arms",
+          "conditioning"
+        ]
+      }
+    }
+  },
   "sessions": {
     "upper_a": {
       "title": "Upper A",
@@ -358,6 +488,1265 @@
             "hanging_knee_raise",
             "pallof_press",
             "ab_wheel"
+          ]
+        }
+      ]
+    },
+    "full_a": {
+      "title": "Full body A",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "back_squat",
+            "front_squat"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_bench_press",
+            "incline_barbell_bench_press"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "chest_supported_row",
+            "seated_cable_row"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "bulgarian_split_squat",
+            "walking_lunge"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "db_lateral_raise",
+            "cable_lateral_raise"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "cable_pushdown",
+            "overhead_cable_extension"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "plank",
+            "dead_bug",
+            "cable_crunch"
+          ]
+        }
+      ]
+    },
+    "full_b": {
+      "title": "Full body B",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_overhead_press",
+            "seated_db_shoulder_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "romanian_deadlift",
+            "dumbbell_romanian_deadlift"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "lat_pulldown",
+            "assisted_pull_up"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hip_thrust",
+            "cable_pull_through"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "lying_leg_curl",
+            "seated_leg_curl"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "db_curl",
+            "ez_bar_curl"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hanging_knee_raise",
+            "pallof_press",
+            "ab_wheel"
+          ]
+        }
+      ]
+    },
+    "full_c": {
+      "title": "Full body C",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "trap_bar_deadlift",
+            "barbell_deadlift"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "dumbbell_bench_press",
+            "incline_db_press"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "barbell_row",
+            "single_arm_db_row"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "reverse_lunge",
+            "lateral_lunge"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "face_pull",
+            "reverse_fly_machine"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "standing_calf_raise",
+            "seated_calf_raise"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "side_plank",
+            "farmers_carry",
+            "cable_woodchop"
+          ]
+        }
+      ]
+    },
+    "full_d": {
+      "title": "Full body D",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "leg_press",
+            "hack_squat"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "machine_shoulder_press",
+            "arnold_press"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "pull_up",
+            "dumbbell_pullover"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "leg_extension",
+            "step_up"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "machine_chest_press",
+            "cable_fly"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "skull_crusher",
+            "db_overhead_extension"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hollow_hold",
+            "russian_twist",
+            "bicycle_crunch"
+          ]
+        }
+      ]
+    },
+    "push_a": {
+      "title": "Push A",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_bench_press",
+            "incline_barbell_bench_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "machine_shoulder_press",
+            "arnold_press"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "db_lateral_raise",
+            "cable_lateral_raise"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_pushdown",
+            "overhead_cable_extension"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_fly",
+            "machine_chest_press"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "assisted_dip",
+            "triceps_kickback"
+          ]
+        }
+      ]
+    },
+    "push_b": {
+      "title": "Push B",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_overhead_press",
+            "seated_db_shoulder_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "dumbbell_bench_press",
+            "incline_db_press"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "machine_lateral_raise",
+            "upright_row"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "skull_crusher",
+            "db_overhead_extension"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "close_grip_bench_press",
+            "push_up"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "ab_wheel",
+            "dead_bug"
+          ]
+        }
+      ]
+    },
+    "pull_a": {
+      "title": "Pull A",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "chest_supported_row",
+            "barbell_row"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "assisted_pull_up",
+            "seated_cable_row"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "single_arm_db_row",
+            "straight_arm_pulldown",
+            "inverted_row"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_curl",
+            "hammer_curl"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hanging_knee_raise",
+            "cable_crunch"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "incline_db_curl",
+            "concentration_curl"
+          ]
+        }
+      ]
+    },
+    "pull_b": {
+      "title": "Pull B",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "lat_pulldown",
+            "pull_up"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "pendlay_row",
+            "dumbbell_pullover"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "face_pull",
+            "reverse_fly_machine",
+            "rear_delt_row"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "ez_bar_curl",
+            "db_curl"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_woodchop",
+            "pallof_press"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "russian_twist",
+            "bicycle_crunch"
+          ]
+        }
+      ]
+    },
+    "legs_a": {
+      "title": "Legs A",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "back_squat",
+            "front_squat"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "romanian_deadlift",
+            "dumbbell_romanian_deadlift"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "bulgarian_split_squat",
+            "walking_lunge"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "lying_leg_curl",
+            "seated_leg_curl"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "standing_calf_raise",
+            "single_leg_calf_raise"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "glute_kickback",
+            "glute_bridge"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "plank",
+            "dead_bug",
+            "cable_crunch"
+          ]
+        }
+      ]
+    },
+    "legs_b": {
+      "title": "Legs B",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "trap_bar_deadlift",
+            "barbell_deadlift"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "leg_press",
+            "hack_squat"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hip_thrust",
+            "cable_pull_through"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "leg_extension",
+            "step_up"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "seated_calf_raise",
+            "leg_press_calf_raise"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "reverse_lunge",
+            "lateral_lunge"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hanging_knee_raise",
+            "pallof_press",
+            "ab_wheel"
+          ]
+        }
+      ]
+    },
+    "chest": {
+      "title": "Chest",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_bench_press",
+            "incline_barbell_bench_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "incline_db_press",
+            "machine_chest_press"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_fly",
+            "push_up"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "assisted_dip",
+            "triceps_kickback"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_crunch",
+            "hanging_knee_raise"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "ab_wheel",
+            "dead_bug"
+          ]
+        }
+      ]
+    },
+    "back": {
+      "title": "Back",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "chest_supported_row",
+            "barbell_row"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "lat_pulldown",
+            "pull_up"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "seated_cable_row",
+            "single_arm_db_row"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "assisted_pull_up",
+            "dumbbell_pullover"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "straight_arm_pulldown",
+            "pendlay_row",
+            "inverted_row"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "cable_woodchop",
+            "pallof_press"
+          ]
+        }
+      ]
+    },
+    "shoulders": {
+      "title": "Shoulders",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_overhead_press",
+            "seated_db_shoulder_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "machine_shoulder_press",
+            "arnold_press"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "db_lateral_raise",
+            "cable_lateral_raise"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "face_pull",
+            "reverse_fly_machine",
+            "rear_delt_row"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "machine_lateral_raise",
+            "upright_row"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "bicycle_crunch",
+            "russian_twist"
+          ]
+        }
+      ]
+    },
+    "legs": {
+      "title": "Legs",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "back_squat",
+            "front_squat"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "romanian_deadlift",
+            "trap_bar_deadlift"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "bulgarian_split_squat",
+            "walking_lunge",
+            "reverse_lunge"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "lying_leg_curl",
+            "seated_leg_curl"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "standing_calf_raise",
+            "seated_calf_raise"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "hip_thrust",
+            "cable_pull_through"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "plank",
+            "dead_bug",
+            "hanging_knee_raise"
+          ]
+        }
+      ]
+    },
+    "arms": {
+      "title": "Arms",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "close_grip_bench_press",
+            "dumbbell_bench_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "ez_bar_curl",
+            "db_curl"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_pushdown",
+            "overhead_cable_extension"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_curl",
+            "incline_db_curl"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "skull_crusher",
+            "db_overhead_extension"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "hammer_curl",
+            "concentration_curl"
+          ]
+        }
+      ]
+    },
+    "shoulders_arms": {
+      "title": "Shoulders and arms",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_overhead_press",
+            "seated_db_shoulder_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "ez_bar_curl",
+            "db_curl"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "db_lateral_raise",
+            "cable_lateral_raise",
+            "machine_lateral_raise"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_pushdown",
+            "overhead_cable_extension",
+            "skull_crusher"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "face_pull",
+            "reverse_fly_machine"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "hammer_curl",
+            "concentration_curl"
           ]
         }
       ]

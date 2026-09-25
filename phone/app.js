@@ -1156,7 +1156,7 @@ function renderSettings() {
   const days = st.train_days || [];
   const kit = st.cardio_kit || [];
   root.innerHTML = `
-    <div class="card"><h2>You</h2><p class="hint">Used for the calorie maths only. Nothing leaves this laptop.</p>
+    <div class="card"><h2>You</h2><p class="hint">Used for the calorie maths only. Nothing leaves this device.</p>
       <div class="f-row"><label class="field narrow"><span>Sex</span><select id="s-sex"><option value="m"${st.sex === "m" ? " selected" : ""}>Male</option><option value="f"${st.sex === "f" ? " selected" : ""}>Female</option></select></label>
       ${field("birth_date", "Birth date", "date")}${field("height_cm", "Height (cm)", "number", 'inputmode="decimal" step="0.5"')}${field("start_weight_kg", "Starting weight (kg)", "number", 'inputmode="decimal" step="0.1"')}</div></div>
     <div class="card"><h2>Your goal</h2><p class="hint">${tg && tg.complete ? `Right now that means about <b>${n0(tg.budget)} kcal</b> a day with <b>${n0(tg.protein)} g protein</b>, ${tg.mode === "losing" ? "losing" : tg.mode === "gaining" ? "gaining" : "holding at"} ${tg.mode === "maintaining" ? "your target" : n1(Math.abs(tg.weekly_pace || 0)) + " kg a week"}.` : "Set a target weight and date and the app works out the daily numbers."}</p>
@@ -1164,7 +1164,7 @@ function renderSettings() {
       <label class="field narrow"><span>Daily life activity</span><select id="s-neat_factor">${[[1.2, "Mostly sitting"], [1.3, "Light, some walking"], [1.4, "On my feet a lot"]].map(([v, l]) => `<option value="${v}"${+st.neat_factor === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div>
       <div class="f-row">${field("deficit_cap", "Biggest daily deficit (kcal)", "number", 'inputmode="numeric" step="50"')}${field("protein_g_per_kg", "Protein (g per kg)", "number", 'inputmode="decimal" step="0.1"')}${field("fat_g_per_kg", "Fat (g per kg)", "number", 'inputmode="decimal" step="0.1"')}${field("kcal_floor", "Calorie floor, blank for default", "number", 'inputmode="numeric" step="50"')}</div>
       ${st.goal_start_date ? `<p class="hint">Pace line runs from ${kg(st.goal_start_weight)} on ${fmtDate(st.goal_start_date)}. Changing the target starts a new line from today.</p>` : ""}</div>
-    <div class="card"><h2>Training</h2><p class="hint">Changes rebuild the sessions you have not started yet, from today. Sessions already done stay as they were.</p>
+    <div class="card"><h2>Training</h2><p class="hint">Changes rebuild the sessions you have not started yet, from today. Sessions already done stay as they were. Pick a split that suits how many days you train.</p>
       <div class="cap">Training split</div><div class="chips mb" id="s-split">${(S.splits || []).map(sp => `<button type="button" class="chip${(st.split || "upper_lower") === sp.key ? " on" : ""}" data-split="${sp.key}" title="${esc(sp.description || "")}">${esc(sp.name)}</button>`).join("")}</div>
       ${(() => { const sp = (S.splits || []).find(x => x.key === (st.split || "upper_lower")); return sp ? `<p class="hint">${esc(sp.description || "")}${sp.days && sp.days.length ? ` Works with ${sp.days.join(", ")} training days.` : ""}</p>` : ""; })()}
       <div class="cap">Days you can train</div><div class="chips mb" id="s-days">${WEEKDAYS.map((d, i) => `<button type="button" class="chip${days.includes(i + 1) ? " on" : ""}" data-day="${i + 1}">${d}</button>`).join("")}</div>
