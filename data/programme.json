@@ -1,0 +1,570 @@
+{
+  "version": 1,
+  "set_overhead_sec": 40,
+  "rest_sec": {
+    "main1": 150,
+    "main2": 90,
+    "accessory": 60,
+    "core": 45,
+    "circuit": 30
+  },
+  "rep_schemes": {
+    "beginner": {
+      "main1": {
+        "sets": 3,
+        "rep_low": 6,
+        "rep_high": 10
+      },
+      "main2": {
+        "sets": 3,
+        "rep_low": 8,
+        "rep_high": 12
+      },
+      "accessory": {
+        "sets": 3,
+        "rep_low": 10,
+        "rep_high": 15
+      },
+      "core": {
+        "sets": 3,
+        "rep_low": 10,
+        "rep_high": 15
+      },
+      "circuit": {
+        "sets": 3,
+        "rep_low": 10,
+        "rep_high": 15
+      }
+    }
+  },
+  "timed_scheme": {
+    "rep_low": 30,
+    "rep_high": 60
+  },
+  "deload": {
+    "week_no": 4,
+    "set_delta": -1,
+    "load_factor": 0.9
+  },
+  "template_5": [
+    "upper_a",
+    "lower_a",
+    "conditioning",
+    "upper_b",
+    "lower_b"
+  ],
+  "template_6": [
+    "upper_a",
+    "lower_a",
+    "conditioning",
+    "upper_b",
+    "lower_b",
+    "zone2"
+  ],
+  "sessions": {
+    "upper_a": {
+      "title": "Upper A",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_bench_press",
+            "incline_barbell_bench_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "lat_pulldown",
+            "seated_cable_row"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "db_lateral_raise",
+            "cable_lateral_raise",
+            "machine_lateral_raise"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "cable_pushdown",
+            "overhead_cable_extension",
+            "assisted_dip"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "face_pull",
+            "reverse_fly_machine"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "cable_curl",
+            "hammer_curl"
+          ]
+        }
+      ]
+    },
+    "upper_b": {
+      "title": "Upper B",
+      "warmup": "dynamic_warmup_upper",
+      "cooldown": "cooldown_upper",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "barbell_overhead_press",
+            "seated_db_shoulder_press"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "chest_supported_row",
+            "assisted_pull_up"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "incline_db_press",
+            "machine_chest_press",
+            "cable_fly"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "single_arm_db_row",
+            "straight_arm_pulldown"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "db_curl",
+            "ez_bar_curl",
+            "incline_db_curl"
+          ]
+        },
+        {
+          "key": "acc4",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": true,
+          "pool": [
+            "skull_crusher",
+            "db_overhead_extension"
+          ]
+        }
+      ]
+    },
+    "lower_a": {
+      "title": "Lower A",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "back_squat",
+            "front_squat"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "romanian_deadlift",
+            "dumbbell_romanian_deadlift"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "bulgarian_split_squat",
+            "walking_lunge",
+            "reverse_lunge"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "lying_leg_curl",
+            "seated_leg_curl"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "standing_calf_raise",
+            "single_leg_calf_raise"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "plank",
+            "dead_bug",
+            "cable_crunch"
+          ]
+        }
+      ]
+    },
+    "lower_b": {
+      "title": "Lower B",
+      "warmup": "dynamic_warmup_lower",
+      "cooldown": "cooldown_lower",
+      "slots": [
+        {
+          "key": "main1",
+          "section": "main",
+          "scheme": "main1",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "trap_bar_deadlift",
+            "barbell_deadlift"
+          ]
+        },
+        {
+          "key": "main2",
+          "section": "main",
+          "scheme": "main2",
+          "select": "block_alternate",
+          "optional": false,
+          "pool": [
+            "leg_press",
+            "hack_squat"
+          ]
+        },
+        {
+          "key": "acc1",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hip_thrust",
+            "cable_pull_through",
+            "glute_kickback"
+          ]
+        },
+        {
+          "key": "acc2",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "leg_extension",
+            "step_up"
+          ]
+        },
+        {
+          "key": "acc3",
+          "section": "accessory",
+          "scheme": "accessory",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "seated_calf_raise",
+            "leg_press_calf_raise"
+          ]
+        },
+        {
+          "key": "core1",
+          "section": "core",
+          "scheme": "core",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "hanging_knee_raise",
+            "pallof_press",
+            "ab_wheel"
+          ]
+        }
+      ]
+    },
+    "conditioning": {
+      "title": "Conditioning",
+      "warmup": null,
+      "cooldown": "mobility_flow",
+      "slots": [
+        {
+          "key": "cond",
+          "section": "main",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "conditioning"
+        },
+        {
+          "key": "circ1",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "plank",
+            "side_plank"
+          ]
+        },
+        {
+          "key": "circ2",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "dead_bug",
+            "bird_dog"
+          ]
+        },
+        {
+          "key": "circ3",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "mountain_climber",
+            "bicycle_crunch"
+          ]
+        }
+      ]
+    },
+    "zone2": {
+      "title": "Zone 2",
+      "warmup": null,
+      "cooldown": null,
+      "slots": [
+        {
+          "key": "zone2",
+          "section": "main",
+          "scheme": null,
+          "select": "fixed",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "zone2"
+        }
+      ]
+    }
+  },
+  "finisher_slot": {
+    "key": "finisher",
+    "section": "finisher",
+    "protocol_group": "finisher"
+  },
+  "warmup_cardio": {
+    "key": "wu_cardio",
+    "protocol": "warm_easy_5"
+  },
+  "protocols": [
+    {
+      "id": "warm_easy_5",
+      "group": "warmup",
+      "machine": "any",
+      "minutes": 5,
+      "minutes_min": 5,
+      "intensity": "easy",
+      "text": "Easy pace for 5 minutes. You should be able to talk comfortably."
+    },
+    {
+      "id": "fin_tread_incline_walk",
+      "group": "finisher",
+      "machine": "treadmill",
+      "minutes": 10,
+      "minutes_min": 8,
+      "intensity": "moderate",
+      "text": "Incline 8 to 12 per cent at 5.5 to 6 km/h."
+    },
+    {
+      "id": "fin_tread_run_walk",
+      "group": "finisher",
+      "machine": "treadmill",
+      "work_sec": 60,
+      "rest_sec": 60,
+      "rounds": 6,
+      "rounds_min": 4,
+      "intensity": "interval",
+      "text": "Run 60 seconds, walk 60 seconds, 6 rounds."
+    },
+    {
+      "id": "fin_bike_30_60",
+      "group": "finisher",
+      "machine": "bike",
+      "work_sec": 30,
+      "rest_sec": 60,
+      "rounds": 8,
+      "rounds_min": 6,
+      "intensity": "interval",
+      "text": "Hard 30 seconds, easy 60 seconds, 8 rounds."
+    },
+    {
+      "id": "fin_rower_1_1",
+      "group": "finisher",
+      "machine": "rower",
+      "work_sec": 60,
+      "rest_sec": 60,
+      "rounds": 5,
+      "rounds_min": 4,
+      "intensity": "interval",
+      "text": "Hard 1 minute, easy 1 minute, 5 rounds."
+    },
+    {
+      "id": "cond_bike_30_60",
+      "group": "conditioning",
+      "machine": "bike",
+      "work_sec": 30,
+      "rest_sec": 60,
+      "rounds": 15,
+      "rounds_min": 10,
+      "intensity": "interval",
+      "text": "Hard 30 seconds, easy 60 seconds, 15 rounds."
+    },
+    {
+      "id": "cond_rower_1_1",
+      "group": "conditioning",
+      "machine": "rower",
+      "work_sec": 60,
+      "rest_sec": 60,
+      "rounds": 10,
+      "rounds_min": 8,
+      "intensity": "interval",
+      "text": "Hard 1 minute, easy 1 minute, 10 rounds."
+    },
+    {
+      "id": "cond_tread_run_walk",
+      "group": "conditioning",
+      "machine": "treadmill",
+      "work_sec": 60,
+      "rest_sec": 60,
+      "rounds": 10,
+      "rounds_min": 7,
+      "intensity": "interval",
+      "text": "Run 60 seconds, walk 60 seconds, 10 rounds."
+    },
+    {
+      "id": "cond_tread_hill",
+      "group": "conditioning",
+      "machine": "treadmill",
+      "minutes": 20,
+      "minutes_min": 15,
+      "intensity": "moderate",
+      "text": "Incline 6 to 10 per cent, brisk walk for 20 minutes."
+    },
+    {
+      "id": "zone2_steady",
+      "group": "zone2",
+      "machine": "any",
+      "minutes": 35,
+      "minutes_min": 30,
+      "intensity": "moderate",
+      "text": "Steady pace for 35 minutes. You can still speak in full sentences."
+    }
+  ],
+  "warmup_moves": {
+    "upper": [
+      "Arm circles, 10 each way.",
+      "Band pull-aparts, 15.",
+      "Scapular push-ups, 10."
+    ],
+    "lower": [
+      "Leg swings, 10 each leg.",
+      "Bodyweight squats, 15.",
+      "Walking lunges with a twist, 10 each side."
+    ]
+  },
+  "cooldown_stretches": {
+    "upper": [
+      "Doorway chest stretch, 30 seconds each side.",
+      "Cross-body shoulder stretch, 30 seconds each side.",
+      "Overhead triceps stretch, 30 seconds each side.",
+      "Lat stretch on the rack, 30 seconds each side."
+    ],
+    "lower": [
+      "Standing quad stretch, 30 seconds each side.",
+      "Seated hamstring stretch, 30 seconds each side.",
+      "Figure-four glute stretch, 30 seconds each side.",
+      "Wall calf stretch, 30 seconds each side."
+    ]
+  }
+}

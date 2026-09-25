@@ -1,0 +1,138 @@
+name,brand,unit,kcal_100,protein_100,carb_100,fat_100,portion1_label,portion1_grams,portion2_label,portion2_grams,category,barcode,note
+Weet-Bix,Sanitarium,g,356,12.0,67.0,1.4,1 biscuit,15,2 biscuits,30,breads_cereals,,
+Vogel's Original Mixed Grain bread,Vogel's,g,240,10.5,38.0,3.8,1 slice,40,2 slices,80,breads_cereals,,
+Vogel's Soy and Linseed bread,Vogel's,g,260,12.5,33.0,7.5,1 slice,40,2 slices,80,breads_cereals,,
+Tip Top Supersoft white bread,Tip Top,g,249,8.5,46.0,2.8,1 slice,35,2 slices,70,breads_cereals,,
+Tip Top Wholemeal bread,Tip Top,g,237,9.5,40.0,3.0,1 slice,40,2 slices,80,breads_cereals,,
+Molenberg Original grain bread,Molenberg,g,246,10.0,40.0,4.0,1 slice,40,2 slices,80,breads_cereals,,
+Burgen Soy-Lin bread,Burgen,g,268,13.5,30.0,9.0,1 slice,43,2 slices,86,breads_cereals,,
+Nature's Fresh Wholemeal bread,Nature's Fresh,g,237,9.5,41.0,2.8,1 slice,40,2 slices,80,breads_cereals,,
+Pams White Sandwich bread,Pams,g,251,8.5,47.0,2.5,1 slice,32,2 slices,64,breads_cereals,,
+Freya's Dark Rye bread,Freya's,g,222,7.5,38.0,2.5,1 slice,40,2 slices,80,breads_cereals,,
+Ploughman's Wholegrain bread,Ploughman's,g,244,9.5,40.0,4.0,1 slice,45,2 slices,90,breads_cereals,,
+English muffin,,g,227,8.0,43.0,1.8,1 muffin,65,half muffin,33,breads_cereals,,
+"Bagel, plain",,g,263,10.0,51.0,1.5,1 bagel,90,half bagel,45,breads_cereals,,
+Crumpet,,g,184,6.0,37.0,0.8,1 crumpet,50,2 crumpets,100,breads_cereals,,
+Harraways Rolled Oats,Harraways,g,373,11.5,58.0,8.5,1/2 cup dry,45,1 cup dry,90,breads_cereals,,dry weight
+Hubbards muesli,Hubbards,g,378,9.5,58.0,10.5,1/2 cup,50,1 cup,100,breads_cereals,,
+"Light 'n' Tasty, berry",Sanitarium,g,366,8.5,70.0,4.5,1 cup,45,,,breads_cereals,,
+Skippy Cornflakes,Sanitarium,g,373,7.0,84.0,0.5,1 cup,30,2 cups,60,breads_cereals,,
+Uncle Tobys Plus Protein,Uncle Tobys,g,373,21.0,54.0,5.5,1 cup,45,,,breads_cereals,,
+Nutri-Grain,Kellogg's,g,378,21.0,57.8,4.2,1 cup,40,,,breads_cereals,,
+"Brown rice, cooked",,g,111,2.6,23.0,0.9,1 cup cooked,195,1/2 cup cooked,98,breads_cereals,,cooked weight
+"Pasta, cooked",,g,131,5.0,25.0,1.1,1 cup cooked,140,1/2 cup cooked,70,breads_cereals,,cooked weight
+"Anchor Blue milk, standard",Anchor,ml,63,3.3,4.8,3.3,1 cup,250,splash,30,dairy_eggs,,
+Anchor Light Blue milk,Anchor,ml,48,3.6,5.0,1.5,1 cup,250,splash,30,dairy_eggs,,
+Anchor Trim milk,Anchor,ml,39,3.8,5.0,0.5,1 cup,250,splash,30,dairy_eggs,,
+Anchor Calci+ milk,Anchor,ml,49,4.1,5.5,1.4,1 cup,250,splash,30,dairy_eggs,,
+Anchor Zero Lacto milk,Anchor,ml,63,3.3,4.8,3.3,1 cup,250,splash,30,dairy_eggs,,lactose free
+Meadow Fresh Original milk,Meadow Fresh,ml,64,3.4,4.8,3.4,1 cup,250,splash,30,dairy_eggs,,
+Oat milk,,ml,45,1.0,7.0,1.5,1 cup,250,splash,30,dairy_eggs,,
+"Anchor Greek yoghurt, natural",Anchor,g,95,5.5,4.8,5.8,1/2 cup,125,1 cup,250,dairy_eggs,,
+"Puhoi Valley yoghurt, vanilla bean",Puhoi Valley,g,120,4.0,13.0,5.5,1/2 cup,125,1 cup,250,dairy_eggs,,
+"Fresh'n Fruity yoghurt, strawberry",Fresh'n Fruity,g,93,3.6,14.0,2.4,1 pottle,125,1 cup,250,dairy_eggs,,
+"Yoplait yoghurt, strawberry",Yoplait,g,95,4.0,14.5,2.5,1 pottle,125,1 cup,250,dairy_eggs,,
+Mainland Edam cheese,Mainland,g,340,28.0,0.5,24.5,1 slice,20,1/4 cup grated,30,dairy_eggs,,
+Mainland Tasty cheese,Mainland,g,406,25.0,0.5,33.5,1 slice,20,1/4 cup grated,30,dairy_eggs,,
+Mainland Colby cheese,Mainland,g,394,24.0,0.5,32.5,1 slice,20,1/4 cup grated,30,dairy_eggs,,
+Cottage cheese,,g,98,13.0,3.5,4.0,1/2 cup,110,1 tbsp,20,dairy_eggs,,
+Philadelphia cream cheese,Philadelphia,g,246,5.5,4.0,23.0,1 tbsp,20,1/4 cup,60,dairy_eggs,,
+Anchor butter,Anchor,g,730,0.6,0.6,81.0,1 tsp,5,1 tbsp,15,dairy_eggs,,
+Anchor Buttersoft,Anchor,g,705,0.5,0.5,78.0,1 tsp,5,1 tbsp,15,dairy_eggs,,
+Whipping cream,Anchor,ml,347,2.0,3.0,36.0,1 tbsp,15,1/2 cup,125,dairy_eggs,,
+"Egg, size 7",,g,143,12.6,0.7,9.5,1 egg,55,2 eggs,110,dairy_eggs,,without shell
+"Beef mince, 5 per cent fat, raw",,g,137,21.0,0.0,5.0,1 serve,125,1 pack,500,meat_fish,,raw weight
+"Beef mince, 5 per cent fat, cooked",,g,174,26.5,0.0,6.5,1 serve,100,1 cup,140,meat_fish,,cooked weight
+"Beef mince, 15 per cent fat, raw",,g,215,18.5,0.0,15.0,1 serve,125,1 pack,500,meat_fish,,raw weight
+"Beef mince, 15 per cent fat, cooked",,g,246,26.0,0.0,15.0,1 serve,100,1 cup,140,meat_fish,,"cooked weight, fat drained"
+"Chicken breast, skinless, raw",,g,120,22.5,0.0,2.6,1 breast,200,half breast,100,meat_fish,,raw weight
+"Chicken thigh, skinless, raw",,g,121,19.5,0.0,4.5,1 thigh,110,2 thighs,220,meat_fish,,"raw weight, boneless"
+"Chicken drumstick, with skin, raw",,g,161,18.0,0.0,9.5,1 drumstick,80,2 drumsticks,160,meat_fish,,"raw weight, bone excluded"
+"Lamb loin chop, raw",,g,230,18.0,0.0,17.5,1 chop,80,2 chops,160,meat_fish,,"raw weight, bone excluded"
+"Lamb leg, roast",,g,220,25.5,0.0,13.0,1 serve,120,1 slice,30,meat_fish,,cooked weight
+"Pork loin chop, raw",,g,190,20.5,0.0,12.0,1 chop,150,1 small chop,100,meat_fish,,"raw weight, bone excluded"
+Hellers Original sausages,Hellers,g,241,12.0,9.0,17.5,1 sausage,55,2 sausages,110,meat_fish,,precooked
+Hellers Middle bacon,Hellers,g,215,16.0,1.0,16.0,1 rasher,35,2 rashers,70,meat_fish,,raw weight
+Hellers Champagne ham,Hellers,g,108,16.0,2.0,4.0,1 slice,25,2 slices,50,meat_fish,,
+Tegel Tenders,Tegel,g,246,15.0,17.0,12.5,1 tender,30,3 tenders,90,meat_fish,,oven baked
+Sealord tuna in springwater,Sealord,g,105,24.0,0.0,1.0,1 small can drained,70,1 large can drained,130,meat_fish,,drained
+Sealord tuna in oil,Sealord,g,186,24.0,0.0,10.0,1 small can drained,70,1 large can drained,130,meat_fish,,drained
+Fish fingers,Sealord,g,210,12.0,19.0,9.0,1 finger,25,4 fingers,100,meat_fish,,oven baked
+"Salmon fillet, raw",,g,200,19.5,0.0,13.0,1 fillet,150,1 small fillet,100,meat_fish,,"raw weight, skin on"
+"Green-lipped mussels, cooked",,g,105,15.5,4.5,2.5,1 mussel,20,6 mussels,120,meat_fish,,"cooked, meat only"
+Mince and cheese pie,,g,263,9.5,22.0,15.0,1 pie,180,,,takeaways,,
+Steak and cheese pie,,g,268,11.0,21.0,15.5,1 pie,180,,,takeaways,,
+Sausage roll,,g,300,8.5,24.0,19.0,1 roll,120,1 small roll,60,takeaways,,
+Battered fish,,g,227,14.0,15.0,12.5,1 piece,150,,,takeaways,,fish and chip shop
+Hot chips,,g,275,3.5,35.0,13.5,1 scoop,300,half scoop,150,takeaways,,fish and chip shop
+Hell Pizza slice,Hell Pizza,g,251,11.0,28.0,10.5,1 slice,75,2 slices,150,takeaways,,average across menu
+Domino's pizza slice,Domino's,g,251,11.5,30.0,9.5,1 slice,80,2 slices,160,takeaways,,"traditional range, classic crust"
+Pizza Hut pizza slice,Pizza Hut,g,270,11.5,30.0,11.5,1 slice,95,2 slices,190,takeaways,,large pan
+Bastard burger,BurgerFuel,g,248,14.0,18.0,13.0,1 burger,380,,,takeaways,,
+Big Mac,McDonald's,g,248,13.0,20.0,12.5,1 burger,210,,,takeaways,,
+Kiwiburger,McDonald's,g,220,12.0,17.0,11.0,1 burger,250,,,takeaways,,
+"Fries, medium",McDonald's,g,310,3.5,38.0,15.5,1 medium,110,1 large,150,takeaways,,
+Original Recipe chicken piece,KFC,g,245,19.0,7.5,15.5,1 piece,110,2 pieces,220,takeaways,,average piece
+Zinger burger,KFC,g,244,12.5,23.0,11.0,1 burger,195,,,takeaways,,
+6-inch Chicken Teriyaki sub,Subway,g,133,9.5,19.5,1.6,1 six-inch,280,1 footlong,560,takeaways,,wheat bread with salads
+Sushi roll,,g,148,5.0,28.0,1.8,1 piece,40,8-piece pack,320,takeaways,,
+Butter chicken with rice,,g,155,8.0,17.0,6.0,1 meal,550,,,takeaways,,curry and rice together
+"Pad Thai, chicken",,g,143,7.0,18.0,5.0,1 meal,450,,,takeaways,,
+Lamb kebab,,g,203,11.0,20.0,8.5,1 kebab,350,,,takeaways,,wrap with salad and sauce
+Cheese scone,,g,335,10.0,36.0,16.0,1 scone,120,,,takeaways,,cafe size
+Custard square,,g,275,4.0,34.0,14.0,1 square,130,,,takeaways,,
+Lamington,,g,347,4.5,55.0,12.0,1 lamington,90,,,takeaways,,
+"Flat white, standard milk",,ml,57,3.0,4.4,3.0,regular cup,220,large cup,300,drinks,,
+"Flat white, trim milk",,ml,36,3.4,4.5,0.5,regular cup,220,large cup,300,drinks,,
+"Latte, standard milk",,ml,58,3.1,4.5,3.1,regular cup,250,large cup,350,drinks,,
+"Cappuccino, standard milk",,ml,45,2.5,3.6,2.4,regular cup,220,large cup,300,drinks,,
+"Mocha, standard milk",,ml,80,3.2,10.5,3.0,regular cup,250,large cup,350,drinks,,
+"Hot chocolate, standard milk",,ml,85,3.3,11.5,3.2,regular cup,250,large cup,350,drinks,,
+Long black,,ml,1,0.1,0.0,0.0,regular cup,200,large cup,300,drinks,,
+"Chai latte, standard milk",,ml,75,2.8,11.0,2.4,regular cup,250,large cup,350,drinks,,powder based
+Primo Iced Coffee,Primo,ml,69,3.2,9.6,1.6,1 small bottle,300,1 large bottle,600,drinks,,
+Tank smoothie,Tank,ml,62,1.5,12.5,0.8,1 regular,500,1 small,350,drinks,,"fruit smoothie, average"
+L&P,L&P,ml,43,0.0,10.6,0.0,1 can,330,1 bottle,600,drinks,,
+Coca-Cola,Coca-Cola,ml,43,0.0,10.6,0.0,1 can,330,1 bottle,600,drinks,,
+Coke Zero,Coca-Cola,ml,0,0.0,0.0,0.0,1 can,330,1 bottle,600,drinks,,
+V Energy Drink,V,ml,47,0.0,10.8,0.0,1 can,250,1 large can,500,drinks,,
+Just Juice Orange,Just Juice,ml,41,0.5,9.5,0.1,1 glass,250,1 bottle,350,drinks,,
+Charlie's Orange Juice,Charlie's,ml,43,0.7,9.0,0.2,1 glass,250,1 bottle,300,drinks,,
+Phoenix Organic Lemonade,Phoenix,ml,42,0.0,10.0,0.0,1 bottle,330,,,drinks,,
+Speight's Gold Medal Ale,Speight's,ml,37,0.3,2.8,0.0,1 stubbie,330,1 handle,425,drinks,,"alcohol 4 per cent, kcal includes alcohol"
+Whittaker's Creamy Milk chocolate,Whittaker's,g,538,7.4,53.4,32.4,1 piece,12.5,2 pieces,25,snacks,,
+Whittaker's Dark Ghana chocolate,Whittaker's,g,571,8.7,32.7,43.5,1 piece,12.5,2 pieces,25,snacks,,
+Whittaker's Peanut Slab,Whittaker's,g,543,12.0,44.0,34.0,1 slab,50,,,snacks,,
+Cadbury Dairy Milk chocolate,Cadbury,g,533,7.3,57.0,30.0,1 piece,7.5,1 row,45,snacks,,
+Cookie Time Original Chocolate Chunk cookie,Cookie Time,g,476,5.0,60.0,23.0,1 cookie,85,,,snacks,,
+Super Wine biscuit,Griffin's,g,442,7.0,70.0,14.0,1 biscuit,9,2 biscuits,18,snacks,,
+Toffee Pop biscuit,Griffin's,g,497,5.0,64.0,24.0,1 biscuit,17,2 biscuits,34,snacks,,
+Gingernut biscuit,Griffin's,g,437,5.5,74.0,12.0,1 biscuit,10,2 biscuits,20,snacks,,
+Tim Tam Original,Arnott's,g,511,5.0,62.0,26.5,1 biscuit,18,2 biscuits,36,snacks,,
+Bluebird Ready Salted chips,Bluebird,g,514,6.0,52.0,31.0,1 snack bag,40,1 handful,25,snacks,,
+Eta Ripples Ready Salted chips,Eta,g,516,6.0,51.0,32.0,1 snack bag,40,1 handful,25,snacks,,
+Proper Crisps Marlborough Sea Salt,Proper Crisps,g,509,6.5,52.0,30.0,1 handful,25,1 small bag,40,snacks,,
+Pams Roasted Salted Mixed Nuts,Pams,g,612,20.0,12.0,53.0,1 handful,30,1/4 cup,35,snacks,,
+Bumper Bar,Cookie Time,g,425,7.0,60.0,16.0,1 bar,75,,,snacks,,
+One Square Meal (OSM) bar,Cookie Time,g,406,10.5,53.0,15.0,1 bar,42.5,1 pack (2 bars),85,snacks,,
+Nice & Natural Roasted Nut Bar,Nice & Natural,g,466,15.0,40.0,26.0,1 bar,32,,,snacks,,
+Pineapple Lumps,Pascall,g,413,1.5,75.0,12.0,1 lump,7,5 lumps,35,snacks,,
+Hokey Pokey ice cream,Tip Top,g,220,3.6,26.8,10.5,1 scoop,70,2 scoops,140,snacks,,
+Pavlova,,g,300,2.5,70.0,0.2,1 slice,80,,,snacks,,"base only, no cream or fruit"
+Marmite,Sanitarium,g,160,11.5,26.0,0.3,1 tsp,5,1/2 tsp,2.5,sauces_spreads,,
+Vegemite,Bega,g,189,24.7,20.6,0.9,1 tsp,5,1/2 tsp,2.5,sauces_spreads,,
+"Pic's Peanut Butter, crunchy",Pic's,g,607,27.0,12.4,49.6,1 tbsp,20,1 tsp,7,sauces_spreads,,
+"Sanitarium Peanut Butter, crunchy",Sanitarium,g,597,25.0,15.0,48.0,1 tbsp,20,1 tsp,7,sauces_spreads,,
+Nutella,Ferrero,g,539,6.3,57.5,30.9,1 tbsp,20,1 tsp,7,sauces_spreads,,
+Craig's Raspberry Jam,Craig's,g,263,0.3,65.0,0.1,1 tbsp,20,1 tsp,7,sauces_spreads,,
+Airborne Clover Honey,Airborne,g,335,0.3,82.0,0.0,1 tbsp,20,1 tsp,7,sauces_spreads,,
+Olivani spread,Olivani,g,533,0.1,0.5,59.0,1 tsp,5,1 tbsp,15,sauces_spreads,,
+Meadowlea Original spread,Meadowlea,g,545,0.1,0.5,60.0,1 tsp,5,1 tbsp,15,sauces_spreads,,
+Wattie's Tomato Sauce,Wattie's,g,115,1.6,25.7,0.2,1 tbsp,20,1 tsp,7,sauces_spreads,,
+Wattie's Baked Beans in Tomato Sauce,Wattie's,g,90,5.0,15.0,0.5,1/2 can,210,1 can,420,sauces_spreads,,420 g can
+Wattie's Spaghetti in Tomato Sauce,Wattie's,g,69,2.0,13.5,0.4,1/2 can,210,1 can,420,sauces_spreads,,420 g can
+Best Foods Real Mayonnaise,Best Foods,g,688,1.0,1.0,75.0,1 tbsp,15,1 tsp,5,sauces_spreads,,
+Eta Lite Mayonnaise,Eta,g,246,0.7,13.0,21.5,1 tbsp,15,1 tsp,5,sauces_spreads,,
+Kiwi onion dip,,g,215,3.0,8.0,19.0,1 tbsp,20,1/4 cup,60,sauces_spreads,,reduced cream and onion soup mix
+"Lisa's Hummus, original",Lisa's,g,241,6.4,13.6,17.6,1 tbsp,20,1/4 cup,60,sauces_spreads,,
+"Kūmara, baked",,g,90,2.0,20.5,0.2,1 medium,150,1 cup mashed,200,produce,,cooked weight

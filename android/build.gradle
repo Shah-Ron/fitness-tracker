@@ -1,0 +1,6 @@
+// Fitness Tracker for Android: a thin shell around the phone edition in ..\phone.
+// GitHub Actions copies phone\ into app\src\main\assets and builds this.
+plugins {
+    id("com.android.application") version "8.5.2" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+}

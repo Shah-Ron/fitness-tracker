@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Fitness" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#3E6B48</item>
+        <item name="android:navigationBarColor">#F2F1EC</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <color name="ic_launcher_background">#3E6B48</color>
+</resources>

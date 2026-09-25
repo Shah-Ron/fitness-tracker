@@ -1,0 +1,13 @@
+# Your data and secrets stay on this laptop
+fitness.db
+fitness.db-wal
+fitness.db-shm
+fitness-backup-*.db
+certs/
+fitness_tracker.log
+fitness_tracker.port
+
+# Build output
+Fitness Tracker.exe
+__pycache__/
+*.pyc

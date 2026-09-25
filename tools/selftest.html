@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en-NZ"><head><meta charset="utf-8"><title>Fitness Tracker self-test</title>
+<style>body{font-family:Consolas,monospace;font-size:13px;padding:16px}div.f{color:#a33}</style></head>
+<body><h1>Self-test</h1><p>Runs the phone engine end to end in this browser. It wipes this browser's Fitness Tracker data first, so never open it on a phone you use.</p>
+<div id="out"></div>
+<script src="./engine.js"></script><script src="./store.js"></script><script src="./local-api.js"></script>
+<script>
+"use strict";
+let fails = 0;
+const out = document.getElementById("out");
+const log = (ok, msg, detail) => { const d = document.createElement("div"); d.textContent = (ok ? "ok   " : "FAIL ") + msg + (ok ? "" : "  " + JSON.stringify(detail).slice(0, 300)); if (!ok) { d.className = "f"; fails++; } out.appendChild(d); };
+const api = (m, p, b) => LocalApi.call(m, p, b);
+const iso = d => Engine.isoOf(d);
+const today = iso(new Date());
+(async () => {
+  try {
+    await LocalApi.init("selftest");
+    await Store.wipe();
+    let st = await api("GET", "/api/state");
+    log(st.week && st.week.sessions.length === 7, "state has a week", st.week);
+    log(st.profile_complete === false, "profile incomplete at start");
+    const kinds = st.week.sessions.map(s => s.kind);
+    log(kinds.filter(k => k !== "rest").length >= 5, "five training kinds", kinds);
+    const nextYear = new Date(); nextYear.setFullYear(nextYear.getFullYear() + 1);
+    let s = await api("PUT", "/api/settings", { sex: "m", birth_date: "1996-05-10", height_cm: 178, start_weight_kg: 82, target_weight_kg: 74, target_date: iso(nextYear) });
+    log(s.goal_start_weight === 82, "settings saved and goal start snapshotted", s);
+    st = await api("GET", "/api/state");
+    log(st.targets.complete === true, "targets complete", st.targets);
+    log(st.targets.budget >= 1500 && st.targets.budget <= 3000, "budget sensible", st.targets.budget);
+    log(Math.abs(st.targets.protein - 164) < 0.01, "protein 164", st.targets.protein);
+    const wk = await api("GET", "/api/plan/week");
+    const lifting = wk.sessions.filter(x => Engine.isLifting(x.kind, LocalApi.prog));
+    log(lifting.length >= 3, "lifting days present", lifting.length);
+    log(lifting.every(x => x.est_minutes <= 60.01), "lifting fits 60 min", lifting.map(x => x.est_minutes));
+    lifting.forEach(x => { const secs = x.items.map(i => i.section); log(secs[0] === "warmup" && secs.includes("finisher") && secs[secs.length - 1] === "cooldown", x.kind + " sections", secs); });
+    let sess = wk.sessions.find(x => x.date === today);
+    if (!sess || sess.kind === "rest" || !Engine.isLifting(sess.kind, LocalApi.prog)) sess = lifting[0];
+    const w = await api("POST", "/api/workouts", { session_id: sess.id });
+    log(!!w.client_id, "workout started", w);
+    const wk2 = await api("GET", "/api/plan/week");
+    const sess2 = wk2.sessions.find(x => x.id === sess.id);
+    log(sess2.date === today, "session moved to today", sess2.date);
+    const main1 = sess2.items.find(i => i.slot_key === "main1");
+    log(main1.target_source === "first", "target frozen as first", main1.target_source);
+    for (const [n, reps, kg, rpe] of [[1, 10, 40, 7], [2, 10, 40, 7.5], [3, 10, 40, 8]]) {
+      const r = await api("POST", "/api/sets", { workout_client_id: w.client_id, plan_item_id: main1.id, exercise_id: main1.exercise_id, set_no: n, reps, weight_kg: kg, rpe });
+      log(r.ok, "set " + n, r);
+    }
+    const dupCid = (await api("GET", "/api/workouts/" + w.client_id)).sets[0].client_id;
+    await api("POST", "/api/sync", { ops: [{ type: "set", client_id: dupCid, payload: { workout_client_id: w.client_id, exercise_id: main1.exercise_id, set_no: 1, reps: 10, weight_kg: 40, rpe: 7 } }] });
+    log((await api("GET", "/api/workouts/" + w.client_id)).sets.length === 3, "replaying a set does not duplicate");
+    const fin = sess2.items.find(i => i.section === "finisher");
+    if (fin) log((await api("POST", "/api/cardio", { workout_client_id: w.client_id, plan_item_id: fin.id, exercise_id: fin.exercise_id, minutes: 10, intensity: "interval", protocol: fin.protocol })).ok, "cardio logged");
+    const started = new Date(); started.setMinutes(started.getMinutes() - 55);
+    const done = await api("PUT", "/api/workouts/" + w.client_id, { started_at: Engine.isoOf(started) + "T" + String(started.getHours()).padStart(2, "0") + ":" + String(started.getMinutes()).padStart(2, "0") + ":00", ended_at: Engine.nowIso() });
+    log(!!done.ended_at, "workout finished", done.ended_at);
+    log(done.kcal_est > 100, "kcal estimated", done.kcal_est);
+    log(Number.isInteger(done.effort) && done.effort >= 0 && done.effort <= 100, "effort scored", done.effort);
+    log(Math.abs(done.volume - 1200) < 0.01, "volume 1200", done.volume);
+    const wk3 = await api("GET", "/api/plan/week");
+    log(wk3.sessions.find(x => x.id === sess.id).status === "done", "session done");
+    const wkNext = await api("GET", "/api/plan/week?date=" + Engine.addDays(today, 7));
+    const nxt = wkNext.sessions.flatMap(x => x.items).find(i => i.exercise_id === main1.exercise_id && i.slot_key === "main1");
+    log(nxt && nxt.target.weight === 42.5 && nxt.target.source === "increase", "next week target 42.5 increase", nxt && nxt.target);
+    const foods = await api("GET", "/api/foods/list");
+    log(foods.foods.length > 7000, "foods list loaded", foods.foods.length);
+    const idx = foods.fields.indexOf("name");
+    const weetbix = foods.foods.find(f => f[idx] === "Weet-Bix");
+    log(!!weetbix, "Weet-Bix present");
+    const thoran = foods.foods.find(f => /thoran/i.test(f[idx]));
+    log(!!thoran, "Kerala food present", thoran && thoran[idx]);
+    let day = await api("POST", "/api/food_logs", { date: today, slot: "breakfast", food_id: weetbix[0], grams: 30, portion_label: "2 biscuits", qty: 1 });
+    log(Math.abs(day.totals.kcal - 106.8) < 0.2, "food log kcal 106.8", day.totals);
+    day = await api("POST", "/api/food_logs/copy", { to_date: Engine.addDays(today, 1), slot: "breakfast", from_date: today });
+    log(day.slots.breakfast.length === 1, "copy slot", day);
+    const m = await api("POST", "/api/meals", { name: "Brekkie", from_date: today, slot: "breakfast" });
+    log(m.meals.length === 1, "meal saved", m);
+    day = await api("POST", "/api/food_logs/meal", { meal_id: m.id, date: today, slot: "snack" });
+    log(day.slots.snack.length === 1, "meal added", day);
+    const f = await api("POST", "/api/foods", { name: "Test shake", kcal_100: 120, protein_100: 20, carb_100: 5, fat_100: 2, unit: "ml", portions: [["1 scoop", 35]] });
+    log(f.id && f.portions.length === 1, "custom food", f);
+    log((await api("GET", "/api/foods/list")).foods.some(r => r[idx] === "Test shake"), "custom food in list");
+    log((await api("POST", "/api/body", { date: today, weight_kg: 81.4, waist_cm: 88 })).ok, "body log");
+    log((await api("POST", "/api/daily", { water_ml: 1500, steps: 6000 })).ok, "daily log");
+    st = await api("GET", "/api/state");
+    log(st.weight.trend === 81.4, "weight trend 81.4", st.weight);
+    log(st.targets.eaten > 200 && st.targets.exercise > 0, "eaten and exercise in budget", st.targets);
+    const pr = await api("GET", "/api/progress");
+    log(pr.strength.length >= 1 && pr.calories.length >= 1 && pr.adherence.length >= 1, "progress payload", { s: pr.strength.length, c: pr.calories.length, a: pr.adherence.length });
+    const hi = await api("GET", "/api/history");
+    log(hi.workouts.length === 1 && hi.food_days.length >= 1 && hi.body.length === 1, "history payload", hi);
+    const csv = await api("GET", "/api/export.csv?what=sets");
+    log(csv.split("\n").filter(Boolean).length === 4, "csv export", csv.slice(0, 120));
+    await api("POST", "/api/plan/shuffle", { week_id: wkNext.week.id });
+    const wkN2 = await api("GET", "/api/plan/week?date=" + Engine.addDays(today, 7));
+    const acc = wkN2.sessions.flatMap(x => x.items).find(i => i.slot_key === "acc1");
+    const sw = await api("POST", "/api/plan/swap", { item_id: acc.id });
+    log(sw.exercise.id !== acc.exercise_id, "swap", sw);
+    let refused = false; try { await api("POST", "/api/plan/swap", { item_id: main1.id }); } catch (e) { refused = e.code === 409; }
+    log(refused, "swap refused on logged item");
+    if (LocalApi.prog.splits && LocalApi.prog.splits.ppl) {
+      s = await api("PUT", "/api/settings", { split: "ppl" });
+      const wkP = await api("GET", "/api/plan/week?date=" + Engine.addDays(today, 7));
+      log(wkP.sessions.some(x => x.kind.startsWith("push")), "ppl split applied from next week", wkP.sessions.map(x => x.kind));
+      log(wkP.sessions.filter(x => Engine.isLifting(x.kind, LocalApi.prog)).every(x => x.est_minutes <= 60.01), "ppl days fit 60 min", wkP.sessions.map(x => x.est_minutes));
+    } else log(true, "splits not in programme.json yet, skipped");
+    const bk = await api("GET", "/api/backup.json");
+    log(bk.collections && bk.collections.workouts.length === 1, "backup has the workout");
+    await api("POST", "/api/wipe");
+    log((await api("GET", "/api/history?from=2000-01-01")).workouts.length === 0, "wipe clears");
+    await api("POST", "/api/restore", bk);
+    log((await api("GET", "/api/history?from=2000-01-01")).workouts.length === 1, "restore brings it back");
+    log((await api("GET", "/api/state")).targets.complete === true, "settings survived restore");
+  } catch (e) { log(false, "exception " + e.message, e.stack); }
+  const d = document.createElement("div"); d.id = "done"; d.textContent = "SELFTEST DONE fails=" + fails; out.appendChild(d);
+})();
+</script></body></html>

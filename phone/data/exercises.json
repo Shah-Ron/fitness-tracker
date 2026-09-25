@@ -1,0 +1,2227 @@
+{
+  "version": 1,
+  "exercises": [
+    {
+      "key": "barbell_bench_press",
+      "name": "Barbell bench press",
+      "pattern": "horizontal_push",
+      "primary_muscle": "chest",
+      "secondary_muscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Feet flat, shoulder blades pulled back and down.",
+        "Lower the bar to the lower chest with a slight pause.",
+        "Press up and slightly back, elbows about 45 degrees."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 2.5,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "incline_barbell_bench_press",
+      "name": "Incline barbell bench press",
+      "pattern": "horizontal_push",
+      "primary_muscle": "chest",
+      "secondary_muscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Set the bench to 30 degrees, feet flat and braced.",
+        "Lower the bar to the upper chest under control.",
+        "Drive the bar up and slightly back, elbows tucked."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 2.5,
+      "min_load_kg": 20,
+      "variation_of": "barbell_bench_press",
+      "carry": 0.8,
+      "mets": null
+    },
+    {
+      "key": "incline_db_press",
+      "name": "Incline dumbbell press",
+      "pattern": "horizontal_push",
+      "primary_muscle": "chest",
+      "secondary_muscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Start with the dumbbells over your upper chest, palms forward.",
+        "Lower until your elbows sit just below the bench.",
+        "Press up and slightly in without banging the dumbbells."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "machine_chest_press",
+      "name": "Machine chest press",
+      "pattern": "horizontal_push",
+      "primary_muscle": "chest",
+      "secondary_muscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "equipment": "machine",
+      "cues": [
+        "Set the handles level with the middle of your chest.",
+        "Press until your arms are nearly straight, then return slowly."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cable_fly",
+      "name": "Cable fly",
+      "pattern": "horizontal_push",
+      "primary_muscle": "chest",
+      "secondary_muscles": [
+        "shoulders"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Set the pulleys at chest height and step forward.",
+        "Bring your hands together with a soft bend in the elbows.",
+        "Open slowly until you feel a stretch across the chest."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "push_up",
+      "name": "Push-up",
+      "pattern": "horizontal_push",
+      "primary_muscle": "chest",
+      "secondary_muscles": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Hands under your shoulders, body in one straight line.",
+        "Lower until your chest is a fist from the floor.",
+        "Push back up without letting your hips sag."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0.65,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "dumbbell_bench_press",
+      "name": "Dumbbell bench press",
+      "pattern": "horizontal_push",
+      "primary_muscle": "chest",
+      "secondary_muscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Lie flat with the dumbbells stacked over your chest.",
+        "Lower with elbows at about 45 degrees to your body.",
+        "Press up and slightly in until your arms are straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "close_grip_bench_press",
+      "name": "Close-grip bench press",
+      "pattern": "horizontal_push",
+      "primary_muscle": "triceps",
+      "secondary_muscles": [
+        "chest",
+        "shoulders"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Grip the bar just inside shoulder width.",
+        "Keep your elbows tucked and lower to the lower chest.",
+        "Press up hard, locking out with the triceps."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 2.5,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "barbell_overhead_press",
+      "name": "Barbell overhead press",
+      "pattern": "vertical_push",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "triceps",
+        "core"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Stand tall, bar resting on the front of your shoulders.",
+        "Brace your core and press straight up past your face.",
+        "Finish with the bar over your mid-foot, elbows locked."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 2.5,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "seated_db_shoulder_press",
+      "name": "Seated dumbbell shoulder press",
+      "pattern": "vertical_push",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "triceps"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Sit with your back against the pad, dumbbells at ear height.",
+        "Press up until your arms are straight, then lower slowly.",
+        "Keep your ribs down and avoid arching your lower back."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": "barbell_overhead_press",
+      "carry": 0.4,
+      "mets": null
+    },
+    {
+      "key": "machine_shoulder_press",
+      "name": "Machine shoulder press",
+      "pattern": "vertical_push",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "triceps"
+      ],
+      "equipment": "machine",
+      "cues": [
+        "Set the seat so the handles start level with your ears.",
+        "Press up smoothly and stop just short of locking out."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "arnold_press",
+      "name": "Arnold press",
+      "pattern": "vertical_push",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "triceps"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Start with palms facing you at shoulder height.",
+        "Rotate your palms outward as you press overhead.",
+        "Reverse the movement slowly on the way down."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "seated_cable_row",
+      "name": "Seated cable row",
+      "pattern": "horizontal_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Sit tall with a slight bend in the knees.",
+        "Pull the handle to your belly, elbows close to your sides.",
+        "Squeeze your shoulder blades, then let your arms reach forward."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "chest_supported_row",
+      "name": "Chest-supported row",
+      "pattern": "horizontal_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps",
+        "shoulders"
+      ],
+      "equipment": "machine",
+      "cues": [
+        "Rest your chest on the pad and grip the handles.",
+        "Pull your elbows back and squeeze your shoulder blades together.",
+        "Lower slowly until your arms are fully stretched."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "single_arm_db_row",
+      "name": "Single-arm dumbbell row",
+      "pattern": "horizontal_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Brace one hand on the bench, back flat.",
+        "Pull the dumbbell to your hip, elbow close to your body.",
+        "Lower with control and do all reps before switching sides."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "straight_arm_pulldown",
+      "name": "Straight-arm pulldown",
+      "pattern": "horizontal_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "shoulders"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Stand facing the cable with arms straight, slight forward lean.",
+        "Sweep the bar down to your thighs with straight arms.",
+        "Let it rise slowly until you feel your lats stretch."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "inverted_row",
+      "name": "Inverted row",
+      "pattern": "horizontal_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps",
+        "core"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Hang under a bar with your body in a straight line.",
+        "Pull your chest to the bar, elbows back.",
+        "Lower slowly without letting your hips drop."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0.45,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "barbell_row",
+      "name": "Barbell row",
+      "pattern": "horizontal_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps",
+        "hamstrings"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Hinge forward with a flat back, knees soft.",
+        "Pull the bar to your lower ribs, elbows back.",
+        "Lower under control without rounding your back."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "pendlay_row",
+      "name": "Pendlay row",
+      "pattern": "horizontal_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps",
+        "hamstrings"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Start each rep from the floor with your torso parallel.",
+        "Pull the bar hard to your lower chest.",
+        "Return it to the floor and reset between reps."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "lat_pulldown",
+      "name": "Lat pulldown",
+      "pattern": "vertical_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Grip slightly wider than your shoulders, chest up.",
+        "Pull the bar to your upper chest, elbows down and back.",
+        "Let the bar rise slowly until your arms are straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "assisted_pull_up",
+      "name": "Assisted pull-up",
+      "pattern": "vertical_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "equipment": "assisted",
+      "cues": [
+        "Set the assistance so you can manage the full rep range.",
+        "Pull your chin over the bar with your chest up.",
+        "Lower slowly until your arms are straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0.95,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "pull_up",
+      "name": "Pull-up",
+      "pattern": "vertical_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "biceps",
+        "core"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Hang with straight arms, shoulders pulled down.",
+        "Drive your elbows down to bring your chin over the bar.",
+        "Lower under control to a full hang."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0.95,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "dumbbell_pullover",
+      "name": "Dumbbell pullover",
+      "pattern": "vertical_pull",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "chest",
+        "triceps"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Lie on the bench holding one dumbbell over your chest.",
+        "Lower it behind your head with a slight elbow bend.",
+        "Pull it back over your chest using your lats."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "db_lateral_raise",
+      "name": "Dumbbell lateral raise",
+      "pattern": "shoulder_iso",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [],
+      "equipment": "dumbbell",
+      "cues": [
+        "Stand tall with a slight lean forward.",
+        "Raise the dumbbells out to shoulder height, leading with elbows.",
+        "Lower slowly and keep your traps relaxed."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cable_lateral_raise",
+      "name": "Cable lateral raise",
+      "pattern": "shoulder_iso",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [],
+      "equipment": "cable",
+      "cues": [
+        "Set the pulley low and stand side-on to it.",
+        "Raise the handle out to shoulder height with a soft elbow.",
+        "Pause at the top, then lower slowly."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "machine_lateral_raise",
+      "name": "Machine lateral raise",
+      "pattern": "shoulder_iso",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [],
+      "equipment": "machine",
+      "cues": [
+        "Set the pads just above your elbows.",
+        "Lift your arms out to the side until level with shoulders.",
+        "Lower slowly and keep your shoulders away from your ears."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "upright_row",
+      "name": "Upright row",
+      "pattern": "shoulder_iso",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "back",
+        "biceps"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Grip the bar just wider than shoulder width.",
+        "Pull up to chest height, elbows leading and staying wide.",
+        "Lower slowly and stop if your shoulders pinch."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cable_pushdown",
+      "name": "Cable pushdown",
+      "pattern": "triceps",
+      "primary_muscle": "triceps",
+      "secondary_muscles": [],
+      "equipment": "cable",
+      "cues": [
+        "Pin your elbows to your sides, chest up.",
+        "Push down until your arms are straight, then squeeze.",
+        "Let the handle rise only to chest height."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "overhead_cable_extension",
+      "name": "Overhead cable extension",
+      "pattern": "triceps",
+      "primary_muscle": "triceps",
+      "secondary_muscles": [],
+      "equipment": "cable",
+      "cues": [
+        "Face away from the cable with the rope behind your head.",
+        "Extend your arms forward until they are straight.",
+        "Return slowly, keeping your elbows pointing forward."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "assisted_dip",
+      "name": "Assisted dip",
+      "pattern": "triceps",
+      "primary_muscle": "triceps",
+      "secondary_muscles": [
+        "chest",
+        "shoulders"
+      ],
+      "equipment": "assisted",
+      "cues": [
+        "Set the assistance so you can manage the full rep range.",
+        "Lower until your elbows reach 90 degrees, torso upright.",
+        "Press up until your arms are straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0.95,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "skull_crusher",
+      "name": "Skull crusher",
+      "pattern": "triceps",
+      "primary_muscle": "triceps",
+      "secondary_muscles": [],
+      "equipment": "barbell",
+      "cues": [
+        "Lie back with the bar held over your forehead.",
+        "Lower the bar behind your head, elbows pointing up.",
+        "Extend hard until your arms are straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": 10,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "db_overhead_extension",
+      "name": "Dumbbell overhead extension",
+      "pattern": "triceps",
+      "primary_muscle": "triceps",
+      "secondary_muscles": [],
+      "equipment": "dumbbell",
+      "cues": [
+        "Hold the dumbbells overhead with elbows close to your head.",
+        "Lower behind your head until your forearms touch your biceps.",
+        "Extend back up and squeeze your triceps."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "triceps_kickback",
+      "name": "Triceps kickback",
+      "pattern": "triceps",
+      "primary_muscle": "triceps",
+      "secondary_muscles": [],
+      "equipment": "dumbbell",
+      "cues": [
+        "Hinge forward with your upper arm parallel to the floor.",
+        "Straighten your arm behind you and pause for a second.",
+        "Bend back to 90 degrees without dropping your elbow."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cable_curl",
+      "name": "Cable curl",
+      "pattern": "biceps",
+      "primary_muscle": "biceps",
+      "secondary_muscles": [],
+      "equipment": "cable",
+      "cues": [
+        "Stand tall with elbows pinned to your sides.",
+        "Curl the bar to your shoulders and squeeze.",
+        "Lower slowly until your arms are straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "hammer_curl",
+      "name": "Hammer curl",
+      "pattern": "biceps",
+      "primary_muscle": "biceps",
+      "secondary_muscles": [],
+      "equipment": "dumbbell",
+      "cues": [
+        "Hold the dumbbells with palms facing in.",
+        "Curl to your shoulders without swinging your body.",
+        "Lower slowly and keep your palms facing in."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "db_curl",
+      "name": "Dumbbell curl",
+      "pattern": "biceps",
+      "primary_muscle": "biceps",
+      "secondary_muscles": [],
+      "equipment": "dumbbell",
+      "cues": [
+        "Stand tall with your elbows pinned to your sides.",
+        "Curl up and turn your palms towards the ceiling.",
+        "Lower slowly until your arms are fully straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "ez_bar_curl",
+      "name": "EZ bar curl",
+      "pattern": "biceps",
+      "primary_muscle": "biceps",
+      "secondary_muscles": [],
+      "equipment": "barbell",
+      "cues": [
+        "Grip the angled parts of the bar, elbows at your sides.",
+        "Curl to shoulder height without leaning back.",
+        "Lower under control until your arms are straight."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": 10,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "incline_db_curl",
+      "name": "Incline dumbbell curl",
+      "pattern": "biceps",
+      "primary_muscle": "biceps",
+      "secondary_muscles": [],
+      "equipment": "dumbbell",
+      "cues": [
+        "Set the bench to 45 degrees and let your arms hang.",
+        "Curl without moving your upper arms forward.",
+        "Lower slowly to feel the stretch at the bottom."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "concentration_curl",
+      "name": "Concentration curl",
+      "pattern": "biceps",
+      "primary_muscle": "biceps",
+      "secondary_muscles": [],
+      "equipment": "dumbbell",
+      "cues": [
+        "Sit and rest your elbow against your inner thigh.",
+        "Curl the dumbbell to your shoulder and squeeze.",
+        "Lower slowly and do all reps before switching arms."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "face_pull",
+      "name": "Face pull",
+      "pattern": "rear_delt",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "back"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Set the rope at face height and step back.",
+        "Pull towards your face, elbows high and wide.",
+        "Finish with your hands beside your ears, then return slowly."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "reverse_fly_machine",
+      "name": "Reverse fly machine",
+      "pattern": "rear_delt",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "back"
+      ],
+      "equipment": "machine",
+      "cues": [
+        "Set the handles in front of you at shoulder height.",
+        "Sweep your arms back with a soft bend in the elbows.",
+        "Return slowly without letting the weights slam."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "rear_delt_row",
+      "name": "Rear delt row",
+      "pattern": "rear_delt",
+      "primary_muscle": "shoulders",
+      "secondary_muscles": [
+        "back"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Hinge forward with the dumbbells hanging below your shoulders.",
+        "Row with your elbows flared wide, hands in line with elbows.",
+        "Lower slowly and keep your neck neutral."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "back_squat",
+      "name": "Back squat",
+      "pattern": "squat",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "hamstrings",
+        "core"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Bar on your upper back, feet shoulder width, toes out slightly.",
+        "Brace and sit down between your hips, knees tracking your toes.",
+        "Drive up through your whole foot, chest up."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 5,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "front_squat",
+      "name": "Front squat",
+      "pattern": "squat",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "core"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Rest the bar on your front shoulders, elbows high.",
+        "Sit straight down, keeping your torso upright.",
+        "Drive up with your elbows staying high."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 5,
+      "min_load_kg": 20,
+      "variation_of": "back_squat",
+      "carry": 0.8,
+      "mets": null
+    },
+    {
+      "key": "leg_press",
+      "name": "Leg press",
+      "pattern": "squat",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "equipment": "machine",
+      "cues": [
+        "Feet shoulder width on the middle of the platform.",
+        "Lower until your knees reach 90 degrees, back flat on the pad.",
+        "Press through your whole foot without locking your knees."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 5,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "hack_squat",
+      "name": "Hack squat",
+      "pattern": "squat",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes"
+      ],
+      "equipment": "machine",
+      "cues": [
+        "Shoulders under the pads, feet shoulder width on the platform.",
+        "Lower until your thighs are at least parallel.",
+        "Drive up through your heels without locking out."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 5,
+      "min_load_kg": null,
+      "variation_of": "leg_press",
+      "carry": 0.5,
+      "mets": null
+    },
+    {
+      "key": "goblet_squat",
+      "name": "Goblet squat",
+      "pattern": "squat",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "core"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Hold one dumbbell upright against your chest.",
+        "Sit down between your hips, elbows inside your knees.",
+        "Stand up tall and squeeze your glutes."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "romanian_deadlift",
+      "name": "Romanian deadlift",
+      "pattern": "hinge",
+      "primary_muscle": "hamstrings",
+      "secondary_muscles": [
+        "glutes",
+        "back"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Stand tall with the bar against your thighs, knees soft.",
+        "Push your hips back and slide the bar down your legs.",
+        "Stop when your hamstrings are tight, then stand up."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 5,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "dumbbell_romanian_deadlift",
+      "name": "Dumbbell Romanian deadlift",
+      "pattern": "hinge",
+      "primary_muscle": "hamstrings",
+      "secondary_muscles": [
+        "glutes",
+        "back"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Hold the dumbbells in front of your thighs, knees soft.",
+        "Push your hips back, keeping the dumbbells close to your legs.",
+        "Stand up by driving your hips forward."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": "romanian_deadlift",
+      "carry": 0.45,
+      "mets": null
+    },
+    {
+      "key": "trap_bar_deadlift",
+      "name": "Trap bar deadlift",
+      "pattern": "hinge",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings",
+        "quads",
+        "back"
+      ],
+      "equipment": "trap_bar",
+      "cues": [
+        "Stand in the middle of the bar, feet hip width.",
+        "Grip the handles, chest up, and push the floor away.",
+        "Lock out tall, then lower with your hips back."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 5,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "barbell_deadlift",
+      "name": "Barbell deadlift",
+      "pattern": "hinge",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings",
+        "back",
+        "quads"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Bar over your mid-foot, shins close to the bar.",
+        "Pull the slack out, brace and push the floor away.",
+        "Keep the bar close and lock out tall."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 5,
+      "min_load_kg": 20,
+      "variation_of": "trap_bar_deadlift",
+      "carry": 0.9,
+      "mets": null
+    },
+    {
+      "key": "sumo_deadlift",
+      "name": "Sumo deadlift",
+      "pattern": "hinge",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings",
+        "quads",
+        "back"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Take a wide stance with toes pointed out.",
+        "Grip inside your knees, chest up, hips close to the bar.",
+        "Spread the floor with your feet and stand tall."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "good_morning",
+      "name": "Good morning",
+      "pattern": "hinge",
+      "primary_muscle": "hamstrings",
+      "secondary_muscles": [
+        "glutes",
+        "back"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Bar on your upper back, feet hip width, knees soft.",
+        "Push your hips back and hinge until your torso is near parallel.",
+        "Drive your hips forward to stand tall."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "bulgarian_split_squat",
+      "name": "Bulgarian split squat",
+      "pattern": "lunge",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Rear foot on the bench, front foot a stride ahead.",
+        "Lower straight down until your front thigh is parallel.",
+        "Drive up through your front heel."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "walking_lunge",
+      "name": "Walking lunge",
+      "pattern": "lunge",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Step forward and lower your back knee towards the floor.",
+        "Keep your torso upright and front knee over your foot.",
+        "Push off the front foot into the next step."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "reverse_lunge",
+      "name": "Reverse lunge",
+      "pattern": "lunge",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Step back and lower your rear knee towards the floor.",
+        "Keep your front shin upright and chest tall.",
+        "Drive through the front foot to return to standing."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "lateral_lunge",
+      "name": "Lateral lunge",
+      "pattern": "lunge",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Step wide to one side and sit into that hip.",
+        "Keep the other leg straight and both feet flat.",
+        "Push off the bent leg to return to standing."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "leg_extension",
+      "name": "Leg extension",
+      "pattern": "quad_iso",
+      "primary_muscle": "quads",
+      "secondary_muscles": [],
+      "equipment": "machine",
+      "cues": [
+        "Set the pad just above your ankles, knees in line with the pivot.",
+        "Extend until your legs are straight and pause briefly.",
+        "Lower slowly without letting the weight drop."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "step_up",
+      "name": "Step-up",
+      "pattern": "quad_iso",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Place your whole foot on a knee-high box.",
+        "Drive through that foot to stand up tall on the box.",
+        "Lower slowly with control, then repeat on the same side."
+      ],
+      "unilateral": 1,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "wall_sit",
+      "name": "Wall sit",
+      "pattern": "quad_iso",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Back flat against the wall, thighs parallel to the floor.",
+        "Keep your knees over your ankles and hold."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "lying_leg_curl",
+      "name": "Lying leg curl",
+      "pattern": "ham_iso",
+      "primary_muscle": "hamstrings",
+      "secondary_muscles": [],
+      "equipment": "machine",
+      "cues": [
+        "Set the pad just above your heels, hips pressed down.",
+        "Curl until the pad touches your glutes.",
+        "Lower slowly without lifting your hips."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "seated_leg_curl",
+      "name": "Seated leg curl",
+      "pattern": "ham_iso",
+      "primary_muscle": "hamstrings",
+      "secondary_muscles": [],
+      "equipment": "machine",
+      "cues": [
+        "Set the thigh pad snug and the ankle pad above your heels.",
+        "Curl down and back as far as you can.",
+        "Return slowly, resisting the weight the whole way."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "nordic_curl",
+      "name": "Nordic curl",
+      "pattern": "ham_iso",
+      "primary_muscle": "hamstrings",
+      "secondary_muscles": [
+        "glutes"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Kneel with your ankles anchored and body upright.",
+        "Lower forward as slowly as you can, hips straight.",
+        "Push back up with your hands if you need to."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "hip_thrust",
+      "name": "Hip thrust",
+      "pattern": "glute",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings"
+      ],
+      "equipment": "barbell",
+      "cues": [
+        "Upper back on the bench, bar across your hips.",
+        "Drive your hips up until your shins are vertical.",
+        "Squeeze at the top with your chin tucked."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": 20,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cable_pull_through",
+      "name": "Cable pull-through",
+      "pattern": "glute",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Face away from the low pulley, rope between your legs.",
+        "Push your hips back and let the rope pull you down.",
+        "Drive your hips forward and squeeze your glutes."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "glute_kickback",
+      "name": "Glute kickback",
+      "pattern": "glute",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Attach the cuff to your ankle and hold the frame.",
+        "Kick back and up, squeezing the glute at the top.",
+        "Return slowly and finish all reps before switching legs."
+      ],
+      "unilateral": 1,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "glute_bridge",
+      "name": "Glute bridge",
+      "pattern": "glute",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings",
+        "core"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Lie on your back with knees bent, feet flat.",
+        "Drive your hips up and squeeze your glutes at the top.",
+        "Lower slowly without arching your lower back."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "standing_calf_raise",
+      "name": "Standing calf raise",
+      "pattern": "calf",
+      "primary_muscle": "calves",
+      "secondary_muscles": [],
+      "equipment": "machine",
+      "cues": [
+        "Stand on the edge with your heels hanging off.",
+        "Rise as high as you can and pause.",
+        "Lower slowly until you feel a stretch."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "single_leg_calf_raise",
+      "name": "Single-leg calf raise",
+      "pattern": "calf",
+      "primary_muscle": "calves",
+      "secondary_muscles": [],
+      "equipment": "bodyweight",
+      "cues": [
+        "Stand on one foot on a step, holding on for balance.",
+        "Rise onto your toes and pause at the top.",
+        "Lower slowly below the step to a full stretch."
+      ],
+      "unilateral": 1,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "seated_calf_raise",
+      "name": "Seated calf raise",
+      "pattern": "calf",
+      "primary_muscle": "calves",
+      "secondary_muscles": [],
+      "equipment": "machine",
+      "cues": [
+        "Set the pad snug on your lower thighs.",
+        "Push through the balls of your feet to lift the pad.",
+        "Lower slowly until your calves are fully stretched."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "leg_press_calf_raise",
+      "name": "Leg press calf raise",
+      "pattern": "calf",
+      "primary_muscle": "calves",
+      "secondary_muscles": [],
+      "equipment": "machine",
+      "cues": [
+        "Place your toes on the bottom edge of the platform.",
+        "Push the platform away with your toes, legs straight.",
+        "Let your heels drop back slowly for a stretch."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "plank",
+      "name": "Plank",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "shoulders"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Elbows under your shoulders, body in one straight line.",
+        "Squeeze your glutes and pull your ribs down.",
+        "Breathe steadily and hold without letting your hips sag."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "dead_bug",
+      "name": "Dead bug",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "bodyweight",
+      "cues": [
+        "Lie on your back with arms up and knees over hips.",
+        "Lower one arm and the opposite leg slowly.",
+        "Keep your lower back pressed into the floor."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cable_crunch",
+      "name": "Cable crunch",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "cable",
+      "cues": [
+        "Kneel facing the cable with the rope beside your head.",
+        "Crunch down by rounding your spine, elbows to your knees.",
+        "Return slowly and keep your hips still."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "hanging_knee_raise",
+      "name": "Hanging knee raise",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "bodyweight",
+      "cues": [
+        "Hang from the bar with your shoulders pulled down.",
+        "Lift your knees towards your chest, curling your hips up.",
+        "Lower your legs slowly without swinging your body."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "pallof_press",
+      "name": "Pallof press",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "shoulders"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Stand side-on to the cable, handle at chest height.",
+        "Press your arms straight out in front and hold.",
+        "Resist the pull, keeping your hips and shoulders square."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "ab_wheel",
+      "name": "Ab wheel rollout",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "shoulders"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Kneel with the wheel under your shoulders.",
+        "Roll out slowly as far as you can control.",
+        "Pull back with your abs, not your hips."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "side_plank",
+      "name": "Side plank",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "shoulders"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Elbow under your shoulder, feet stacked or staggered.",
+        "Lift your hips so your body forms a straight line.",
+        "Hold, then switch sides for the next set."
+      ],
+      "unilateral": 1,
+      "per_hand": 0,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "bird_dog",
+      "name": "Bird dog",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "glutes",
+        "back"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Start on all fours with a flat back.",
+        "Reach one arm and the opposite leg out long.",
+        "Pause, then return slowly without twisting your hips."
+      ],
+      "unilateral": 1,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "mountain_climber",
+      "name": "Mountain climber",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "shoulders",
+        "quads"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Start in a push-up position with hands under shoulders.",
+        "Drive one knee towards your chest, then switch.",
+        "Keep your hips low and your pace steady."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "bicycle_crunch",
+      "name": "Bicycle crunch",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "bodyweight",
+      "cues": [
+        "Lie on your back with hands behind your head.",
+        "Bring one elbow to the opposite knee as you extend the other leg.",
+        "Move slowly and keep your lower back on the floor."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "farmers_carry",
+      "name": "Farmer's carry",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "back",
+        "shoulders"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Stand tall with a heavy dumbbell in each hand.",
+        "Walk with short quick steps and shoulders pulled back.",
+        "Keep your ribs down and grip tight."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "russian_twist",
+      "name": "Russian twist",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "bodyweight",
+      "cues": [
+        "Sit with knees bent and lean back slightly.",
+        "Rotate your torso side to side with control.",
+        "Keep your chest up and move from your ribs."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cable_woodchop",
+      "name": "Cable woodchop",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "shoulders"
+      ],
+      "equipment": "cable",
+      "cues": [
+        "Set the pulley high and stand side-on.",
+        "Pull the handle down and across your body to your opposite hip.",
+        "Rotate through your hips and return slowly."
+      ],
+      "unilateral": 1,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "hollow_hold",
+      "name": "Hollow hold",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "bodyweight",
+      "cues": [
+        "Lie on your back with arms and legs extended.",
+        "Lift your shoulders and legs a little off the floor.",
+        "Press your lower back down and hold."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "treadmill",
+      "name": "Treadmill",
+      "pattern": "cardio_treadmill",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "hamstrings",
+        "glutes",
+        "calves"
+      ],
+      "equipment": "treadmill",
+      "cues": [
+        "Stand tall, look ahead and let your arms swing naturally.",
+        "Land softly under your hips with short quick steps.",
+        "Ease the speed up gradually rather than all at once."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": {
+        "easy": 3.5,
+        "moderate": 5.5,
+        "vigorous": 9.0
+      }
+    },
+    {
+      "key": "bike",
+      "name": "Stationary bike",
+      "pattern": "cardio_bike",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "hamstrings",
+        "calves"
+      ],
+      "equipment": "bike",
+      "cues": [
+        "Set the seat so your knee stays slightly bent at the bottom.",
+        "Pedal smoothly at a steady cadence, shoulders relaxed.",
+        "Push and pull through the whole pedal stroke."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": {
+        "easy": 4.0,
+        "moderate": 6.8,
+        "vigorous": 8.8
+      }
+    },
+    {
+      "key": "rower",
+      "name": "Rowing machine",
+      "pattern": "cardio_rower",
+      "primary_muscle": "back",
+      "secondary_muscles": [
+        "quads",
+        "hamstrings"
+      ],
+      "equipment": "rower",
+      "cues": [
+        "Push with your legs first, then swing your back, then pull.",
+        "Return in reverse: arms, then body, then legs.",
+        "Keep the stroke rate steady and the handle level."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": {
+        "easy": 4.8,
+        "moderate": 7.0,
+        "vigorous": 10.0
+      }
+    },
+    {
+      "key": "dynamic_warmup_upper",
+      "name": "Dynamic warm-up (upper)",
+      "pattern": "mobility",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "none",
+      "cues": [
+        "Arm circles, 10 each way.",
+        "Band pull-aparts, 15.",
+        "Scapular push-ups, 10."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "dynamic_warmup_lower",
+      "name": "Dynamic warm-up (lower)",
+      "pattern": "mobility",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "none",
+      "cues": [
+        "Leg swings, 10 each leg.",
+        "Bodyweight squats, 15.",
+        "Walking lunges with a twist, 10 each side."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cooldown_upper",
+      "name": "Cool-down (upper)",
+      "pattern": "mobility",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "none",
+      "cues": [
+        "Doorway chest stretch, 30 seconds each side.",
+        "Cross-body shoulder stretch, 30 seconds each side.",
+        "Overhead triceps stretch, 30 seconds each side.",
+        "Lat stretch on the rack, 30 seconds each side."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "cooldown_lower",
+      "name": "Cool-down (lower)",
+      "pattern": "mobility",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "none",
+      "cues": [
+        "Standing quad stretch, 30 seconds each side.",
+        "Seated hamstring stretch, 30 seconds each side.",
+        "Figure-four glute stretch, 30 seconds each side.",
+        "Wall calf stretch, 30 seconds each side."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    },
+    {
+      "key": "mobility_flow",
+      "name": "Mobility flow",
+      "pattern": "mobility",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "none",
+      "cues": [
+        "Cat-cow, 10 slow reps.",
+        "World's greatest stretch, 5 each side.",
+        "90/90 hip switches, 10 each side.",
+        "Thoracic rotations on all fours, 8 each side."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null
+    }
+  ]
+}

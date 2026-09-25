@@ -1,0 +1,131 @@
+name,brand,unit,kcal_100,protein_100,carb_100,fat_100,portion1_label,portion1_grams,portion2_label,portion2_grams,category,barcode,note
+Appam,,g,153,2.6,30.0,2.5,1 appam,60,2 appams,120,kerala_breakfast,,fermented rice and coconut batter
+Idiyappam (string hoppers),,g,129,2.4,28.5,0.6,1 idiyappam,50,3 idiyappams,150,kerala_breakfast,,steamed rice noodles
+"Puttu (rice), steamed",,g,165,3.0,32.0,2.8,1 puttu (1 cylinder),150,half puttu,75,kerala_breakfast,,with grated coconut
+"Puttu (wheat), steamed",,g,159,4.2,30.0,2.5,1 puttu (1 cylinder),150,half puttu,75,kerala_breakfast,,with grated coconut
+"Kappa (tapioca), boiled",,g,121,0.8,29.0,0.2,1 cup,150,1 plate,250,kerala_breakfast,,plain boiled
+Kappa vevichathu (mashed tapioca with coconut),,g,152,1.4,28.0,3.8,1 cup,180,1 plate,300,kerala_breakfast,,"with coconut, home style"
+"Dosa, plain",,g,168,3.9,28.0,4.5,1 dosa,90,2 dosas,180,kerala_breakfast,,moderate oil
+Masala dosa,,g,174,3.6,26.0,6.2,1 masala dosa,180,,,kerala_breakfast,,with potato masala
+Idli,,g,127,4.0,26.0,0.8,1 idli,40,3 idlis,120,kerala_breakfast,,steamed
+Uthappam,,g,164,4.2,26.5,4.6,1 uthappam,120,,,kerala_breakfast,,with onion and tomato
+Upma (rava),,g,152,3.5,22.0,5.5,1 cup,180,,,kerala_breakfast,,"semolina, moderate oil"
+Vellayappam,,g,159,2.8,31.0,2.6,1 vellayappam,70,2 vellayappams,140,kerala_breakfast,,soft rice and coconut hopper
+Pathiri (rice flour flatbread),,g,190,3.4,42.0,0.9,1 pathiri,45,2 pathiris,90,kerala_breakfast,,Malabar style
+Kerala egg roast (mutta roast),,g,166,9.5,6.0,11.5,1 egg with masala,75,2 eggs with masala,150,kerala_breakfast,,boiled eggs in onion masala
+Kadala curry (black chickpea curry),,g,146,6.5,17.0,5.8,1 cup,180,1/2 cup,90,kerala_breakfast,,"with coconut, goes with puttu"
+"Green peas curry, Kerala style",,g,119,5.5,13.5,4.8,1 cup,180,1/2 cup,90,kerala_breakfast,,with coconut
+"Vegetable stew (ishtu), Kerala style",,g,106,1.8,8.5,7.2,1 cup,180,1/2 cup,90,kerala_breakfast,,"with coconut milk, goes with appam"
+Coconut chutney,,g,187,2.5,7.0,16.5,2 tablespoons,40,1/4 cup,60,kerala_breakfast,,fresh coconut
+Medu vada (uzhunnu vada),,g,289,8.5,30.0,15.0,1 vada,45,2 vadas,90,kerala_breakfast,,deep fried urad dal
+"Matta rice (Kerala red rice), cooked",,g,128,2.8,27.0,0.9,1 cup,180,1 plate,300,kerala_rice_and_bread,,cooked weight
+"White rice, cooked",,g,128,2.7,28.5,0.3,1 cup,180,1 plate,300,kerala_rice_and_bread,,cooked weight
+Ghee rice (nei choru),,g,192,3.5,30.0,6.5,1 cup,180,1 plate,300,kerala_rice_and_bread,,with ghee and fried onion
+Kerala chicken biryani,,g,175,8.5,20.0,6.8,1 plate,300,1/2 plate,150,kerala_rice_and_bread,,with chicken pieces
+Thalassery biryani (chicken),,g,184,8.0,21.0,7.5,1 plate,300,1/2 plate,150,kerala_rice_and_bread,,"kaima rice, ghee, fried onion"
+Mutton biryani,,g,195,9.5,20.0,8.5,1 plate,300,1/2 plate,150,kerala_rice_and_bread,,
+Vegetable biryani,,g,151,3.5,23.0,5.0,1 plate,300,1/2 plate,150,kerala_rice_and_bread,,
+Malabar parotta,,g,319,6.5,45.0,12.5,1 parotta,80,2 parottas,160,kerala_rice_and_bread,,"layered, maida"
+Chapati,,g,266,8.0,46.0,5.5,1 chapati,40,2 chapatis,80,kerala_rice_and_bread,,"wholemeal atta, little oil"
+Poori,,g,338,6.5,42.0,16.0,1 poori,35,2 pooris,70,kerala_rice_and_bread,,deep fried
+Kerala fried rice,,g,176,5.0,26.0,5.8,1 plate,300,1/2 plate,150,kerala_rice_and_bread,,with egg and vegetables
+Kanji (rice gruel),,g,54,1.1,12.0,0.2,1 bowl,300,,,kerala_rice_and_bread,,cooked rice with its water
+Curd rice,,g,118,3.8,19.0,3.0,1 cup,200,,,kerala_rice_and_bread,,with yoghurt
+Lemon rice,,g,166,3.2,27.0,5.0,1 cup,180,,,kerala_rice_and_bread,,with peanuts and tempering
+Tamarind rice (puliyodarai),,g,176,3.3,28.0,5.6,1 cup,180,,,kerala_rice_and_bread,,
+"Chicken curry, Kerala style",,g,149,12.0,5.0,9.0,1 cup,180,1/2 cup,90,kerala_curries,,"with coconut, home style, moderate oil"
+Nadan kozhi curry (country chicken curry),,g,142,13.0,4.5,8.0,1 cup,180,1/2 cup,90,kerala_curries,,home style
+"Chicken stew, Kerala style",,g,121,8.5,6.0,7.0,1 cup,180,1/2 cup,90,kerala_curries,,"with coconut milk, goes with appam"
+"Beef curry, Kerala style",,g,162,13.5,4.5,10.0,1 cup,180,1/2 cup,90,kerala_curries,,"home style, moderate oil"
+"Mutton curry, Kerala style",,g,172,12.5,4.0,12.0,1 cup,180,1/2 cup,90,kerala_curries,,
+Duck curry (tharavu curry),,g,188,12.0,4.0,14.0,1 cup,180,1/2 cup,90,kerala_curries,,with coconut milk
+"Egg curry, Kerala style",,g,129,7.0,5.0,9.0,1 cup,180,1/2 cup,90,kerala_curries,,"about 2 eggs per cup, with coconut milk"
+"Meen curry (fish curry, Kerala style)",,g,111,12.0,3.5,5.5,1 cup,180,1/2 cup,90,kerala_curries,,with coconut and kudampuli
+"Meen vevichathu (red fish curry, Kottayam style)",,g,97,13.0,3.0,3.8,1 cup,180,1/2 cup,90,kerala_curries,,"no coconut, kudampuli and chilli"
+Fish molee (fish moilee),,g,138,11.0,4.0,8.8,1 cup,180,1/2 cup,90,kerala_curries,,with coconut milk
+"Prawn curry (chemmeen curry), Kerala style",,g,116,11.5,4.5,5.8,1 cup,180,1/2 cup,90,kerala_curries,,with coconut
+"Parippu curry (dal, Kerala style)",,g,104,5.5,12.0,3.8,1 katori (small bowl),120,1 cup,180,kerala_curries,,moong dal with coconut
+Sambar,,g,63,2.8,8.5,2.0,1 katori (small bowl),120,1 cup,180,kerala_curries,,
+Rasam,,g,31,1.0,4.5,1.0,1 katori (small bowl),120,1 cup,180,kerala_curries,,
+"Moru curry (buttermilk curry, kachiya moru)",,g,54,2.2,3.5,3.5,1 katori (small bowl),120,1 cup,180,kerala_curries,,
+Pulissery (yoghurt curry with coconut),,g,80,2.5,5.5,5.3,1 katori (small bowl),120,1 cup,180,kerala_curries,,
+Theeyal (roasted coconut curry),,g,130,2.2,10.0,9.0,1 katori (small bowl),120,1 cup,180,kerala_curries,,shallot or bitter gourd
+Inji curry (ginger curry),,g,193,1.5,22.0,11.0,1 tablespoon,15,2 tablespoons,30,kerala_curries,,sweet and sour relish
+Mango pickle,,g,150,1.5,10.0,11.5,1 teaspoon,10,1 tablespoon,15,kerala_curries,,oil pickle
+Lime pickle,,g,129,1.2,9.0,9.8,1 teaspoon,10,1 tablespoon,15,kerala_curries,,oil pickle
+Cabbage thoran,,g,95,2.2,7.5,6.2,1 cup,180,1/2 cup,90,kerala_vegetable,,with coconut
+Beans thoran,,g,101,2.8,8.0,6.4,1 cup,180,1/2 cup,90,kerala_vegetable,,with coconut
+Carrot thoran,,g,101,1.8,9.0,6.4,1 cup,180,1/2 cup,90,kerala_vegetable,,with coconut
+Beetroot thoran,,g,100,2.0,9.5,6.0,1 cup,180,1/2 cup,90,kerala_vegetable,,with coconut
+Cheera thoran (spinach with coconut),,g,91,3.0,5.0,6.6,1 cup,180,1/2 cup,90,kerala_vegetable,,with coconut
+Avial,,g,99,2.3,9.0,6.0,1 cup,180,1/2 cup,90,kerala_vegetable,,"mixed vegetables, coconut and yoghurt"
+Olan,,g,85,2.5,7.0,5.2,1 cup,180,1/2 cup,90,kerala_vegetable,,ash gourd and cowpeas in coconut milk
+Erissery (pumpkin and beans with coconut),,g,117,4.0,13.0,5.5,1 cup,180,1/2 cup,90,kerala_vegetable,,
+Kootu curry,,g,132,4.5,15.0,6.0,1 cup,180,1/2 cup,90,kerala_vegetable,,"yam, plantain and chickpea with roasted coconut"
+Pachadi (cucumber),,g,71,2.0,4.5,5.0,1/2 cup,90,1 cup,180,kerala_vegetable,,with yoghurt and coconut
+Kichadi (cucumber or bitter gourd),,g,76,2.2,5.0,5.2,1/2 cup,90,1 cup,180,kerala_vegetable,,with yoghurt
+Mezhukkupuratti (stir-fried vegetable),,g,105,2.5,8.0,7.0,1 cup,180,1/2 cup,90,kerala_vegetable,,"long beans, raw banana or yam"
+"Pappadam, fried",,g,484,14.0,44.0,28.0,1 pappadam,12,2 pappadams,24,kerala_vegetable,,"lentil, deep fried"
+"Chicken roast, Kerala style",,g,187,16.0,6.0,11.0,1 cup,180,1/2 cup,90,kerala_meat_fish,,
+Chicken fry (kozhi porichathu),,g,243,22.0,5.0,15.0,1 piece,80,2 pieces,160,kerala_meat_fish,,"shallow fried, home style"
+Chicken 65,,g,264,20.0,10.0,16.0,1 serve,150,1/2 serve,75,kerala_meat_fish,,"deep fried, battered"
+"Beef fry, Kerala style (beef ularthiyathu)",,g,220,20.0,5.0,13.5,1 cup,180,1/2 cup,90,kerala_meat_fish,,with coconut slivers
+"Beef roast, Kerala style",,g,198,18.0,6.0,11.5,1 cup,180,1/2 cup,90,kerala_meat_fish,,
+"Pork fry, Kerala style",,g,284,18.0,4.0,22.0,1 cup,180,1/2 cup,90,kerala_meat_fish,,
+"Fish fry (king fish), Kerala style",,g,200,22.0,3.5,11.0,1 piece,50,2 pieces,100,kerala_meat_fish,,"neymeen, shallow fried in masala"
+Mathi (sardine) fry,,g,235,22.0,3.0,15.0,1 fish,40,3 fish,120,kerala_meat_fish,,edible portion
+Karimeen pollichathu (pearl spot in banana leaf),,g,177,18.0,5.0,9.5,1 fish,200,,,kerala_meat_fish,,
+Prawn roast (chemmeen roast),,g,168,17.0,6.0,8.5,1 cup,150,1/2 cup,75,kerala_meat_fish,,
+Squid roast (koonthal roast),,g,151,16.0,6.0,7.0,1 cup,150,1/2 cup,75,kerala_meat_fish,,
+Pazham pori (banana fritter),,g,282,3.5,40.0,12.0,1 pazham pori,70,2 pazham poris,140,kerala_snacks,,deep fried
+Unniyappam,,g,340,4.5,50.0,13.5,1 unniyappam,25,4 unniyappams,100,kerala_snacks,,"rice, jaggery and banana, fried"
+Ela ada,,g,213,3.0,42.0,3.8,1 ada,100,,,kerala_snacks,,"rice parcel with coconut and jaggery, steamed in banana leaf"
+Kozhukatta,,g,208,3.2,40.0,4.0,1 kozhukatta,50,2 kozhukattas,100,kerala_snacks,,steamed rice dumpling with coconut and jaggery
+Kerala banana chips (upperi),,g,517,2.3,55.0,32.0,small handful,30,1 cup,60,kerala_snacks,,fried in coconut oil
+Jackfruit chips (chakka varuthathu),,g,495,2.5,58.0,28.0,small handful,30,1 cup,60,kerala_snacks,,
+Murukku,,g,495,8.0,55.0,27.0,1 murukku,30,2 murukku,60,kerala_snacks,,
+Achappam (rose cookie),,g,468,5.0,58.0,24.0,1 achappam,15,4 achappams,60,kerala_snacks,,
+Sukhiyan,,g,298,6.5,42.0,11.5,1 sukhiyan,40,2 sukhiyans,80,kerala_snacks,,"green gram and jaggery, fried"
+Parippu vada (dal fritter),,g,328,12.0,34.0,16.0,1 vada,40,2 vadas,80,kerala_snacks,,deep fried
+"Nendran banana (ripe, raw fruit)",,g,107,1.2,25.0,0.3,1 banana,180,half banana,90,kerala_snacks,,
+"Jackfruit (ripe, raw fruit)",,g,95,1.7,23.0,0.6,5 bulbs,100,10 bulbs,200,kerala_snacks,,
+Ada pradhaman,,g,192,2.5,32.0,6.0,1 small bowl,120,1 cup,180,kerala_sweets,,jaggery and coconut milk
+Palada payasam,,g,166,3.5,28.0,4.5,1 small bowl,120,1 cup,180,kerala_sweets,,milk and sugar
+Semiya payasam,,g,152,3.5,25.0,4.2,1 small bowl,120,1 cup,180,kerala_sweets,,vermicelli
+Parippu payasam,,g,188,4.0,30.0,6.0,1 small bowl,120,1 cup,180,kerala_sweets,,"moong dal, jaggery and coconut milk"
+Neyyappam,,g,359,4.0,52.0,15.0,1 neyyappam,40,2 neyyappams,80,kerala_sweets,,fried in ghee
+Boli,,g,302,6.0,55.0,6.5,1 boli,60,,,kerala_sweets,,sweet dal stuffed flatbread
+Ari unda (rice and jaggery ball),,g,398,5.0,72.0,10.0,1 unda,40,2 undas,80,kerala_sweets,,
+Butter chicken,,g,166,12.0,6.0,10.5,1 cup,180,1/2 cup,90,indian_north,,
+Chicken tikka,,g,177,24.0,3.5,7.5,1 piece,30,6 pieces,180,indian_north,,grilled
+Tandoori chicken,,g,185,25.0,2.5,8.5,1 leg quarter,150,,,indian_north,,edible portion
+Paneer butter masala,,g,217,9.5,8.0,16.5,1 cup,180,1/2 cup,90,indian_north,,
+Palak paneer,,g,157,8.5,6.0,11.0,1 cup,180,1/2 cup,90,indian_north,,
+Chana masala,,g,142,6.5,18.0,5.0,1 cup,180,1/2 cup,90,indian_north,,
+Rajma,,g,126,6.0,17.0,3.8,1 cup,180,1/2 cup,90,indian_north,,kidney bean curry
+Dal makhani,,g,152,6.5,14.0,8.0,1 katori (small bowl),120,1 cup,180,indian_north,,with butter and cream
+Dal tadka,,g,106,5.5,13.0,3.6,1 katori (small bowl),120,1 cup,180,indian_north,,
+Aloo gobi,,g,112,2.5,12.0,6.0,1 cup,180,1/2 cup,90,indian_north,,
+Bhindi masala,,g,116,2.5,9.0,8.0,1 cup,180,1/2 cup,90,indian_north,,okra
+Naan,,g,288,8.5,50.0,6.0,1 naan,90,half naan,45,indian_north,,
+Butter naan,,g,320,8.5,49.0,10.0,1 naan,95,half naan,48,indian_north,,
+Roti (tandoori roti),,g,266,8.5,48.0,4.5,1 roti,50,2 rotis,100,indian_north,,wholemeal
+"Thali (mixed vegetarian plate, per 100 g of the whole plate)",,g,151,4.5,22.0,5.0,1 thali,600,half thali,300,indian_north,,"rice, roti, dal, sabzi and curd"
+Samosa,,g,310,6.0,32.0,17.5,1 samosa,80,2 samosas,160,indian_snacks,,"potato and pea filling, deep fried"
+Pakora (onion bhaji),,g,299,6.5,30.0,17.0,1 pakora,30,4 pakoras,120,indian_snacks,,deep fried
+Pav bhaji,,g,181,4.5,25.0,7.0,1 plate (2 pav with bhaji),300,,,indian_snacks,,with butter
+Chole bhature,,g,242,6.5,27.0,12.0,1 plate (2 bhature with chole),350,,,indian_snacks,,
+Gulab jamun,,g,348,5.0,55.0,12.0,1 piece,40,2 pieces,80,indian_sweets,,in syrup
+Jalebi,,g,398,2.5,70.0,12.0,1 jalebi,30,2 jalebis,60,indian_sweets,,
+Laddu (besan),,g,430,8.0,58.0,18.5,1 laddu,40,2 laddus,80,indian_sweets,,
+Rasgulla,,g,185,4.5,34.0,3.5,1 piece,50,2 pieces,100,indian_sweets,,with syrup
+Kheer (rice),,g,145,3.8,23.0,4.2,1 small bowl,120,1 cup,180,indian_sweets,,
+"Halwa (carrot, gajar halwa)",,g,278,4.5,38.0,12.0,1 small bowl,100,,,indian_sweets,,with ghee and khoya
+Chaya (Kerala tea with milk and sugar),,ml,46,1.2,8.0,1.0,1 small glass,150,1 mug,250,indian_drinks,,
+Kattan chaya (black tea with sugar),,ml,20,0.1,5.0,0.0,1 small glass,150,1 mug,250,indian_drinks,,
+Kaapi (filter coffee with milk and sugar),,ml,52,1.5,8.0,1.5,1 small glass,150,1 mug,250,indian_drinks,,
+Masala chai,,ml,51,1.5,8.5,1.2,1 cup,150,1 mug,250,indian_drinks,,
+Sambharam (spiced buttermilk),,ml,21,1.3,2.0,0.9,1 glass,250,,,indian_drinks,,"with ginger, green chilli and curry leaves"
+Tender coconut water (karikku),,ml,19,0.7,3.7,0.2,1 glass,250,1 coconut,300,indian_drinks,,
+Lassi (sweet),,ml,85,2.8,14.0,2.0,1 glass,250,,,indian_drinks,,
+Mango lassi,,ml,96,2.5,17.0,2.0,1 glass,250,,,indian_drinks,,
