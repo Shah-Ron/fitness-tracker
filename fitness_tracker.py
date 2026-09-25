@@ -247,6 +247,7 @@ SETTING_DEFAULTS.update(nutrition.DEFAULTS)
 SETTING_DEFAULTS.update(programme.TRAIN_DEFAULTS)
 SETTING_DEFAULTS.update({
     "stay_running": True,
+    "keep_awake": True,
     "theme": None,
     "contact_email": None,
     "display_name": None,
@@ -1205,7 +1206,7 @@ def update_settings(conn, settings, patch):
             v = v_choice(v, "split", tuple(PROG.get("splits", {"upper_lower": 1}).keys()))
         elif k == "main1_swap_every_blocks":
             v = v_int(v, k, 1, 6)
-        elif k == "stay_running":
+        elif k in ("stay_running", "keep_awake"):
             v = bool(v)
         elif k in ("theme", "contact_email", "display_name"):
             v = v_text(v, k, 120)

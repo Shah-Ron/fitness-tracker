@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
@@ -103,6 +104,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class Bridge {
+        /** Keeps the screen on while a workout is open, so the rest timer is never missed. */
+        @JavascriptInterface
+        fun keepAwake(on: Boolean) {
+            runOnUiThread {
+                if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+
         /** Writes a backup or CSV into the phone's Downloads folder. */
         @JavascriptInterface
         fun saveFile(name: String, mime: String, text: String) {

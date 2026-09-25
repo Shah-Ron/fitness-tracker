@@ -13,7 +13,7 @@ const LocalApi = (() => {
 
   class BadRequest extends Error { constructor(msg, code = 400) { super(msg); this.code = code; } }
 
-  const settings = () => { const s = Object.assign({}, E.NUTRITION_DEFAULTS, E.TRAIN_DEFAULTS, { split: "upper_lower", stay_running: true, theme: null, contact_email: null, rest_default_sec: 90 }); Object.assign(s, db.settings()); return s; };
+  const settings = () => { const s = Object.assign({}, E.NUTRITION_DEFAULTS, E.TRAIN_DEFAULTS, { split: "upper_lower", stay_running: true, keep_awake: true, theme: null, contact_email: null, rest_default_sec: 90 }); Object.assign(s, db.settings()); return s; };
   const refreshExercises = () => { EX_BY_KEY = {}; db.all("exercises").forEach(e => { EX_BY_KEY[e.key] = e; }); };
   const exPublic = e => Object.assign({}, e);
 
@@ -371,7 +371,7 @@ const LocalApi = (() => {
   }
 
   /* ---------------------------------------------------- settings, exercises */
-  const SETTING_KEYS = Object.keys(E.NUTRITION_DEFAULTS).concat(Object.keys(E.TRAIN_DEFAULTS), ["split", "stay_running", "theme", "contact_email", "display_name", "rest_default_sec"]);
+  const SETTING_KEYS = Object.keys(E.NUTRITION_DEFAULTS).concat(Object.keys(E.TRAIN_DEFAULTS), ["split", "stay_running", "keep_awake", "theme", "contact_email", "display_name", "rest_default_sec"]);
   const TRAINING_KEYS = ["train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split"];
   function updateSettings(patch) {
     if (!patch || typeof patch !== "object") throw new BadRequest("Send an object of settings");
@@ -392,7 +392,7 @@ const LocalApi = (() => {
       else if (k === "experience") v = choice(v, "experience", Object.keys(PROG.rep_schemes));
       else if (k === "split") v = choice(v, "split", Object.keys(PROG.splits || { upper_lower: 1 }));
       else if (k === "main1_swap_every_blocks") v = int(v, k, 1, 6);
-      else if (k === "stay_running") v = !!v;
+      else if (k === "stay_running" || k === "keep_awake") v = !!v;
       else if (["theme", "contact_email", "display_name"].includes(k)) v = text(v, k, 120);
       if (JSON.stringify(s[k]) !== JSON.stringify(v)) { if (["target_weight_kg", "target_date"].includes(k)) goal = true; if (TRAINING_KEYS.includes(k)) training = true; }
       db.setSetting(k, v); s[k] = v;

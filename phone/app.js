@@ -37,10 +37,26 @@ let S = null;        // /api/state
 let T = null;        // /api/today, cached for the gym
 let FOODS = null;    // /api/foods/list rows
 let ONLINE = true;
-const IS_ANDROID_APP = !!(window.Android && window.Android.saveFile);
 const UI = { tab: ls.get("ft-tab", "today"), foodDate: todayIso(), planDate: todayIso(), progressDays: 90, histRange: 90, histQ: "", exQ: "", foodQ: "" };
 let W = ls.get("ft-live");       // the workout in progress, mirrored on every tap
 const REST = { end: 0, total: 0, timer: null, finished: false };
+const IS_ANDROID_APP = !!(window.Android && window.Android.saveFile);
+
+/* Keep the screen on while a workout is open, so the rest timer can always buzz. */
+let wakeLock = null;
+async function keepAwake(on) {
+  if (IS_ANDROID_APP && window.Android.keepAwake) { try { window.Android.keepAwake(!!on); } catch (e) {} return; }
+  if (!("wakeLock" in navigator)) return;
+  if (on) {
+    if (wakeLock) return;
+    try { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } catch (e) { wakeLock = null; }
+  } else if (wakeLock) {
+    try { await wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+}
+const wantAwake = () => !!W && (!S || S.settings.keep_awake !== false);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && wantAwake()) keepAwake(true); });
 
 /* ---------------------------------------------------------- local api */
 async function api(method, path, body) {
@@ -74,7 +90,7 @@ async function load(quiet) {
   renderAll();
   updateNotice();
 }
-function saveW() { if (W) ls.set("ft-live", W); else ls.del("ft-live"); $("#navLive").hidden = !W; }
+function saveW() { if (W) ls.set("ft-live", W); else ls.del("ft-live"); $("#navLive").hidden = !W; keepAwake(wantAwake()); }
 
 function renderAll() {
   renderToday();
@@ -1171,6 +1187,7 @@ function renderSettings() {
       <div class="f-row">${field("session_minutes", "Minutes per session", "number", 'inputmode="numeric" step="5" min="30" max="120"')}${field("rest_default_sec", "Default rest (seconds)", "number", 'inputmode="numeric" step="15"')}
       <label class="field narrow"><span>Experience</span><select id="s-experience"><option value="beginner"${st.experience === "beginner" ? " selected" : ""}>Beginner</option></select></label></div>
       <div class="cap">Cardio machines you will use</div><div class="chips" id="s-kit">${[["treadmill", "Treadmill"], ["bike", "Bike"], ["rower", "Rower"]].map(([k, l]) => `<button type="button" class="chip${kit.includes(k) ? " on" : ""}" data-kit="${k}">${l}</button>`).join("")}</div>
+      <div class="row mt"><label class="switch"><input type="checkbox" id="s-awake" ${st.keep_awake !== false ? "checked" : ""}><span class="slider"></span><span>Keep the screen on during a workout</span></label></div>
       <div class="row mt"><button id="s-regen" class="ghost">Rebuild the plan from today</button></div></div>
     <div class="card exlib"><h2>Exercise library</h2><p class="hint">Switch off anything your gym does not have and the plan stops picking it. Edit the cues to suit you, or add your own exercise.</p>
       <div class="row mb"><input type="search" id="exQ" placeholder="Search exercises" value="${esc(UI.exQ)}" style="max-width:260px"><button id="exAdd">Add an exercise</button></div><div id="exList"></div></div>
@@ -1198,6 +1215,7 @@ function renderSettings() {
     saveSettings({ cardio_kit: next }, "Plan rebuilt from today");
   }));
   $("#s-regen").addEventListener("click", async () => { try { await api("POST", "/api/plan/regenerate"); toast("Plan rebuilt from today"); load(true); } catch (e) { toast(e.message); } });
+  $("#s-awake").addEventListener("change", e => { saveSettings({ keep_awake: e.target.checked }); keepAwake(e.target.checked && !!W); });
   $("#bkExport").addEventListener("click", async () => { try { const data = await api("GET", "/api/backup.json"); await downloadText(`fitness-backup-${todayIso()}.json`, "application/json", JSON.stringify(data)); } catch (e) { toast(e.message); } });
   $("#csvSets").addEventListener("click", () => exportCsv("sets"));
   $("#csvFood").addEventListener("click", () => exportCsv("food"));
