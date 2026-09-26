@@ -515,6 +515,16 @@ const LocalApi = (() => {
     throw new BadRequest("method not allowed", 405);
   }
 
-  return { init, call, settings, exportCsv, BadRequest, get db() { return db; }, get prog() { return PROG; } };
+  /* JSON from anywhere on the internet: through the Android app's native call when present, else the browser. */
+  async function fetchJson(url) {
+    if (window.Android && window.Android.fetchJson) return androidFetch(url);
+    let r;
+    try { r = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" }); }
+    catch (e) { throw new BadRequest("Could not reach the internet.", 502); }
+    if (!r.ok) throw new BadRequest(`The server answered ${r.status}.`, 502);
+    return r.json();
+  }
+
+  return { init, call, settings, exportCsv, fetchJson, BadRequest, get db() { return db; }, get prog() { return PROG; } };
 })();
 if (typeof module !== "undefined") module.exports = LocalApi;

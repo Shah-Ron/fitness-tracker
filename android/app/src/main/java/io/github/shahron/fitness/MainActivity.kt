@@ -2,13 +2,17 @@ package io.github.shahron.fitness
 
 import android.Manifest
 import android.app.AlarmManager
+import android.app.DownloadManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -30,9 +34,11 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.webkit.WebViewAssetLoader
 import org.json.JSONObject
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.concurrent.thread
@@ -47,11 +53,40 @@ import kotlin.concurrent.thread
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var pendingPermission: PermissionRequest? = null
+    private var downloadId: Long = -1
 
     companion object {
         const val CHANNEL_REST = "rest"
         const val REQ_CAMERA = 1
         const val REQ_NOTIFY = 2
+        const val UPDATE_FILE = "Fitness-Tracker.apk"
+    }
+
+    /** When the update download finishes, open the Android installer on it. */
+    private val downloadDone = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) != downloadId) return
+            installDownloadedUpdate()
+        }
+    }
+
+    private fun updateFile(): File = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), UPDATE_FILE)
+
+    private fun installDownloadedUpdate() {
+        val file = updateFile()
+        if (!file.exists() || file.length() < 100_000) {
+            Toast.makeText(this, "The update did not download. Try again.", Toast.LENGTH_LONG).show()
+            return
+        }
+        val uri = FileProvider.getUriForFile(this, "$packageName.files", file)
+        val i = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            startActivity(i)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Could not open the installer: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +95,7 @@ class MainActivity : AppCompatActivity() {
         web = WebView(this)
         setContentView(web)
         createChannels()
+        ContextCompat.registerReceiver(this, downloadDone, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_EXPORTED)
 
         val s = web.settings
         s.javaScriptEnabled = true
@@ -119,6 +155,11 @@ class MainActivity : AppCompatActivity() {
         web.saveState(outState)
     }
 
+    override fun onDestroy() {
+        try { unregisterReceiver(downloadDone) } catch (e: Exception) { }
+        super.onDestroy()
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode != REQ_CAMERA) return
@@ -151,6 +192,29 @@ class MainActivity : AppCompatActivity() {
         PendingIntent.getBroadcast(this, 7, Intent(this, RestAlarmReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
     inner class Bridge {
+        /** The installed version, as on the GitHub release tag without the leading v. */
+        @JavascriptInterface
+        fun appVersion(): String = BuildConfig.VERSION_NAME
+
+        /** Downloads a new package from GitHub; the installer opens when it lands. */
+        @JavascriptInterface
+        fun installUpdate(url: String): String {
+            return try {
+                val file = updateFile()
+                if (file.exists()) file.delete()
+                val req = DownloadManager.Request(Uri.parse(url))
+                    .setTitle("Fitness Tracker update")
+                    .setDescription("Downloading the new version")
+                    .setMimeType("application/vnd.android.package-archive")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalFilesDir(this@MainActivity, Environment.DIRECTORY_DOWNLOADS, UPDATE_FILE)
+                downloadId = getSystemService(DownloadManager::class.java).enqueue(req)
+                "started"
+            } catch (e: Exception) {
+                "Could not start the download: ${e.message}"
+            }
+        }
+
         /** Keeps the screen on while a workout is open, so the rest timer is never missed. */
         @JavascriptInterface
         fun keepAwake(on: Boolean) {

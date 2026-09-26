@@ -1220,7 +1220,9 @@ function renderSettings() {
       <div class="row"><button class="primary" id="bkExport">Export a backup</button><label class="btn" for="restoreFile">Restore a backup</label><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
       <div class="row mt"><button id="csvSets">Sets CSV</button><button id="csvFood">Food CSV</button><button id="csvBody">Body CSV</button></div>
       <div class="row mt"><button class="danger" id="bkWipe">Start fresh</button><span class="muted small">Removes everything on this device. Export first.</span></div>
-      <p class="hint mt" id="bkInfo"></p></div>`;
+      <p class="hint mt" id="bkInfo"></p></div>
+    <div class="card"><h2>Updates</h2><p class="hint">New versions are published on GitHub. ${IS_ANDROID_APP ? "Checking downloads the new package and opens the installer; your data stays." : "Checking reloads the app into the newest build."}</p>
+      <div class="row"><button id="upCheck">Check for updates</button><span class="muted small" id="upInfo"></span></div></div>`;
 
   const bind = (k, parse, msg) => { const el = $("#s-" + k, root); if (!el) return; el.addEventListener("change", () => { const v = el.value === "" ? null : (parse ? parse(el.value) : el.value); saveSettings({ [k]: v }, msg); }); };
   ["sex", "birth_date", "target_date", "experience"].forEach(k => bind(k));
@@ -1250,6 +1252,7 @@ function renderSettings() {
     if (!confirm(`Replace everything with ${file.name}? This cannot be undone.`)) { e.target.value = ""; return; }
     try { const data = JSON.parse(await file.text()); await api("POST", "/api/restore", data); toast("Restored"); W = null; saveW(); FOODS = null; await load(true); renderSettings(); } catch (err) { toast(err.message); }
   });
+  $("#upCheck").onclick = checkForUpdate;
   renderExLib(root);
   renderMyFoods(root);
   renderBackupInfo(root);
@@ -1315,7 +1318,46 @@ async function renderBackupInfo(root) {
     }
   } catch (e) {}
   const counts = { workouts: (await api("GET", "/api/history?from=2000-01-01")).workouts.length };
-  el.textContent = `${plural(counts.workouts, "workout")} stored. ${IS_ANDROID_APP ? "Android app" : swVersion ? "Installed for offline use, version " + swVersion : "Running in the browser"}, app version ${S.version}.`;
+  const appVer = IS_ANDROID_APP && window.Android.appVersion ? window.Android.appVersion() : null;
+  el.textContent = `${plural(counts.workouts, "workout")} stored. ${IS_ANDROID_APP ? "Android app " + (appVer || "") : swVersion ? "Installed for offline use, version " + swVersion : "Running in the browser"}, build ${S.version}.`;
+}
+/* Updates: the Android app fetches the latest GitHub release and installs it; the web app reloads into the newest build. */
+const REPO = "Shah-Ron/fitness-tracker";
+const verParts = v => String(v || "").replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
+function newerVersion(a, b) { const x = verParts(a), y = verParts(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; }
+async function checkForUpdate() {
+  const info = $("#upInfo"), btn = $("#upCheck");
+  if (!info || !btn) return;
+  info.textContent = "Checking";
+  btn.disabled = true;
+  try {
+    if (IS_ANDROID_APP) {
+      const cur = window.Android.appVersion ? window.Android.appVersion() : "0";
+      const rel = await LocalApi.fetchJson(`https://api.github.com/repos/${REPO}/releases/latest`);
+      const latest = String(rel.tag_name || "").replace(/^v/, "");
+      const apk = (rel.assets || []).find(a => /\.apk$/i.test(a.name || ""));
+      if (latest && newerVersion(latest, cur) && apk) {
+        info.textContent = `Version ${latest} is available. You have ${cur}.`;
+        btn.textContent = `Install ${latest}`; btn.classList.add("primary");
+        btn.onclick = () => {
+          try { const r = window.Android.installUpdate(apk.browser_download_url); info.textContent = r === "started" ? "Downloading. The installer opens when it is ready; tap Install there." : r; btn.disabled = true; }
+          catch (e) { info.textContent = e.message; }
+        };
+      } else {
+        info.textContent = `You have the latest version (${cur}).`;
+      }
+    } else {
+      const v = await (await fetch("./version.json?ts=" + Date.now(), { cache: "no-store" })).json();
+      if (v.version && S && v.version !== S.version) {
+        info.textContent = "A newer version is available. Reloading.";
+        try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
+        setTimeout(() => location.reload(), 1800);
+      } else {
+        info.textContent = `You have the latest version (${S ? S.version : "?"}).`;
+      }
+    }
+  } catch (e) { info.textContent = "Could not check: " + e.message; }
+  finally { btn.disabled = false; }
 }
 async function downloadText(name, mime, text) {
   if (IS_ANDROID_APP) { window.Android.saveFile(name, mime, text); toast(`Saved ${name} to Downloads`); return; }
