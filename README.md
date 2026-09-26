@@ -6,7 +6,7 @@ A private training and food tracker that lives on your phone. It plans your week
 
 There are two ways. Both keep your data on the phone, both work with no signal at the gym, and a backup file moves your data between them.
 
-**The Android app.** On the phone, open the [latest release](https://github.com/Shah-Ron/fitness-tracker/releases/latest), download **Fitness-Tracker.apk** and open it. Android will ask you to allow installs from your browser for this file. When a newer release appears, download it and install it over the top; your data stays.
+**The Android app.** On the phone, open the [latest release](https://github.com/Shah-Ron/fitness-tracker/releases/latest), download **Fitness-Tracker.apk** and open it. Android will ask you to allow installs from your browser for this file. After that, **Settings, Updates, Check for updates** finds newer releases and installs them from inside the app; your data stays.
 
 **The web app.** Open <https://shah-ron.github.io/fitness-tracker/> in Chrome on the phone, then choose **Add to Home screen** from Chrome's menu. It installs like an app and opens full screen.
 
