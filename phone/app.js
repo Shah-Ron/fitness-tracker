@@ -230,7 +230,7 @@ function renderToday() {
   if (!S.profile_complete) {
     hero = `<div class="hero"><div><div class="kicker">Welcome</div><div class="big">Let's set you up</div>
       <p class="sub">Add your height, birth date, target weight and target date, and the app works out your daily calories, protein and pace.</p>
-      <div class="quick"><button class="primary big" data-go="settings">Finish your profile</button></div></div>
+      <button class="cta" data-go="settings">Finish your profile <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
       <div>${S.strip ? weekStrip(S.strip) : ""}</div></div>`;
   } else {
     const leftCls = tg.left < 0 ? " crit" : "";
