@@ -117,12 +117,10 @@ function renderAll() {
 
 /* ---------------------------------------------------------- tabs, theme, sheets, toast, tooltip */
 function switchTab(name) {
-  if (name === "more") { openSheet(`<div class="handle"></div><h2>More</h2><div class="grid" style="margin-top:10px">
-    ${["plan", "progress", "history", "settings"].map(t => `<button class="big wide" data-go="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div>`); return; }
   UI.tab = name;
   $$(".tile").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
   $$("[data-panel]").forEach(p => { p.hidden = p.dataset.panel !== name; });
-  $$("#bottombar button").forEach(b => b.classList.toggle("on", b.dataset.go === name || (b.dataset.go === "more" && ["plan", "progress", "history", "settings"].includes(name))));
+  $$("#bottombar button").forEach(b => { const on = b.dataset.go === name; b.classList.toggle("on", on); if (on && b.scrollIntoView) b.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); });
   ls.set("ft-tab", name);
   hideTip();
   closeSheet();
@@ -400,6 +398,25 @@ function renderWorkout() {
   tickElapsed();
 }
 function exById(id) { return (S && S.exercises && S.exercises.find(e => e.id === id)) || null; }
+/* "How to do it": description, cues and a form video, collapsed until asked for. Open state lasts for this visit only. */
+const HOWTO_OPEN = new Set();
+function howToBlock(ex) {
+  const v = ex.video && ex.video.id ? ex.video : null;
+  if (!ex.how_to && !(ex.cues || []).length && !v) return `<div class="howto muted">No notes for this exercise yet.</div>`;
+  return `<div class="howto">${ex.how_to ? `<p>${esc(ex.how_to)}</p>` : ""}
+    ${(ex.cues || []).length ? `<ul class="cues">${ex.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+    ${v ? `<div class="video" data-video="${esc(v.id)}"><img src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" loading="lazy"><button type="button" class="play" aria-label="Play the video">▶</button><div class="vcap">${esc(v.title || "Form video")}<small>${esc(v.channel || "YouTube")}${v.length ? ", " + esc(v.length) : ""}</small></div></div>
+    <a href="https://www.youtube.com/watch?v=${esc(v.id)}" data-external>Open in YouTube</a>` : ""}</div>`;
+}
+function openExternal(url) { if (IS_ANDROID_APP) location.href = url; else window.open(url, "_blank", "noopener"); }
+function wireVideos(root) {
+  $$(".video .play", root).forEach(b => b.addEventListener("click", e => {
+    e.stopPropagation();
+    const box = b.closest(".video"), id = box.dataset.video;
+    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&playsinline=1&rel=0&modestbranding=1" title="Form video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  }));
+  $$("a[data-external]", root).forEach(a => a.addEventListener("click", e => { e.preventDefault(); openExternal(a.href); }));
+}
 function loggedSets(it) { return W.sets[it.id] || []; }
 function renderItem(it) {
   const ex = it.exercise || exById(it.exercise_id) || { name: "Exercise", cues: [] };
@@ -436,13 +453,13 @@ function renderItem(it) {
     const defR = last ? last.reps : (ex.timed ? it.rep_low : it.rep_low);
     rows.push(setEntryRow(it, ex, n, defW, defR));
   }
-  const cuesOpen = W.open["cues" + it.id];
+  const howOpen = HOWTO_OPEN.has(String(it.id));
   return `<div class="ex${working.length >= planned || skipped ? " done" : ""}" data-item="${it.id}">
     <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${planned} x ${it.rep_low}-${it.rep_high}${ex.timed ? " s" : ""}${ex.per_hand ? ", each hand" : ""}</span></h3>
       <div class="target">${targetLine(it)}</div>
-      ${cuesOpen ? `<ul class="cues">${(ex.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}</div></div>
+      ${howOpen ? howToBlock(ex) : ""}</div></div>
     <div class="sets">${skipped ? `<div class="muted small">Skipped. <button class="link" data-unskip="${it.id}">Undo</button></div>` : rows.join("")}</div>
-    <div class="tools"><button class="ghost" data-cues="${it.id}">${cuesOpen ? "Hide cues" : "Form cues"}</button>
+    <div class="tools"><button class="ghost" data-howto="${it.id}">${howOpen ? "Hide how-to" : "How to do it"}</button>
       ${!skipped && working.length >= planned ? `<button class="ghost" data-more="${it.id}">Add a set</button>` : ""}
       ${!it.adhoc && !working.length && !skipped ? `<button class="ghost" data-swap="${it.id}">Swap</button><button class="ghost" data-skip="${it.id}">Skip</button>` : ""}</div></div>`;
 }
@@ -494,7 +511,8 @@ function wireWorkout(root) {
     logSet(it, +b.dataset.r, +b.dataset.w, null, 1, true);
   }));
   $$("[data-edit]", root).forEach(row => row.addEventListener("click", () => editSet(row.dataset.item, row.dataset.edit)));
-  $$("[data-cues]", root).forEach(b => b.addEventListener("click", () => { W.open["cues" + b.dataset.cues] = !W.open["cues" + b.dataset.cues]; saveW(); renderWorkout(); }));
+  $$("[data-howto]", root).forEach(b => b.addEventListener("click", () => { const k = b.dataset.howto; if (HOWTO_OPEN.has(k)) HOWTO_OPEN.delete(k); else HOWTO_OPEN.add(k); renderWorkout(); }));
+  wireVideos(root);
   $$("[data-more]", root).forEach(b => b.addEventListener("click", () => { W.open[b.dataset.more] = true; saveW(); renderWorkout(); }));
   $$("[data-skip]", root).forEach(b => b.addEventListener("click", () => { W.skipped[b.dataset.skip] = true; saveW(); renderWorkout(); }));
   $$("[data-unskip]", root).forEach(b => b.addEventListener("click", () => { delete W.skipped[b.dataset.unskip]; saveW(); renderWorkout(); }));
@@ -1264,7 +1282,11 @@ function renderExLib(root) {
     const t = q.value.trim().toLowerCase();
     const exs = S.exercises.filter(e => !e.pattern.startsWith("cardio") && e.pattern !== "mobility").filter(e => !t || e.name.toLowerCase().includes(t) || e.pattern.includes(t) || (e.primary_muscle || "").includes(t)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, t ? 60 : 30);
     list.innerHTML = exs.map(e => `<div class="lg-row"><div class="lg-what"><div class="t">${esc(e.name)}${e.is_custom ? ' <span class="pill">yours</span>' : ""}</div><div class="c">${esc(e.pattern.replace("_", " "))}, ${esc(e.primary_muscle || "")}, ${esc(e.equipment || "")}</div></div>
-      <div class="row"><button class="ghost" data-exedit="${e.id}">Edit</button><label class="switch small"><input type="checkbox" data-exact="${e.id}" ${e.active ? "checked" : ""}><span class="slider"></span></label></div></div>`).join("") + (!t && S.exercises.length > 30 ? `<div class="muted small" style="padding:8px 4px">Search to see the rest of the ${S.exercises.length} exercises.</div>` : "");
+      <div class="row"><button class="ghost" data-exhow="${e.id}">How to</button><button class="ghost" data-exedit="${e.id}">Edit</button><label class="switch small"><input type="checkbox" data-exact="${e.id}" ${e.active ? "checked" : ""}><span class="slider"></span></label></div></div>`).join("") + (!t && S.exercises.length > 30 ? `<div class="muted small" style="padding:8px 4px">Search to see the rest of the ${S.exercises.length} exercises.</div>` : "");
+    $$("[data-exhow]", list).forEach(b => b.addEventListener("click", () => {
+      const ex = S.exercises.find(x => x.id === +b.dataset.exhow);
+      openSheet(`<div class="handle"></div><h2>${esc(ex.name)}</h2><p class="hint">${esc(ex.primary_muscle || "")}, ${esc((ex.equipment || "").replace("_", " "))}</p>${howToBlock(ex)}<div class="row mt2"><button class="primary" id="howClose">Close</button></div>`, sh => { wireVideos(sh); $("#howClose", sh).addEventListener("click", closeSheet); });
+    }));
     $$("[data-exact]", list).forEach(i => i.addEventListener("change", async () => { try { await api("PUT", "/api/exercises/" + i.dataset.exact, { active: i.checked }); toast(i.checked ? "Back in the rotation" : "Hidden from the plan"); load(true); } catch (e) { toast(e.message); } }));
     $$("[data-exedit]", list).forEach(b => b.addEventListener("click", () => editExerciseSheet(S.exercises.find(x => x.id === +b.dataset.exedit))));
   };

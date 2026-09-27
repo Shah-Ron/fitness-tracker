@@ -29,8 +29,11 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -54,6 +57,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var pendingPermission: PermissionRequest? = null
     private var downloadId: Long = -1
+    private var customView: View? = null
+    private var customCallback: WebChromeClient.CustomViewCallback? = null
 
     companion object {
         const val CHANNEL_REST = "rest"
@@ -123,6 +128,26 @@ class MainActivity : AppCompatActivity() {
             }
         }
         web.webChromeClient = object : WebChromeClient() {
+            /** Full-screen video from an embedded player. */
+            override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                if (customView != null) { callback.onCustomViewHidden(); return }
+                customView = view
+                customCallback = callback
+                (window.decorView as FrameLayout).addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+                web.visibility = View.GONE
+                WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
+            }
+
+            override fun onHideCustomView() {
+                val v = customView ?: return
+                (window.decorView as FrameLayout).removeView(v)
+                customView = null
+                customCallback?.onCustomViewHidden()
+                customCallback = null
+                web.visibility = View.VISIBLE
+                WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+            }
+
             override fun onPermissionRequest(request: PermissionRequest) {
                 if (!request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) { request.deny(); return }
                 if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -138,6 +163,7 @@ class MainActivity : AppCompatActivity() {
         // Back closes a sheet or returns to Today before it ever leaves the app.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                if (customView != null) { web.webChromeClient?.onHideCustomView(); return }
                 web.evaluateJavascript("(window.__androidBack ? window.__androidBack() : false)") { handled ->
                     if (handled != "true") {
                         if (web.canGoBack()) web.goBack() else moveTaskToBack(true)

@@ -66,7 +66,8 @@ const Store = (() => {
       const have = byKey.get(ex.key);
       const row = { key: ex.key, name: ex.name, pattern: ex.pattern, primary_muscle: ex.primary_muscle, secondary_muscles: ex.secondary_muscles || [], equipment: ex.equipment,
         per_hand: ex.per_hand ? 1 : 0, timed: ex.timed ? 1 : 0, unilateral: ex.unilateral ? 1 : 0, bodyweight_fraction: +(ex.bodyweight_fraction || 0),
-        increment_kg: ex.increment_kg ?? null, min_load_kg: ex.min_load_kg ?? null, variation_of: ex.variation_of || null, carry: ex.carry ?? null, mets: ex.mets || null, cues: ex.cues || [], is_custom: 0 };
+        increment_kg: ex.increment_kg ?? null, min_load_kg: ex.min_load_kg ?? null, variation_of: ex.variation_of || null, carry: ex.carry ?? null, mets: ex.mets || null, cues: ex.cues || [],
+        how_to: ex.how_to || null, video: ex.video || null, is_custom: 0 };
       if (have) db.update("exercises", have.id, Object.assign(row, { active: have.active, cues: have.cues && have.cues.length ? have.cues : row.cues, increment_kg: have.increment_kg ?? row.increment_kg, min_load_kg: have.min_load_kg ?? row.min_load_kg }));
       else db.insert("exercises", Object.assign(row, { active: 1 }));
     });

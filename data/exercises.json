@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "exercises": [
     {
       "key": "barbell_bench_press",
@@ -24,7 +24,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on the bench with your eyes under the bar, feet flat and shoulder blades pulled back and down. Unrack, lower the bar to your lower chest under control, touch lightly and press it back up over your shoulders. The usual mistake is flaring the elbows straight out to the sides, which strains the shoulders; keep them at about 45 degrees.",
+      "video": {
+        "id": "4Y2ZdHCOXok",
+        "title": "How to PROPERLY Bench Press for Growth (5 Easy Steps)",
+        "channel": "Jeremy Ethier",
+        "length": "8:05"
+      }
     },
     {
       "key": "incline_barbell_bench_press",
@@ -49,7 +56,14 @@
       "min_load_kg": 20,
       "variation_of": "barbell_bench_press",
       "carry": 0.8,
-      "mets": null
+      "mets": null,
+      "how_to": "Set the bench to about 30 degrees and lie back with your feet planted and your shoulder blades squeezed together. Lower the bar to your upper chest, just below the collarbones, then press it back up until your arms are straight. Avoid setting the bench too steep, which turns the lift into a shoulder press and takes the work off the chest.",
+      "video": {
+        "id": "SrqOu55lrYU",
+        "title": "How To: Incline Barbell Bench Press | 3 GOLDEN RULES! (MADE BETTER!)",
+        "channel": "ScottHermanFitness",
+        "length": "5:34"
+      }
     },
     {
       "key": "incline_db_press",
@@ -74,7 +88,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit on a bench set to about 30 degrees, kick the dumbbells up to your thighs and lean back with them held above your upper chest. Lower them out and down until your elbows drop just below the bench, then press them back up so they finish close together over your chest. A common mistake is flaring the elbows straight out to the sides; keep them tucked at roughly 45 degrees to protect your shoulders.",
+      "video": {
+        "id": "hChjZQhX1Ls",
+        "title": "How To: Dumbbell Incline Press | 3 GOLDEN RULES (MADE BETTER!)",
+        "channel": "ScottHermanFitness",
+        "length": "4:51"
+      }
     },
     {
       "key": "machine_chest_press",
@@ -98,7 +119,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Adjust the seat so the handles sit level with the middle of your chest and keep your back and head against the pad. Push the handles forward until your arms are almost straight, pause, then bring them back slowly. Do not let the weight stack crash down or your shoulders roll forward at the end of each rep.",
+      "video": {
+        "id": "xUm0BiZCWlQ",
+        "title": "How To: Chest Press (Cybex)",
+        "channel": "ScottHermanFitness",
+        "length": "2:38"
+      }
     },
     {
       "key": "cable_fly",
@@ -122,7 +150,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set both pulleys at about chest height, grab a handle in each hand and step forward into a split stance so the cables have tension. Keep a slight bend in your elbows and sweep your hands together in a wide arc in front of your chest, then open them back out slowly until you feel a stretch. Turning the exercise into a press by bending the elbows too much is the usual mistake; keep the elbow angle fixed the whole way.",
+      "video": {
+        "id": "JUDTGZh4rhg",
+        "title": "STOP F*cking Up Cable Flys (PROPER FORM!)",
+        "channel": "ATHLEAN-X™",
+        "length": "6:51"
+      }
     },
     {
       "key": "push_up",
@@ -148,7 +183,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Start in a straight arm plank with your hands a little wider than your shoulders and your body in one line from head to heels. Bend your elbows to lower your chest towards the floor, then push the floor away to return to the start. Sagging or piking at the hips is the most common fault, so squeeze your glutes and brace your abs throughout.",
+      "video": {
+        "id": "i9sTjhN4Z3M",
+        "title": "The RIGHT Way To Do Push-Ups (PERFECT FORM)",
+        "channel": "Mind Pump TV",
+        "length": "4:54"
+      }
     },
     {
       "key": "dumbbell_bench_press",
@@ -173,7 +215,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit on the end of a flat bench with a dumbbell on each thigh, then lie back and kick them up so they sit above your chest with your palms facing forward. Lower the dumbbells out and down until they are level with your chest, then press them up and slightly inwards until your arms are straight. Do not clang the dumbbells together at the top or let your elbows drift straight out to the sides.",
+      "video": {
+        "id": "VmB1G1K7v94",
+        "title": "How To: Dumbbell Chest Press",
+        "channel": "ScottHermanFitness",
+        "length": "2:11"
+      }
     },
     {
       "key": "close_grip_bench_press",
@@ -198,7 +247,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on the bench as you would for a normal bench press, but take a grip just inside shoulder width. Lower the bar to your lower chest with your elbows staying close to your body, then press it back up and lock out your elbows. Gripping so narrow that your wrists bend backwards is a common mistake; shoulder width or a touch inside is close enough.",
+      "video": {
+        "id": "UYJsFzqdgK4",
+        "title": "HOW TO: Close-Grip Bench Press (TRICEPS BUILDER) || PERFECT FORM",
+        "channel": "ScottHermanFitness",
+        "length": "2:57"
+      }
     },
     {
       "key": "barbell_overhead_press",
@@ -223,7 +279,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand with your feet about hip width apart and hold the bar at the front of your shoulders with your forearms vertical. Squeeze your glutes and abs, press the bar straight up, moving your head back slightly to let it pass, then finish with the bar directly over the middle of your feet. Leaning back and arching the lower back to get the bar up is the classic fault; if you have to do that, the weight is too heavy.",
+      "video": {
+        "id": "_RlRDWO2jfg",
+        "title": "Build Bigger Shoulders With Perfect Training Technique (The Overhead Press)",
+        "channel": "Jeff Nippard",
+        "length": "7:59"
+      }
     },
     {
       "key": "seated_db_shoulder_press",
@@ -247,7 +310,14 @@
       "min_load_kg": null,
       "variation_of": "barbell_overhead_press",
       "carry": 0.4,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit on a bench with a near upright back rest and bring the dumbbells up to shoulder height with your palms facing forward. Press them up and slightly together until your arms are straight, then lower them under control back to the start. Avoid pushing your lower back away from the pad, which usually means the load is too heavy or your core has switched off.",
+      "video": {
+        "id": "qEwKCR5JCog",
+        "title": "How To: Dumbbell Shoulder Press",
+        "channel": "ScottHermanFitness",
+        "length": "2:24"
+      }
     },
     {
       "key": "machine_shoulder_press",
@@ -270,7 +340,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set the seat so the handles start at about ear height and sit with your back flat against the pad. Press the handles up until your arms are nearly straight, then lower them slowly back to the start. Do not let the handles drop below your shoulders on the way down, as that puts unnecessary strain on the joint.",
+      "video": {
+        "id": "Wqq43dKW1TU",
+        "title": "How To: Overhead Press (Cybex)",
+        "channel": "ScottHermanFitness",
+        "length": "2:17"
+      }
     },
     {
       "key": "arnold_press",
@@ -294,7 +371,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit tall with a dumbbell in each hand at shoulder height and your palms facing your face, elbows in front of you. Press the dumbbells up while rotating your palms to face forward, finishing with your arms straight overhead, then reverse the movement on the way down. Rushing the rotation is the main mistake, so keep it smooth and use a lighter weight than you would for a normal shoulder press.",
+      "video": {
+        "id": "ris9tKqMwgU",
+        "title": "Stop F*cking Up The Arnold Press (PROPER FORM!)",
+        "channel": "ATHLEAN-X™",
+        "length": "7:41"
+      }
     },
     {
       "key": "seated_cable_row",
@@ -318,7 +402,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit at the machine with your feet on the platform, knees slightly bent and your torso upright, holding the handle with straight arms. Pull the handle to your lower stomach by driving your elbows back, squeeze your shoulder blades together, then let the handle return slowly until your arms are straight. Rocking your torso back and forth to move the weight is the common fault; keep your body still and let your back do the work.",
+      "video": {
+        "id": "sP_4vybjVJs",
+        "title": "How To Properly Do The Seated Cable Row (IT MATTERS!)",
+        "channel": "Mind Pump TV",
+        "length": "5:25"
+      }
     },
     {
       "key": "chest_supported_row",
@@ -343,7 +434,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set the pad so your chest rests against it with your feet planted, then reach down and grip the handles. Pull the handles towards you by driving your elbows back until your shoulder blades squeeze together, then lower them slowly to a full stretch. Lifting your chest off the pad to heave the weight is the usual mistake, so keep it pinned throughout.",
+      "video": {
+        "id": "3EP5HpKtJG0",
+        "title": "Gold's Gym Tutorials ⎮ Chest Supported Row Machine",
+        "channel": "The Gym at Milford & Norton",
+        "length": "2:06"
+      }
     },
     {
       "key": "single_arm_db_row",
@@ -367,7 +465,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Place one hand and the same side knee on a bench so your back is flat and roughly parallel to the floor, and hold a dumbbell in the other hand with your arm hanging straight. Pull the dumbbell up towards your hip with your elbow close to your body, pause, then lower it slowly to a full stretch. Twisting your torso open to lift heavier is the common fault; keep your shoulders square to the floor.",
+      "video": {
+        "id": "gfUg6qWohTk",
+        "title": "STOP F*cking Up Dumbbell Rows (PROPER FORM!)",
+        "channel": "ATHLEAN-X™",
+        "length": "4:59"
+      }
     },
     {
       "key": "straight_arm_pulldown",
@@ -391,7 +496,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand facing a high cable holding a straight bar with your arms extended and a slight lean forward at the hips. Keep your arms nearly straight and sweep the bar down in an arc until it touches your thighs, then let it rise slowly until you feel a stretch in your lats. Bending your elbows and turning it into a pushdown is the common mistake, so fix the elbow angle and move from your shoulders.",
+      "video": {
+        "id": "AjCCGN2tU3Q",
+        "title": "How To: Standing Lat Pushdown (Cable Machine)",
+        "channel": "ScottHermanFitness",
+        "length": "1:50"
+      }
     },
     {
       "key": "inverted_row",
@@ -416,7 +528,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set a bar in a rack at about waist height, lie underneath it and grip it a little wider than your shoulders with your heels on the floor and your body straight. Pull your chest up to the bar by driving your elbows back, pause, then lower yourself slowly until your arms are straight. Letting your hips sag towards the floor is the usual fault; squeeze your glutes and keep a straight line from head to heels.",
+      "video": {
+        "id": "11F_O_sZ1Z4",
+        "title": "How to Perform the Inverted Row | Back | Exercise Tutorial",
+        "channel": "Buff Dudes Workouts",
+        "length": "1:16"
+      }
     },
     {
       "key": "barbell_row",
@@ -441,7 +560,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand with the bar over the middle of your feet, hinge at the hips with a flat back until your torso is around 45 degrees, and grip the bar just outside your knees. Pull the bar towards your lower ribs by driving your elbows back, squeeze, then lower it under control. The common mistake is standing up more with each rep and rounding the lower back; set your torso angle and hold it.",
+      "video": {
+        "id": "T3N-TO4reLQ",
+        "title": "How to do Barbell Rows PROPERLY for a Big Back (AVOID MISTAKES!)",
+        "channel": "ATHLEAN-X™",
+        "length": "10:39"
+      }
     },
     {
       "key": "pendlay_row",
@@ -466,7 +592,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set up as for a barbell row but with the bar on the floor and your torso parallel to the ground, back flat and arms straight. Pull the bar explosively to your lower chest, then lower it all the way back to the floor and pause before the next rep. Do not let your torso rise as you row, as that makes it a different exercise; the whole point is that each rep starts dead from the floor.",
+      "video": {
+        "id": "axoeDmW0oAY",
+        "title": "How To Build a Thick Back With Perfect Rowing Technique (Pendlay Row/ Helms Row)",
+        "channel": "Jeff Nippard",
+        "length": "8:30"
+      }
     },
     {
       "key": "lat_pulldown",
@@ -490,7 +623,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set the thigh pad so your legs are locked in, grip the bar a little wider than your shoulders and sit tall with your chest up. Pull the bar down to your upper chest by driving your elbows down and back, then let it rise slowly until your arms are fully straight. Leaning back a long way and yanking the bar down with momentum is the usual mistake; a small lean is fine but the movement should come from your back.",
+      "video": {
+        "id": "SALxEARiMkw",
+        "title": "How to do Lat Pulldowns (AVOID MISTAKES!)",
+        "channel": "ATHLEAN-X™",
+        "length": "5:55"
+      }
     },
     {
       "key": "assisted_pull_up",
@@ -514,7 +654,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Kneel or stand on the assistance platform, set the counterweight so the reps are hard but doable, and grip the bar a little wider than your shoulders. Pull yourself up until your chin passes the bar, then come down slowly to a full hang with straight arms. Setting the assistance so high that the reps are easy defeats the purpose, so reduce it a little each week.",
+      "video": {
+        "id": "wFj808u2HWU",
+        "title": "How To Use The Assisted Pull Up Machine",
+        "channel": "PureGym",
+        "length": "1:12"
+      }
     },
     {
       "key": "pull_up",
@@ -539,7 +686,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Hang from the bar with your hands a little wider than your shoulders, palms facing away and your arms fully straight. Pull your shoulders down first, then drive your elbows towards your ribs until your chin clears the bar, and lower yourself slowly all the way back down. Kicking your legs and swinging to get up is the classic mistake; if you cannot do a strict rep, use a band or the assisted machine instead.",
+      "video": {
+        "id": "XB_7En-zf_M",
+        "title": "How to do a Perfect Pullup",
+        "channel": "FitnessFAQs",
+        "length": "2:24"
+      }
     },
     {
       "key": "dumbbell_pullover",
@@ -564,7 +718,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie across or along a flat bench holding one dumbbell with both hands above your chest, arms slightly bent. Lower the dumbbell in an arc behind your head until you feel a stretch through your lats and chest, then pull it back over your chest along the same path. Bending your elbows more as the weight goes back is the common fault; keep the elbow angle fixed and let your hips drop a little to increase the stretch.",
+      "video": {
+        "id": "b-Nsz0MNEy4",
+        "title": "How To Perform Proper Form In The DB Pullover For Chest or Lats",
+        "channel": "Citizen Athletics",
+        "length": "9:36"
+      }
     },
     {
       "key": "db_lateral_raise",
@@ -586,7 +747,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand with a dumbbell in each hand at your sides and a slight forward lean from the hips. Raise your arms out to the sides, leading with your elbows, until your hands reach shoulder height, then lower them slowly. Using momentum from your legs and shrugging the shoulders up towards your ears are the common faults; go lighter than you think and keep your traps relaxed.",
+      "video": {
+        "id": "3VcKaXpzqRo",
+        "title": "How To: Dumbbell Side Lateral Raise",
+        "channel": "ScottHermanFitness",
+        "length": "1:55"
+      }
     },
     {
       "key": "cable_lateral_raise",
@@ -608,7 +776,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set a pulley to its lowest position, stand side on to the machine and hold the handle in the hand furthest from it. Raise the handle out to the side until your arm is level with your shoulder, pause briefly, then lower it slowly. Do not let your torso lean away from the cable to help the weight up; keep your body upright and let the shoulder do the work.",
+      "video": {
+        "id": "Sp8be0IFNvk",
+        "title": "How to Fix your Cable Lateral Raise | DB vs. CABLE",
+        "channel": "John Jewett",
+        "length": "4:51"
+      }
     },
     {
       "key": "machine_lateral_raise",
@@ -630,7 +805,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Adjust the seat so the pads rest just above your elbows and your shoulders line up with the machine pivot. Push your arms out to the sides until they reach shoulder height, pause, then lower them under control. Raising your shoulders towards your ears is the usual mistake, so keep them down and relaxed the whole time.",
+      "video": {
+        "id": "0FUpcwj_1z4",
+        "title": "How to do Shoulders Front Machine Side Lateral Raise correctly. Abawi Fit",
+        "channel": "Abawi Fit",
+        "length": "1:05"
+      }
     },
     {
       "key": "upright_row",
@@ -655,7 +837,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Attach a straight bar to a low cable, stand close to the machine and hold the bar with your hands just wider than your shoulders. Pull the bar up towards your chest by leading with your elbows, keeping them higher than your hands, then lower it slowly. Gripping too narrow and pulling too high pinches the shoulders, so stop at chest height and widen your grip if you feel any discomfort.",
+      "video": {
+        "id": "nwkLwMRHMQo",
+        "title": "How To Fix The Upright Row: Avoid Shoulder Pain & Maximize Growth",
+        "channel": "Jeff Nippard",
+        "length": "7:27"
+      }
     },
     {
       "key": "cable_pushdown",
@@ -677,7 +866,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand facing a high cable with the bar or rope in your hands and your elbows tucked into your sides. Push the handle down until your arms are straight, squeeze your triceps at the bottom, then let it rise only as far as chest height. The usual fault is letting your elbows drift forward and using your shoulders to push, so keep them pinned to your ribs.",
+      "video": {
+        "id": "_w-HpW70nSQ",
+        "title": "HOW TO: Cable Triceps Pushdown || 3 Golden Rules (FOR GROWTH)",
+        "channel": "ScottHermanFitness",
+        "length": "4:31"
+      }
     },
     {
       "key": "overhead_cable_extension",
@@ -699,7 +895,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Attach a rope to a low or mid height pulley, grab it with both hands and turn so your back faces the machine with the rope behind your head. Step forward into a split stance, then extend your arms forward and up until they are straight, and return slowly until you feel a stretch in your triceps. Letting your elbows flare out wide is the common mistake; keep them pointing forward and close to your head.",
+      "video": {
+        "id": "GzmlxvSFE7A",
+        "title": "How to PROPERLY Overhead Cable Tricep Extension | Fix Your Tricep Extension Form NOW!",
+        "channel": "Colossus Fitness",
+        "length": "3:43"
+      }
     },
     {
       "key": "assisted_dip",
@@ -724,7 +927,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Kneel on the platform of the assisted dip machine, set the counterweight so you can complete every rep with control and grip the handles with your arms straight. Lower yourself until your elbows reach about 90 degrees, keeping your torso fairly upright, then press back up to straight arms. Dropping too far and letting your shoulders roll forward is the usual fault, so stop when your upper arms are level with the floor.",
+      "video": {
+        "id": "vi1-BOcj3cQ",
+        "title": "Are You Doing Dips Properly? (AVOID MISTAKES!)",
+        "channel": "ATHLEAN-X™",
+        "length": "5:03"
+      }
     },
     {
       "key": "skull_crusher",
@@ -746,7 +956,14 @@
       "min_load_kg": 10,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on a flat bench holding an EZ bar or barbell straight above your shoulders with a narrow grip. Bend only at the elbows to lower the bar towards your forehead or just behind it, then extend your arms back to the start. Letting your elbows flare out or drift back turns it into a pullover; keep them pointing up and steady.",
+      "video": {
+        "id": "d_KZxkY_0cM",
+        "title": "How To: Skull Crushers",
+        "channel": "ScottHermanFitness",
+        "length": "2:34"
+      }
     },
     {
       "key": "db_overhead_extension",
@@ -768,7 +985,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit or stand with a dumbbell in each hand pressed straight overhead, elbows close to your head. Bend at the elbows to lower the dumbbells behind your head until your forearms are past parallel, then extend your arms back up and squeeze your triceps. The common mistake is letting your elbows drift out wide, so keep them tucked in and pointing forward.",
+      "video": {
+        "id": "fYqswDVbJDg",
+        "title": "HOW TO: Overhead Triceps Extension (BEST EXERCISE FOR HUGE TRICEPS) || PERFECT FORM (POWERBOMB)",
+        "channel": "ScottHermanFitness",
+        "length": "3:22"
+      }
     },
     {
       "key": "triceps_kickback",
@@ -790,7 +1014,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Hinge forward from the hips with a flat back, brace your free hand on a bench and hold a dumbbell with your upper arm tucked against your side and parallel to the floor. Straighten your arm behind you until it is fully extended, pause, then bend back to 90 degrees. Swinging the upper arm and dropping the elbow to lift more weight is the classic fault; keep the upper arm still and use a light dumbbell.",
+      "video": {
+        "id": "m9me06UBPKc",
+        "title": "How to Perform Dumbbell Triceps Kickback Exercise",
+        "channel": "Buff Dudes",
+        "length": "1:53"
+      }
     },
     {
       "key": "cable_curl",
@@ -812,7 +1043,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Attach a bar to a low pulley, stand close with your feet hip width apart and hold the bar with an underhand grip and your arms straight. Curl the bar up towards your shoulders by bending only at the elbows, squeeze your biceps, then lower it slowly until your arms are straight again. Do not swing your hips or lean back to move the weight; keep your elbows by your sides and your body still.",
+      "video": {
+        "id": "AsAVbj7puKo",
+        "title": "How To: Outside Grip Cable EZ-Curls (LF Cable)",
+        "channel": "ScottHermanFitness",
+        "length": "1:51"
+      }
     },
     {
       "key": "hammer_curl",
@@ -834,7 +1072,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand tall holding a dumbbell in each hand with your palms facing your thighs. Curl the dumbbells up towards your shoulders without turning your wrists, then lower them slowly to the start. The usual fault is swinging the body and letting the elbows drift forward, so keep the elbows tucked and the movement controlled.",
+      "video": {
+        "id": "8XLxfXROrTo",
+        "title": "HOW TO: Dumbbell Hammer Curl (BICEPS PEAK BUILDER!) || PERFECT FORM",
+        "channel": "ScottHermanFitness",
+        "length": "3:03"
+      }
     },
     {
       "key": "db_curl",
@@ -856,7 +1101,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand with a dumbbell in each hand at your sides, palms facing forward and elbows tucked against your ribs. Curl the dumbbells up to your shoulders, turning your palms to face the ceiling as you lift, then lower them slowly until your arms are fully straight. Rocking your torso and using momentum is the most common mistake; if you cannot do the rep without swinging, drop the weight.",
+      "video": {
+        "id": "sAq_ocpRh_I",
+        "title": "How To: Alternating Dumbbell Curl",
+        "channel": "ScottHermanFitness",
+        "length": "1:20"
+      }
     },
     {
       "key": "ez_bar_curl",
@@ -878,7 +1130,14 @@
       "min_load_kg": 10,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand holding an EZ bar with your hands on the angled sections, palms up and your elbows tucked into your sides. Curl the bar up to shoulder height without letting your elbows move forward, then lower it slowly until your arms are straight. Leaning back and swinging the bar up is the usual fault, so keep your torso still and stand tall.",
+      "video": {
+        "id": "zG2xJ0Q5QtI",
+        "title": "How To: Inside-Grip Bicep Curl With E-Z Bar Curl",
+        "channel": "ScottHermanFitness",
+        "length": "1:40"
+      }
     },
     {
       "key": "incline_db_curl",
@@ -900,7 +1159,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set a bench to about 45 degrees, sit back with a dumbbell in each hand and let your arms hang straight down behind you. Curl the dumbbells up without letting your upper arms move forward, then lower them slowly until your arms are fully extended. Shifting your shoulders forward to shorten the movement is the common fault; keep your shoulders back against the bench and feel the stretch at the bottom.",
+      "video": {
+        "id": "DCe8f6vMe9A",
+        "title": "Stop Screwing Up Incline Dumbbell Curls (PROPER FORM!)",
+        "channel": "ATHLEAN-X™",
+        "length": "5:05"
+      }
     },
     {
       "key": "concentration_curl",
@@ -922,7 +1188,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit on a bench with your legs apart, hold a dumbbell in one hand and rest the back of that upper arm against your inner thigh. Curl the dumbbell up to your shoulder, squeeze your biceps at the top, then lower it slowly until your arm is straight. Rocking your body or letting your elbow slide off your thigh is the usual mistake, so keep the arm locked in place.",
+      "video": {
+        "id": "Jvj2wV0vOYU",
+        "title": "How To: Dumbbell Concentration Curl",
+        "channel": "ScottHermanFitness",
+        "length": "1:41"
+      }
     },
     {
       "key": "face_pull",
@@ -946,7 +1219,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set a rope on a cable at about face height, grip it with your palms facing in and step back until your arms are straight. Pull the rope towards your face while spreading your hands apart, so your elbows finish high and wide and your hands end up beside your ears, then return slowly. Using too much weight and pulling to your chest is the common fault; keep it light and lead with your elbows.",
+      "video": {
+        "id": "ljgqer1ZpXg",
+        "title": "STOP F*cking Up Face Pulls (PROPER FORM!)",
+        "channel": "ATHLEAN-X™",
+        "length": "6:22"
+      }
     },
     {
       "key": "reverse_fly_machine",
@@ -970,7 +1250,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Adjust the seat so the handles are at shoulder height and sit facing the pad with your chest against it. With a slight bend in your elbows, sweep your arms back and out until they are level with your shoulders, squeeze your shoulder blades, then return slowly. Swinging the weight and letting the stack slam down is the usual mistake; use a load you can control both ways.",
+      "video": {
+        "id": "6yMdhi2DVao",
+        "title": "How To Properly Use The Rear Delt Fly Machine (+ BONUS TIP)",
+        "channel": "Mind Pump TV",
+        "length": "6:12"
+      }
     },
     {
       "key": "rear_delt_row",
@@ -994,7 +1281,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Hinge forward from the hips until your torso is roughly parallel to the floor, holding a dumbbell in each hand with your arms hanging straight down. Row the dumbbells up and out with your elbows flared wide, so your hands stay in line with your elbows, then lower slowly. Pulling the elbows tight to your sides is the common fault, as that turns it into a back row rather than a rear delt exercise.",
+      "video": {
+        "id": "uIdXVGjcfFE",
+        "title": "Cable Rear Delt Row | How to Target Rear Delts in a Row",
+        "channel": "Physique Development",
+        "length": "3:17"
+      }
     },
     {
       "key": "back_squat",
@@ -1020,7 +1314,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set the bar at upper chest height, step under it so it rests across your upper back, brace and step back with your feet about shoulder width apart and toes turned out slightly. Take a breath, push your hips back and bend your knees to sit down until your thighs are at least parallel, then drive through your whole foot to stand up. Letting your knees cave inwards is the classic mistake, so push them out in line with your toes the whole way.",
+      "video": {
+        "id": "my0tLDaWyDU",
+        "title": "How To Squat Correctly (NO BACK PAIN)",
+        "channel": "Squat University",
+        "length": "7:38"
+      }
     },
     {
       "key": "front_squat",
@@ -1045,7 +1346,14 @@
       "min_load_kg": 20,
       "variation_of": "back_squat",
       "carry": 0.8,
-      "mets": null
+      "mets": null,
+      "how_to": "Rest the bar across the front of your shoulders with your elbows high and your fingertips under the bar, then step back with feet about shoulder width apart. Sit straight down with your torso as upright as you can, then drive up while keeping your elbows lifted. Letting your elbows drop is the common fault, because the bar then rolls forward and pulls you off balance.",
+      "video": {
+        "id": "v-mQm_droHg",
+        "title": "HOW TO FRONT SQUAT: Build Bigger Quads & A Stronger Squat",
+        "channel": "Jeff Nippard",
+        "length": "8:57"
+      }
     },
     {
       "key": "leg_press",
@@ -1070,7 +1378,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit in the machine with your back and hips pressed into the pad and your feet shoulder width apart in the middle of the platform. Release the safeties, lower the platform until your knees reach about 90 degrees, then push it away through your whole foot without locking your knees out. Lowering so far that your lower back rounds and your hips lift off the pad is the usual mistake, so stop before that happens.",
+      "video": {
+        "id": "IZxyjW7MPJQ",
+        "title": "How To: Seated Leg Press (Cybex)",
+        "channel": "ScottHermanFitness",
+        "length": "2:36"
+      }
     },
     {
       "key": "hack_squat",
@@ -1094,7 +1409,14 @@
       "min_load_kg": null,
       "variation_of": "leg_press",
       "carry": 0.5,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand on the platform with your shoulders under the pads, your back flat against the machine and your feet about shoulder width apart. Release the safeties and squat down until your thighs are at least level with the platform, then push up through your heels and midfoot without slamming into lockout. Placing your feet too low on the platform is a common mistake, as it pushes your knees far forward and strains them.",
+      "video": {
+        "id": "0tn5K9NlCfo",
+        "title": "Hack Squat | Exercise Guide",
+        "channel": "Bodybuilding.com",
+        "length": "1:23"
+      }
     },
     {
       "key": "goblet_squat",
@@ -1119,7 +1441,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Hold a single dumbbell upright at your chest with both hands cupping the top end, feet a little wider than shoulder width with toes turned out. Sit down between your hips until your elbows pass inside your knees, keeping your chest up, then stand back up and squeeze your glutes. Letting your heels lift off the floor is the common fault; if that happens, turn your toes out more or rest your heels on a small plate.",
+      "video": {
+        "id": "MeIiIdhvXT4",
+        "title": "How To: Goblet Squat",
+        "channel": "ScottHermanFitness",
+        "length": "3:12"
+      }
     },
     {
       "key": "romanian_deadlift",
@@ -1144,7 +1473,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand tall with the bar resting against your thighs, feet hip width apart and a slight bend in your knees. Push your hips straight back and let the bar slide down your legs with a flat back until you feel a strong stretch in your hamstrings, then drive your hips forward to stand tall. Bending the knees too much and turning it into a regular deadlift is the usual mistake; the knees stay almost fixed and the movement comes from the hips.",
+      "video": {
+        "id": "5zmlnbWb-g4",
+        "title": "Stop F*cking Up RDL's (PROPER FORM!)",
+        "channel": "ATHLEAN-X™",
+        "length": "5:51"
+      }
     },
     {
       "key": "dumbbell_romanian_deadlift",
@@ -1169,7 +1505,14 @@
       "min_load_kg": null,
       "variation_of": "romanian_deadlift",
       "carry": 0.45,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand with a dumbbell in each hand resting against the front of your thighs, feet hip width apart and knees slightly bent. Push your hips back and let the dumbbells travel down close to your legs until your hamstrings feel tight, then stand up by pushing your hips forward. Rounding your back and letting the dumbbells drift away from your legs is the common fault; keep them brushing your shins.",
+      "video": {
+        "id": "FQKfr1YDhEk",
+        "title": "How To: Dumbbell Romanian Deadlift",
+        "channel": "ScottHermanFitness",
+        "length": "1:59"
+      }
     },
     {
       "key": "trap_bar_deadlift",
@@ -1195,7 +1538,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand inside the trap bar with your feet hip width apart, bend down and grip the handles in the middle, then lift your chest and flatten your back. Push the floor away with your legs and stand up tall, keeping your arms straight, then lower it back to the floor by pushing your hips back. Rounding your upper back or letting your hips shoot up before the bar moves is the usual mistake, so brace hard before you pull.",
+      "video": {
+        "id": "WzvsIU9FW60",
+        "title": "Trap Bar Deadlifts (How to)",
+        "channel": "Trainer Hub",
+        "length": "2:38"
+      }
     },
     {
       "key": "barbell_deadlift",
@@ -1221,7 +1571,14 @@
       "min_load_kg": 20,
       "variation_of": "trap_bar_deadlift",
       "carry": 0.9,
-      "mets": null
+      "mets": null,
+      "how_to": "Walk up to the bar so it sits over the middle of your feet, hinge down and grip it just outside your legs, then pull your chest up and flatten your back. Take the slack out of the bar, brace your abs and push the floor away, keeping the bar close to your legs until you stand tall with your hips locked out. Rounding the lower back and letting the bar drift away from you are the common faults, so keep it dragging along your shins and thighs.",
+      "video": {
+        "id": "XxWcirHIwVo",
+        "title": "How to PROPERLY Deadlift for Growth (5 Easy Steps)",
+        "channel": "Jeremy Ethier",
+        "length": "8:03"
+      }
     },
     {
       "key": "sumo_deadlift",
@@ -1247,7 +1604,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Take a wide stance with your toes pointed out, grip the bar inside your knees and lower your hips until your shins are vertical and your chest is up. Push the floor apart with your feet and drive your hips forward to stand tall, then lower the bar under control. Letting your hips rise before your shoulders is the common fault, so keep your chest up and think of pushing the knees out as you stand.",
+      "video": {
+        "id": "XsrD5y8EIKU",
+        "title": "The Most Effective Way to Deadlift for Muscle and Strength (Sumo Technique Explained)",
+        "channel": "Jeff Nippard",
+        "length": "10:55"
+      }
     },
     {
       "key": "good_morning",
@@ -1272,7 +1636,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set a bar across your upper back as for a squat, stand with your feet hip width apart and soften your knees. Push your hips straight back and hinge forward with a flat back until your torso is close to parallel, then drive your hips forward to return to standing. Rounding the back or going too heavy is the usual mistake; this is a light exercise done for control, not for load.",
+      "video": {
+        "id": "f23vXjoG2e8",
+        "title": "HOW TO DO THE GOOD MORNING EXERCISE: Build Your Glutes, Hamstrings And Squat With Perfect Technique",
+        "channel": "Jeff Nippard",
+        "length": "7:16"
+      }
     },
     {
       "key": "bulgarian_split_squat",
@@ -1296,7 +1667,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand a stride length in front of a bench and rest the top of your back foot on it, holding a dumbbell in each hand. Lower straight down until your front thigh is about parallel to the floor and your back knee hovers near the ground, then push up through the heel of your front foot. Leaning too far forward or letting the front knee cave in is the common fault; keep your torso upright and your knee tracking over your toes.",
+      "video": {
+        "id": "hiLF_pF3EJM",
+        "title": "Stop F*cking Up Bulgarian Split Squats (PROPER FORM!)",
+        "channel": "ATHLEAN-X™",
+        "length": "4:48"
+      }
     },
     {
       "key": "walking_lunge",
@@ -1321,7 +1699,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand tall with a dumbbell in each hand and take a long step forward, lowering your back knee towards the floor until both knees are at about 90 degrees. Push through the front foot to bring your back leg through into the next step, and keep alternating. Taking steps that are too short is the usual mistake, as it drives the front knee far past your toes; step long enough that your front shin stays fairly upright.",
+      "video": {
+        "id": "Pbmj6xPo-Hw",
+        "title": "Walking Lunges Exercise Tutorial | Build Legendary Legs & Cardio",
+        "channel": "Buff Dudes Workouts",
+        "length": "1:50"
+      }
     },
     {
       "key": "reverse_lunge",
@@ -1346,7 +1731,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand tall holding a dumbbell in each hand and step one foot straight back, lowering that knee towards the floor until your front thigh is about parallel. Drive through your front foot to return to standing, then repeat on the same side or alternate. Letting your torso fold forward is the common fault, so keep your chest tall and your front shin upright.",
+      "video": {
+        "id": "7pwO2gemRyg",
+        "title": "Exercise Technique - Reverse Lunge",
+        "channel": "DTS Fitness Education",
+        "length": "1:34"
+      }
     },
     {
       "key": "lateral_lunge",
@@ -1370,7 +1762,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand with your feet together holding one dumbbell at your chest or one in each hand, then step wide to one side and sit back into that hip, bending the knee while keeping the other leg straight. Push off the bent leg to return to the start, then repeat on the same side before switching. Letting the heel of the bent leg lift or the knee roll inwards is the usual mistake; keep both feet flat and sit back rather than forward.",
+      "video": {
+        "id": "liFeq7swKfc",
+        "title": "Side (Lateral) Lunge Technique",
+        "channel": "Mind Pump TV",
+        "length": "5:45"
+      }
     },
     {
       "key": "leg_extension",
@@ -1392,7 +1791,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit in the machine with your back against the pad, your knees lined up with the machine pivot and the ankle pad resting just above your feet. Straighten your legs until they are fully extended, pause for a moment, then lower the weight slowly. Letting the stack drop and bounce is the common fault, so control the lowering phase as much as the lift.",
+      "video": {
+        "id": "ljO4jkwv8wQ",
+        "title": "How To Do Leg Extensions With Perfect Technique (Grow Every Quad Head)",
+        "channel": "Jeff Nippard",
+        "length": "6:37"
+      }
     },
     {
       "key": "step_up",
@@ -1416,7 +1822,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand facing a box or bench at about knee height with a dumbbell in each hand and place your whole foot flat on top. Push through that foot until you are standing tall on the box, bring your other foot up to meet it, then step back down slowly with control. Pushing off the trailing foot to bounce yourself up is the usual mistake; the leg on the box should do all the work.",
+      "video": {
+        "id": "WCFCdxzFBa4",
+        "title": "How to do the STEP UP: technique and common mistakes",
+        "channel": "Get Exercise Confident",
+        "length": "2:52"
+      }
     },
     {
       "key": "wall_sit",
@@ -1439,7 +1852,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lean your back flat against a wall and slide down until your thighs are parallel to the floor, with your knees directly above your ankles. Keep your feet flat and hold the position for the set time, breathing steadily. Letting your knees drift past your toes or sliding your feet inwards makes it easier but strains the knees, so keep the shins vertical.",
+      "video": {
+        "id": "y-wV4Venusw",
+        "title": "How To: Wall-Sit",
+        "channel": "ScottHermanFitness",
+        "length": "2:01"
+      }
     },
     {
       "key": "lying_leg_curl",
@@ -1461,7 +1881,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie face down on the machine with the pad resting just above your heels and your knees hanging just off the end of the bench. Curl your heels up towards your glutes as far as you can, squeeze, then lower slowly back to straight legs. Lifting your hips off the pad to heave the weight is the common fault, so press them down throughout.",
+      "video": {
+        "id": "1Tq3QdYUuHs",
+        "title": "How To: Prone Leg Curl (Cybex)",
+        "channel": "ScottHermanFitness",
+        "length": "1:38"
+      }
     },
     {
       "key": "seated_leg_curl",
@@ -1483,7 +1910,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit in the machine with your back against the pad, the thigh pad snug over your legs and the ankle pad just above your heels. Curl your heels down and back beneath the seat as far as they will go, then let your legs come back up slowly while you resist the weight. Letting the weight yank your legs back up is the usual mistake, so keep the return slow and controlled.",
+      "video": {
+        "id": "ELOCsoDSmrg",
+        "title": "How To: Seated Leg Curl (Cybex)",
+        "channel": "ScottHermanFitness",
+        "length": "3:10"
+      }
     },
     {
       "key": "nordic_curl",
@@ -1507,7 +1941,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Kneel on a pad with your ankles held firmly by a partner, a bar or a Nordic bench, and keep your hips straight so your body is one line from knees to head. Lower your torso forward as slowly as you can using your hamstrings as a brake, catching yourself with your hands on the floor, then push back up with a little help from your arms if needed. Bending at the hips to make it easier is the common fault; keep your hips locked and let the hamstrings do the work.",
+      "video": {
+        "id": "6NCN6kOagfY",
+        "title": "How to Do a Nordic Hamstring Curl",
+        "channel": "The Kneesovertoesguy",
+        "length": "4:48"
+      }
     },
     {
       "key": "hip_thrust",
@@ -1531,7 +1972,14 @@
       "min_load_kg": 20,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit on the floor with your upper back against a bench, roll a padded bar over your hips and plant your feet flat about hip width apart. Drive through your heels to lift your hips until your body is straight from shoulders to knees with your shins vertical, squeeze your glutes hard, then lower slowly. Arching the lower back and looking up at the ceiling is the usual mistake, so keep your chin tucked and your ribs down at the top.",
+      "video": {
+        "id": "xDmFkJxPzeM",
+        "title": "How To Build Great Glutes with Perfect Hip Thrust Technique (Fix Mistakes!)",
+        "channel": "Jeff Nippard",
+        "length": "7:12"
+      }
     },
     {
       "key": "cable_pull_through",
@@ -1555,7 +2003,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set a rope on the lowest pulley, face away from the machine and hold the rope between your legs, then step forward until the cable has tension. Push your hips back and hinge forward with a flat back until you feel a stretch in your hamstrings, then drive your hips forward to stand tall and squeeze your glutes. Pulling with your arms or rounding your back are the common faults; your arms just hold the rope while the hips do the work.",
+      "video": {
+        "id": "4oZ_0_bQcOg",
+        "title": "How to Do Cable Pull Throughs",
+        "channel": "Chris and Eric Martinez",
+        "length": "1:23"
+      }
     },
     {
       "key": "glute_kickback",
@@ -1579,7 +2034,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Strap an ankle cuff to a low cable, face the machine and hold the frame for balance with a slight forward lean. Kick the working leg back and slightly up, squeezing the glute at the top, then bring it back slowly with control. Arching the lower back to kick higher is the usual mistake, so brace your abs and stop when the glute is fully contracted.",
+      "video": {
+        "id": "5jJNfIlKTmg",
+        "title": "How to PROPERLY Cable Glute Kickback (GROW YOUR GLUTES)",
+        "channel": "Colossus Fitness",
+        "length": "3:12"
+      }
     },
     {
       "key": "glute_bridge",
@@ -1604,7 +2066,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on your back with your knees bent, feet flat on the floor about hip width apart and your arms by your sides. Push through your heels to lift your hips until your body is a straight line from shoulders to knees, squeeze your glutes at the top, then lower slowly. Pushing so high that your lower back arches is the common fault; stop when your hips are in line and think about tucking the pelvis.",
+      "video": {
+        "id": "8bbE64NuDTU",
+        "title": "How To: Glute Bridge",
+        "channel": "ScottHermanFitness",
+        "length": "2:44"
+      }
     },
     {
       "key": "standing_calf_raise",
@@ -1626,7 +2095,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set your shoulders under the pads with the balls of your feet on the edge of the platform and your heels hanging off. Rise up onto your toes as high as you can, pause at the top, then lower your heels slowly below the platform until you feel a stretch. Bouncing at the bottom and using the stretch reflex to lift is the usual mistake, so pause briefly at both ends of the rep.",
+      "video": {
+        "id": "-M4-G8p8fmc",
+        "title": "How to Do a Calf Raise | Sexy Legs Workout",
+        "channel": "Howcast",
+        "length": "1:51"
+      }
     },
     {
       "key": "single_leg_calf_raise",
@@ -1648,7 +2124,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Stand on the edge of a step on one foot with your heel hanging off, holding a rail or wall for balance. Rise up onto your toes as high as you can, pause, then lower your heel slowly below the step until you feel a stretch in your calf. Rushing through short bouncy reps is the common fault; go slowly through the full range on each rep.",
+      "video": {
+        "id": "ORT4oJ_R8Qs",
+        "title": "How To: Single-Leg Calf Raise",
+        "channel": "ScottHermanFitness",
+        "length": "1:47"
+      }
     },
     {
       "key": "seated_calf_raise",
@@ -1670,7 +2153,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit in the machine with the balls of your feet on the platform and the pad snug across your lower thighs. Press through the balls of your feet to raise the pad as high as it will go, pause, then lower your heels slowly until your calves are fully stretched. Using too much weight and cutting the range short is the usual mistake, so drop the load and use the whole range.",
+      "video": {
+        "id": "JbyjNymZOt0",
+        "title": "How to Do Seated Calf Raises",
+        "channel": "LIVESTRONG",
+        "length": "1:59"
+      }
     },
     {
       "key": "leg_press_calf_raise",
@@ -1692,7 +2182,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit in the leg press with your legs straight but not locked and only the balls of your feet on the bottom edge of the platform. Push the platform away by pointing your toes as far as you can, pause, then let your heels drop back slowly to a full stretch. Letting your feet slip off the platform is the danger, so keep the safety catches in place and stay in control.",
+      "video": {
+        "id": "Hu8i9d_IgpM",
+        "title": "How To Do Calf Raises On Leg Press Machine [best exercise for big calfs]",
+        "channel": "David Duncan",
+        "length": "1:58"
+      }
     },
     {
       "key": "plank",
@@ -1716,7 +2213,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie face down, then prop yourself up on your forearms and toes with your elbows directly under your shoulders. Squeeze your glutes, pull your ribs down towards your hips and hold your body in one straight line from head to heels while breathing steadily. Letting your hips sag towards the floor or piking them up in the air are the usual faults; if your form breaks, stop the set.",
+      "video": {
+        "id": "pSHjTRCQxIw",
+        "title": "How To: Plank",
+        "channel": "ScottHermanFitness",
+        "length": "1:17"
+      }
     },
     {
       "key": "dead_bug",
@@ -1738,7 +2242,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on your back with your arms pointing at the ceiling and your knees bent above your hips, then press your lower back into the floor. Slowly lower one arm overhead and the opposite leg towards the floor, stop before your back lifts, then return and swap sides. Letting the lower back arch off the floor is the common fault; if it does, shorten the range until you can keep it pressed down.",
+      "video": {
+        "id": "4XLEnwUr1d8",
+        "title": "Dead Bug - Abdominal / Core Exercise Guide",
+        "channel": "Bodybuilding.com",
+        "length": "1:13"
+      }
     },
     {
       "key": "cable_crunch",
@@ -1760,7 +2271,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Attach a rope to a high pulley, kneel facing the machine and hold the rope at either side of your head. Crunch down by rounding your spine and bringing your elbows towards your knees, then return slowly to the start. Pulling with your arms or bending at the hips instead of the spine is the usual mistake; keep your hips still and move only your torso.",
+      "video": {
+        "id": "AV5PmZJIrrw",
+        "title": "How to PROPERLY Cable Crunch to Shape Your Abs (How to Kneeling Cable Abdominal Crunch)",
+        "channel": "Colossus Fitness",
+        "length": "4:52"
+      }
     },
     {
       "key": "hanging_knee_raise",
@@ -1782,7 +2300,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Hang from a pull up bar with your arms straight and your shoulders pulled down away from your ears. Lift your knees up towards your chest, curling your hips forward at the top, then lower your legs slowly to the start. Swinging to build momentum is the common fault, so pause at the bottom of each rep until the swing stops.",
+      "video": {
+        "id": "X-ACS9vpRyU",
+        "title": "How To: Hanging Knee / Leg Raise | BUILD A “SCIENCED BASED” 6-PACK!",
+        "channel": "ScottHermanFitness",
+        "length": "7:11"
+      }
     },
     {
       "key": "pallof_press",
@@ -1806,7 +2331,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set a cable handle at chest height, stand side on to the machine and hold the handle with both hands at your chest, then step out so the cable is tight. Press your arms straight out in front of you, hold for a moment while the cable tries to twist you, then bring your hands back to your chest. Letting your hips or shoulders rotate towards the machine is the usual mistake, so brace your abs and keep everything square.",
+      "video": {
+        "id": "5_8d8vHgZvU",
+        "title": "Pallof Press - How To Do Pallof Presses + Variations",
+        "channel": "Girls Gone Strong | Women's Health & Fitness",
+        "length": "1:58"
+      }
     },
     {
       "key": "ab_wheel",
@@ -1830,7 +2362,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Kneel on a mat holding the ab wheel on the floor under your shoulders, with your hips slightly tucked and your abs braced. Roll the wheel forward slowly as far as you can without your back sagging, then pull it back by tightening your abs. Letting your lower back arch as you reach out is the common fault, so shorten the range until you can keep your spine neutral.",
+      "video": {
+        "id": "rqiTPdK1c_I",
+        "title": "Ab Wheel- How to PROPERLY Use an Ab Wheel | MIND PUMP",
+        "channel": "Mind Pump TV",
+        "length": "3:36"
+      }
     },
     {
       "key": "side_plank",
@@ -1854,7 +2393,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on your side with your elbow directly under your shoulder and your feet stacked or staggered on the floor. Raise your hips until your body is a straight line from head to feet and hold for the set time, then repeat on the other side. Letting your hips drop towards the floor or rolling forward is the usual mistake, so keep your body stacked.",
+      "video": {
+        "id": "NXr4Fw8q60o",
+        "title": "How to Do a Side Plank | Ab Workout",
+        "channel": "Howcast",
+        "length": "1:54"
+      }
     },
     {
       "key": "bird_dog",
@@ -1879,7 +2425,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Start on your hands and knees with your hands under your shoulders, your knees under your hips and your back flat. Reach one arm forward and the opposite leg back until they are level with your torso, pause, then return slowly and swap sides. Twisting your hips or arching your back to lift the leg higher is the common fault; keep your hips level and your spine still.",
+      "video": {
+        "id": "xEDnlOxeJH4",
+        "title": "How to Do the Bird Dog Exercise: A Guide from Physical Therapists",
+        "channel": "Hinge Health",
+        "length": "1:24"
+      }
     },
     {
       "key": "mountain_climber",
@@ -1904,7 +2457,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Start in a push up position with your hands under your shoulders and your body in a straight line. Drive one knee towards your chest, return it, then drive the other knee in, keeping a steady rhythm for the set time. Letting your hips bounce up and down is the usual mistake, so keep them low and level while your legs move.",
+      "video": {
+        "id": "ixxk9Qfn61o",
+        "title": "How To Perform Mountain Climbers - Exercise Tutorial",
+        "channel": "Buff Dudes",
+        "length": "2:11"
+      }
     },
     {
       "key": "bicycle_crunch",
@@ -1926,7 +2486,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on your back with your hands lightly behind your head and your knees bent above your hips. Bring one elbow towards the opposite knee as you straighten the other leg, then switch sides in a slow controlled pedalling motion. Yanking on your neck with your hands is the common fault, so keep your hands light and lift from your abs.",
+      "video": {
+        "id": "9FGilxCbdz8",
+        "title": "How to Do the Bicycle",
+        "channel": "LIVESTRONG",
+        "length": "1:25"
+      }
     },
     {
       "key": "farmers_carry",
@@ -1951,7 +2518,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Pick up a heavy dumbbell in each hand from the floor with a flat back and stand tall with your shoulders pulled back and down. Walk forward with short quick steps for the set time or distance, keeping your grip tight and your ribs down. Leaning to one side or letting your shoulders round forward is the usual mistake, so stay upright and look ahead.",
+      "video": {
+        "id": "NH7Xv-7NQNQ",
+        "title": "How To Perform Farmer Walks Exercise Tutorial",
+        "channel": "Buff Dudes Workouts",
+        "length": "1:30"
+      }
     },
     {
       "key": "russian_twist",
@@ -1973,7 +2547,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Sit on the floor with your knees bent, lean back slightly with your chest up and lift your feet off the floor if you can. Rotate your torso to one side, bring your hands to the floor beside your hip, then rotate to the other side with control. Rounding your back and flicking only your arms is the common fault; keep your chest tall and turn from your ribs.",
+      "video": {
+        "id": "wkD8rjkodUI",
+        "title": "How to Do a Russian Twist | Ab Workout",
+        "channel": "Howcast",
+        "length": "1:32"
+      }
     },
     {
       "key": "cable_woodchop",
@@ -1997,7 +2578,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Set the pulley high, stand side on to the machine and hold the handle with both hands above the shoulder nearest it. Pull the handle down and across your body to the opposite hip, rotating through your hips and pivoting on your back foot, then return slowly along the same path. Using only your arms and keeping your hips locked is the usual mistake; let the turn come from your hips and trunk.",
+      "video": {
+        "id": "pAplQXk3dkU",
+        "title": "How To: Oblique Twist \"Wood Chopper\" (LF CAble)",
+        "channel": "ScottHermanFitness",
+        "length": "3:14"
+      }
     },
     {
       "key": "hollow_hold",
@@ -2019,7 +2607,14 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": "Lie on your back with your arms extended overhead and your legs straight, then press your lower back firmly into the floor. Lift your shoulders and legs a few centimetres off the ground so your body forms a shallow banana shape and hold for the set time. Letting your lower back arch off the floor is the common fault; if it does, raise your legs higher or bring your arms forward to make it easier.",
+      "video": {
+        "id": "hf00_b2sRdc",
+        "title": "How to Perfect Your Hollow Hold | Form Check | Men's Health",
+        "channel": "Men's Health",
+        "length": "3:10"
+      }
     },
     {
       "key": "treadmill",
@@ -2049,6 +2644,13 @@
         "easy": 3.5,
         "moderate": 5.5,
         "vigorous": 9.0
+      },
+      "how_to": "Step onto the belt while it is stopped, clip the safety cord to your clothing and start at a slow walk before easing the speed up. Stand tall, look ahead rather than down at the console and land each foot softly under your hips with short quick steps. Holding the handrails while you walk or run is the common mistake, as it shortens your stride and throws off your posture.",
+      "video": {
+        "id": "8i3Vrd95o2k",
+        "title": "HOW TO USE A TREADMILL | Beginner's Guide",
+        "channel": "Naomi Kong",
+        "length": "3:08"
       }
     },
     {
@@ -2079,6 +2681,13 @@
         "easy": 4.0,
         "moderate": 6.8,
         "vigorous": 8.8
+      },
+      "how_to": "Set the seat height so your knee has a slight bend when the pedal is at the bottom, and set the handlebars so you can reach them without hunching. Pedal at a smooth steady cadence with your shoulders relaxed and your feet pushing down and pulling back through the whole stroke. A seat that is too low is the most common problem, as it overloads the knees and makes the pedalling feel heavy.",
+      "video": {
+        "id": "jhPqTyejY_0",
+        "title": "How to Correctly & Effectively Use Your Exercise Bike",
+        "channel": "Sunny Health & Fitness",
+        "length": "6:00"
       }
     },
     {
@@ -2108,6 +2717,13 @@
         "easy": 4.8,
         "moderate": 7.0,
         "vigorous": 10.0
+      },
+      "how_to": "Strap your feet in, grip the handle and start at the catch with your shins vertical, arms straight and your torso leaning slightly forward. Push with your legs first, then swing your torso back, then pull the handle to your lower ribs, and reverse the order on the way back: arms out, body forward, then bend the knees. Pulling with your arms before your legs have finished driving is the usual mistake, and it wrecks the rhythm.",
+      "video": {
+        "id": "H0r_ZPXJLtg",
+        "title": "How to Properly Use a Rowing Machine",
+        "channel": "GHF Training",
+        "length": "1:39"
       }
     },
     {
@@ -2130,7 +2746,9 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": null,
+      "video": null
     },
     {
       "key": "dynamic_warmup_lower",
@@ -2152,7 +2770,9 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": null,
+      "video": null
     },
     {
       "key": "cooldown_upper",
@@ -2175,7 +2795,9 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": null,
+      "video": null
     },
     {
       "key": "cooldown_lower",
@@ -2198,7 +2820,9 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": null,
+      "video": null
     },
     {
       "key": "mobility_flow",
@@ -2221,7 +2845,9 @@
       "min_load_kg": null,
       "variation_of": null,
       "carry": null,
-      "mets": null
+      "mets": null,
+      "how_to": null,
+      "video": null
     }
   ]
 }
