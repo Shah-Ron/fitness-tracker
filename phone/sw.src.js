@@ -7,7 +7,7 @@
 const VERSION = "__BUILD__";
 const CACHE = "fitness-phone-" + VERSION;
 const FILES = ["./", "./index.html", "./app.js", "./engine.js", "./store.js", "./local-api.js", "./manifest.webmanifest",
-  "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./version.json",
+  "./icon-180.png", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./version.json",
   "./data/exercises.json", "./data/programme.json", "./data/foods.json"];
 
 self.addEventListener("install", event => {

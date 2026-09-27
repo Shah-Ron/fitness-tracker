@@ -282,9 +282,14 @@ def build_zone2_items(week_seed, conditioning_machine, is_deload, ts, prog):
     kit = [m for m in ts["cardio_kit"] if m != conditioning_machine] or ts["cardio_kit"]
     machine = pick(kit, week_seed, "zone2:machine")
     proto = protos.get("zone2_steady") or next(p for p in prog["protocols"] if p.get("group") == "zone2")
-    return [{"ord": 1, "section": "main", "slot_key": "zone2", "exercise_key": machine, "sets": None, "rep_low": None,
-             "rep_high": None, "rest_sec": None, "minutes": protocol_minutes(proto, minimum=is_deload),
-             "protocol": proto["id"], "rounds": None, "optional": 0, "note": None}]
+    items = [{"ord": 1, "section": "main", "slot_key": "zone2", "exercise_key": machine, "sets": None, "rep_low": None,
+              "rep_high": None, "rest_sec": None, "minutes": protocol_minutes(proto, minimum=is_deload),
+              "protocol": proto["id"], "rounds": None, "optional": 0, "note": None}]
+    cooldown = prog["sessions"].get("zone2", {}).get("cooldown")
+    if cooldown:
+        items.append({"ord": 2, "section": "cooldown", "slot_key": "cooldown", "exercise_key": cooldown, "sets": None, "rep_low": None,
+                      "rep_high": None, "rest_sec": None, "minutes": 3.0, "protocol": None, "rounds": None, "optional": 0, "note": None})
+    return items
 
 
 def trim_to_budget(items, budget, prog):

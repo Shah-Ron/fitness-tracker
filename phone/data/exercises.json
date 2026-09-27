@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "exercises": [
     {
       "key": "barbell_bench_press",
@@ -2747,8 +2747,13 @@
       "variation_of": null,
       "carry": null,
       "mets": null,
-      "how_to": null,
-      "video": null
+      "how_to": "Five minutes before an upper body session, to raise your temperature and wake up the shoulders and upper back. Move through the listed moves at an easy pace, then do the ramp up sets the app shows under your first lift. Skip long static stretches here and save them for the cool down.",
+      "video": {
+        "id": "mf6CZ5_7dfc",
+        "title": "5 MIN UPPER BODY WARM UP ROUTINE - total upper body warm up",
+        "channel": "MadFit",
+        "length": "6:41"
+      }
     },
     {
       "key": "dynamic_warmup_lower",
@@ -2771,8 +2776,13 @@
       "variation_of": null,
       "carry": null,
       "mets": null,
-      "how_to": null,
-      "video": null
+      "how_to": "Five minutes before a leg session, to get blood into the hips, knees and ankles. Work through the listed moves smoothly rather than bouncing, then ramp up with light sets on your first lift. Long static holds before heavy squats can leave you weaker, so keep those for afterwards.",
+      "video": {
+        "id": "DgjiFOKWsfg",
+        "title": "LEG DAY WARM UP ROUTINE (dynamic stretching, hip openers, & glute activation)",
+        "channel": "MadFit",
+        "length": "8:39"
+      }
     },
     {
       "key": "cooldown_upper",
@@ -2796,8 +2806,13 @@
       "variation_of": null,
       "carry": null,
       "mets": null,
-      "how_to": null,
-      "video": null
+      "how_to": "Three minutes after an upper body session to settle your heart rate and stretch what you worked. Hold each stretch about 30 seconds a side and breathe slowly, easing off if anything feels sharp. This is the place for long holds, not the warm up.",
+      "video": {
+        "id": "s-7lyvblFNI",
+        "title": "Stretches for Neck, Shoulder & Upper Back Pain Relief | 10 min. Yoga to release Tension and Relax",
+        "channel": "Mady Morrison",
+        "length": "10:33"
+      }
     },
     {
       "key": "cooldown_lower",
@@ -2821,8 +2836,13 @@
       "variation_of": null,
       "carry": null,
       "mets": null,
-      "how_to": null,
-      "video": null
+      "how_to": "Three minutes after a leg session to bring your heart rate down and loosen the hips, quads, hamstrings and calves. Hold each stretch about 30 seconds a side with slow breathing and no bouncing. Stop short of pain; a gentle pull is the goal.",
+      "video": {
+        "id": "gfzC9XMEypg",
+        "title": "5 MIN FULL BODY COOL DOWN STRETCHES (Recovery & Flexibility)",
+        "channel": "MadFit",
+        "length": "7:05"
+      }
     },
     {
       "key": "mobility_flow",
@@ -2846,8 +2866,72 @@
       "variation_of": null,
       "carry": null,
       "mets": null,
-      "how_to": null,
-      "video": null
+      "how_to": "Ten minutes of slow, full range movement to finish the conditioning day. Follow the routine at your own pace and spend longer on whatever feels tight. Mobility builds over weeks, so a little every session beats a long session once a month.",
+      "video": {
+        "id": "dBYjU7iBpck",
+        "title": "The Daily 10 Minute Mobility Routine [FULL BODY RELEASE]",
+        "channel": "Squat University",
+        "length": "11:06"
+      }
+    },
+    {
+      "key": "dynamic_warmup_full",
+      "name": "Dynamic warm-up, whole body",
+      "pattern": "mobility",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "none",
+      "cues": [
+        "Arm circles and shoulder rolls, 10 each way.",
+        "Bodyweight squats, 15, and leg swings, 10 each leg.",
+        "Inchworms, 6, then 20 quick steps on the spot."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "A short whole body warm up for a freestyle session. Work from the top down through the listed moves so every joint has moved before you load it. Two or three minutes is enough; the aim is to feel warm and loose, not tired.",
+      "video": {
+        "id": "1e528F0pYPg",
+        "title": "Full Body 5 Minute Dynamic Warm Up for Intense Workouts",
+        "channel": "Anabolic Aliens",
+        "length": "6:30"
+      }
+    },
+    {
+      "key": "cooldown_full",
+      "name": "Cool-down, whole body",
+      "pattern": "mobility",
+      "primary_muscle": "core",
+      "secondary_muscles": [],
+      "equipment": "none",
+      "cues": [
+        "Doorway chest stretch, 30 seconds each side.",
+        "Standing quad stretch, 30 seconds each side.",
+        "Seated hamstring stretch, 30 seconds each side.",
+        "Child's pose with slow breathing, 45 seconds."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "A few minutes of easy stretching to finish a freestyle session. Move through the listed stretches with slow breaths, holding each about 30 seconds a side. Finish with the child's pose and let your breathing settle before you leave.",
+      "video": {
+        "id": "wo1uEoy9MwU",
+        "title": "5 MIN FULL BODY STRETCH & COOL DOWN",
+        "channel": "MadFit",
+        "length": "7:21"
+      }
     }
   ]
 }

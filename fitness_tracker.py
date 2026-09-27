@@ -257,7 +257,7 @@ SETTING_DEFAULTS.update({
 HIDDEN_SETTINGS = {"pair_key"}
 TRAINING_KEYS = {"train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split"}
 GOAL_KEYS = {"target_weight_kg", "target_date"}
-SEED_VERSION = 2
+SEED_VERSION = 3
 
 
 def connect():

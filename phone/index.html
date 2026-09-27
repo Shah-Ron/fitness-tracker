@@ -6,9 +6,12 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#3E6B48">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fitness">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon-192.png">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-180.png">
 <title>Fitness Tracker</title>
 <style>
 /* ------------------------------------------------------------------
@@ -392,6 +395,8 @@ header.top { animation: pop .6s ease-out backwards; }
 main { animation: rise .7s var(--ease) .3s backwards; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (max-width: 640px) { .hero .big { font-size: 46px; } .hero { padding: 20px 18px 16px; } .card { padding: 16px; } }
+/* iPhone Safari zooms into any field smaller than 16px; keep fields at 16px on phones. */
+@media (max-width: 640px) { input[type="number"], input[type="date"], input[type="text"], input[type="search"], input[type="time"], input[type="email"], select, textarea { font-size: 16px; } }
 </style>
 </head>
 <body>

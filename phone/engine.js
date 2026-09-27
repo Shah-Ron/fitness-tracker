@@ -417,7 +417,10 @@ const Engine = (() => {
     const kit = ts.cardio_kit.filter(m => m !== condMachine); const use = kit.length ? kit : ts.cardio_kit;
     const machine = pick(use, weekSeed, "zone2:machine");
     const proto = protos.zone2_steady || (prog.protocols || []).find(p => p.group === "zone2");
-    return [blankItem(1, { section: "main", slot_key: "zone2", exercise_key: machine, minutes: protocolMinutes(proto, isDeload), protocol: proto.id })];
+    const items = [blankItem(1, { section: "main", slot_key: "zone2", exercise_key: machine, minutes: protocolMinutes(proto, isDeload), protocol: proto.id })];
+    const sess = (prog.sessions || {}).zone2 || {};
+    if (sess.cooldown) items.push(blankItem(2, { section: "cooldown", slot_key: "cooldown", exercise_key: sess.cooldown, minutes: 3 }));
+    return items;
   }
   function trimToBudget(items, budget, prog) {
     const protos = protocolsById(prog), oh = prog.set_overhead_sec || 40;

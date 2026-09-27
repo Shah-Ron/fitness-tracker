@@ -57,7 +57,7 @@ def main():
         json.dump({"fields": FIELDS, "foods": rows}, fh, ensure_ascii=False, separators=(",", ":"))
     for name in ("exercises.json", "programme.json"):
         shutil.copy(os.path.join(DATA, name), os.path.join(PHONE, "data", name))
-    for name in ("icon-192.png", "icon-512.png", "icon-maskable-512.png"):
+    for name in ("icon-180.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png"):
         src = os.path.join(ROOT, name)
         if os.path.exists(src):
             shutil.copy(src, os.path.join(PHONE, name))

@@ -1803,7 +1803,7 @@
     "zone2": {
       "title": "Zone 2",
       "warmup": null,
-      "cooldown": null,
+      "cooldown": "cooldown_full",
       "slots": [
         {
           "key": "zone2",

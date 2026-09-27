@@ -10,6 +10,8 @@ There are two ways. Both keep your data on the phone, both work with no signal a
 
 **The web app.** Open <https://shah-ron.github.io/fitness-tracker/> in Chrome on the phone, then choose **Add to Home screen** from Chrome's menu. It installs like an app and opens full screen.
 
+**iPhone.** Apple does not allow installing an app file from a website, so on an iPhone the web app is the app. Open <https://shah-ron.github.io/fitness-tracker/> in Safari, tap **Share**, then **Add to Home Screen**. It opens full screen, works offline and keeps your data on the phone. **Settings, Updates, Check for updates** reloads it into the newest version. Two things the iPhone version cannot do: scan a barcode with the camera (type the number instead) and buzz when the screen is off (keep the screen on during a workout, which is the default).
+
 Both come from this repository. GitHub builds the app file and publishes the web version every time the code changes.
 
 ## What it does

@@ -63,6 +63,7 @@ def main():
     ico_path = os.path.join(HERE, "icon.ico")
     frames[256].save(ico_path, format="ICO", sizes=[(sz, sz) for sz in frames], append_images=[frames[sz] for sz in sorted(frames) if sz != 256])
     draw(192).save(os.path.join(ROOT, "icon-192.png"))
+    draw(180, rounded=False).save(os.path.join(ROOT, "icon-180.png"))   # iPhone home screen, which rounds it itself
     draw(512).save(os.path.join(ROOT, "icon-512.png"))
     draw(512, pad_frac=0.12, rounded=False).save(os.path.join(ROOT, "icon-maskable-512.png"))
     print("Wrote tools\\icon.ico, icon-192.png, icon-512.png and icon-maskable-512.png")

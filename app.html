@@ -6,9 +6,12 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#3E6B48">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fitness">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-180.png">
 <title>Fitness Tracker</title>
 <style>
 /* ------------------------------------------------------------------
@@ -392,6 +395,8 @@ header.top { animation: pop .6s ease-out backwards; }
 main { animation: rise .7s var(--ease) .3s backwards; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (max-width: 640px) { .hero .big { font-size: 46px; } .hero { padding: 20px 18px 16px; } .card { padding: 16px; } }
+/* iPhone Safari zooms into any field smaller than 16px; keep fields at 16px on phones. */
+@media (max-width: 640px) { input[type="number"], input[type="date"], input[type="text"], input[type="search"], input[type="time"], input[type="email"], select, textarea { font-size: 16px; } }
 </style>
 </head>
 <body>
@@ -499,6 +504,12 @@ const UI = { tab: ls.get("ft-tab", "today"), foodDate: todayIso(), planDate: tod
 let W = ls.get("ft-live");       // the workout in progress, mirrored on every tap
 const REST = { end: 0, total: 0, timer: null, finished: false };
 const IS_ANDROID_APP = !!(window.Android && window.Android.saveFile);
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const STANDALONE = navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+function iosHint() {
+  if (!IS_IOS || STANDALONE || IS_ANDROID_APP || ls.get("ft-ios-hint-hidden")) return "";
+  return `<div class="callout" style="margin:0 0 14px"><strong>Install on your iPhone:</strong> tap Share in Safari, then Add to Home Screen. It then opens full screen, works offline and keeps your data safely. <button class="link" id="iosHintHide">Hide</button></div>`;
+}
 
 /* Keep the screen on while a workout is open, so the rest timer can always buzz. */
 let wakeLock = null;
@@ -808,7 +819,8 @@ function renderToday() {
     <div class="stat"><div class="l">Weeks on track</div><div class="v num">${S.weeks_streak}</div><div class="f">weeks with 4 of 5 sessions or more</div></div>
     <div class="stat"><div class="l">Block</div><div class="v num">${S.week ? `${S.week.week.block_no}, week ${S.week.week.week_no}` : "-"}</div><div class="f">${S.week && S.week.week.week_no === 3 ? "deload next week" : S.week && S.week.week.is_deload ? "lighter on purpose" : "building"}</div></div>
   </div>`;
-  root.innerHTML = hero + stats + prs;
+  root.innerHTML = iosHint() + hero + stats + prs;
+  const hide = $("#iosHintHide", root); if (hide) hide.addEventListener("click", () => { ls.set("ft-ios-hint-hidden", true); renderToday(); });
   wireToday(root);
 }
 function sessionCard(s) {
@@ -876,7 +888,13 @@ function startSession(id) {
 }
 function startFreestyle() {
   const today = todayIso();
-  W = { client_id: uid(), session_id: null, date: today, started_at: nowIso(), title: "Freestyle", kind: "adhoc", items: [], sets: {}, cardio: [], skipped: {}, open: {}, local: true };
+  // A freestyle session still opens with a warm-up and closes with a cool-down.
+  const exs = (S && S.exercises) || [];
+  const wu = exs.find(e => e.key === "dynamic_warmup_full"), cd = exs.find(e => e.key === "cooldown_full");
+  const items = [];
+  if (wu) items.push({ id: "free-wu", section: "warmup", slot_key: "wu_dynamic", exercise_id: wu.id, exercise: wu, minutes: 3 });
+  if (cd) items.push({ id: "free-cd", section: "cooldown", slot_key: "cooldown", exercise_id: cd.id, exercise: cd, minutes: 3 });
+  W = { client_id: uid(), session_id: null, date: today, started_at: nowIso(), title: "Freestyle", kind: "adhoc", items, sets: {}, cardio: [], skipped: {}, open: {}, local: true };
   saveW();
   mutate("workout", W.client_id, { date: today, started_at: W.started_at });
   switchTab("workout");
@@ -942,11 +960,12 @@ function renderWorkout() {
 function exById(id) { return (S && S.exercises && S.exercises.find(e => e.id === id)) || null; }
 /* "How to do it": description, cues and a form video, collapsed until asked for. Open state lasts for this visit only. */
 const HOWTO_OPEN = new Set();
-function howToBlock(ex) {
+function howToBlock(ex, opts = {}) {
   const v = ex.video && ex.video.id ? ex.video : null;
-  if (!ex.how_to && !(ex.cues || []).length && !v) return `<div class="howto muted">No notes for this exercise yet.</div>`;
+  const cues = opts.cues === false ? [] : (ex.cues || []);
+  if (!ex.how_to && !cues.length && !v) return `<div class="howto muted">No notes for this exercise yet.</div>`;
   return `<div class="howto">${ex.how_to ? `<p>${esc(ex.how_to)}</p>` : ""}
-    ${(ex.cues || []).length ? `<ul class="cues">${ex.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+    ${cues.length ? `<ul class="cues">${cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
     ${v ? `<div class="video" data-video="${esc(v.id)}"><img src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" loading="lazy"><button type="button" class="play" aria-label="Play the video">▶</button><div class="vcap">${esc(v.title || "Form video")}<small>${esc(v.channel || "YouTube")}${v.length ? ", " + esc(v.length) : ""}</small></div></div>
     <a href="https://www.youtube.com/watch?v=${esc(v.id)}" data-external>Open in YouTube</a>` : ""}</div>`;
 }
@@ -966,10 +985,14 @@ function renderItem(it) {
   const skipped = W.skipped[it.id];
   if (it.section === "warmup" || it.section === "cooldown") {
     const isCardio = it.protocol;
+    const howOpen = HOWTO_OPEN.has(String(it.id));
+    const hasHow = !!(ex.how_to || (ex.video && ex.video.id));
     return `<div class="ex${done.length || skipped ? " done" : ""}" data-item="${it.id}">
       <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${n0(it.minutes)} min</span></h3>
-      ${isCardio ? `<div class="target">${esc(it.protocol_text || "Easy pace.")}</div>` : `<ul class="cues">${(ex.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ul>`}</div>
-      <button class="${skipped ? "" : "good"}" data-tickwu="${it.id}">${skipped ? "Undo" : "Done"}</button></div></div>`;
+      ${isCardio ? `<div class="target">${esc(it.protocol_text || "Easy pace.")}</div>` : `<ul class="cues">${(ex.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ul>`}
+      ${howOpen ? howToBlock(ex, { cues: false }) : ""}</div>
+      <button class="${skipped ? "" : "good"}" data-tickwu="${it.id}">${skipped ? "Undo" : "Done"}</button></div>
+      ${hasHow ? `<div class="tools"><button class="ghost" data-howto="${it.id}">${howOpen ? "Hide video" : "Watch how"}</button></div>` : ""}</div>`;
   }
   if (it.section === "finisher") {
     const c = W.cardio.find(x => x.plan_item_id === it.id);
@@ -1201,12 +1224,23 @@ function startRest(sec, label) {
   REST.timer = setInterval(draw, 500);
 }
 function stopRest() { clearInterval(REST.timer); REST.finished = false; $("#timerbar").hidden = true; cancelRestAlarm(); }
+/* iPhones only allow sound after a tap, so the audio context is opened on the first touch and kept. */
+let audioCtx = null;
+function audioUnlock() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch (e) {}
+}
+document.addEventListener("touchstart", audioUnlock, { once: true, passive: true });
+document.addEventListener("click", audioUnlock, { once: true });
 function beep() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    audioUnlock();
+    const ctx = audioCtx; if (!ctx) return;
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.connect(g); g.connect(ctx.destination); o.frequency.value = 880; g.gain.value = 0.08;
-    o.start(); setTimeout(() => { o.stop(); ctx.close(); }, 220);
+    o.start(); setTimeout(() => { try { o.stop(); } catch (e) {} }, 220);
   } catch (e) {}
 }
 function tickElapsed() {
