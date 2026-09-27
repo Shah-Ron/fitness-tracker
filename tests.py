@@ -608,8 +608,9 @@ class ProgrammeTests(unittest.TestCase):
         week = sessions(conn, weeks(conn)[0]["id"])
         self.assertEqual([x["kind"] for x in week][5:], ["zone2", "rest"])
         z = items(conn, week[5]["id"])
-        self.assertEqual(len(z), 1)
+        self.assertEqual([i["section"] for i in z], ["main", "cooldown"])
         self.assertEqual((z[0]["protocol"], z[0]["minutes"]), ("zone2_steady", 35.0))
+        self.assertEqual(z[1]["exercise_key"], "cooldown_full")
         cond_machine = item(items(conn, week[2]["id"]), "wu_cardio")["exercise_key"]
         self.assertNotEqual(z[0]["exercise_key"], cond_machine)
 

@@ -509,8 +509,9 @@ describe("programme", () => {
       const week = sessionsOf(db, weeks(db)[0].id);
       assert.deepEqual(week.map(s => s.kind).slice(5), ["zone2", "rest"]);
       const z = itemsOf(db, week[5].id);
-      assert.equal(z.length, 1);
+      assert.deepEqual(z.map(i => i.section), ["main", "cooldown"]);
       assert.deepEqual([z[0].protocol, z[0].minutes], ["zone2_steady", 35]);
+      assert.equal(z[1].exercise_key, "cooldown_full");
       const condMachine = item(itemsOf(db, week[2].id), "wu_cardio").exercise_key;
       assert.notEqual(z[0].exercise_key, condMachine);
     });
