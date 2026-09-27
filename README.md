@@ -16,7 +16,7 @@ Both come from this repository. GitHub builds the app file and publishes the web
 
 **Today** shows what is left to eat, protein, carbs and fat against target, this week's sessions, today's workout and quick buttons for weight, water, sleep and steps. A pace line tells you whether your weight trend is on track for the date you set.
 
-**Workout** is built for one hand at the gym. Each exercise shows what you did last time and the weight to aim for, with big steppers for weight and reps, an RPE row for how hard the set felt, and a tick. The tick starts the rest timer, which buzzes when it is time. The finisher has an interval timer. Finish shows your volume, hard sets, calories and effort score, and takes the numbers from your watch if you have one.
+**Workout** is built for one hand at the gym. Each exercise shows what you did last time and the weight to aim for, with big steppers for weight and reps, an RPE row for how hard the set felt, and a tick. **How to do it** on any exercise opens a short description, the form cues and a YouTube tutorial from a well-known coaching channel; it stays closed until you ask for it. The tick starts the rest timer, which buzzes when it is time. The finisher has an interval timer. Finish shows your volume, hard sets, calories and effort score, and takes the numbers from your watch if you have one.
 
 **Plan** is the week. Pick a split in Settings: **Upper / Lower**, **Full body**, **Push / Pull / Legs** or a **Bro split**, and how many days you train. Main lifts stay for a four-week block so you can build on them, accessories and cardio finishers rotate every week, and week 4 is a deload. Shuffle a week, swap an exercise when a machine is busy, pull a session forward to today or mark a day as rest.
 

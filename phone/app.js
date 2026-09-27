@@ -352,16 +352,21 @@ function renderWorkout() {
     if (S && S.in_progress && !W) {
       const ip = S.in_progress;
       const sess = sessionById(ip.session_id);
+      const resume = async () => {
+        const det = await api("GET", "/api/workouts/" + ip.client_id);
+        W = { client_id: det.client_id, session_id: det.session_id, date: det.date, started_at: det.started_at, title: sess ? sess.title : "Workout", kind: sess ? sess.kind : "adhoc", is_deload: sess && sess.is_deload, items: sess ? JSON.parse(JSON.stringify(sess.items)) : [], sets: {}, cardio: det.cardio.map(c => ({ client_id: c.client_id, plan_item_id: c.plan_item_id, minutes: c.minutes, intensity: c.intensity })), skipped: {}, open: {}, local: false };
+        det.sets.forEach(s => { (W.sets[s.plan_item_id || "x" + s.exercise_id] = W.sets[s.plan_item_id || "x" + s.exercise_id] || []).push({ client_id: s.client_id, set_no: s.set_no, reps: s.reps, weight: s.weight_kg, rpe: s.rpe, is_warmup: s.is_warmup, done_at: s.done_at }); });
+        saveW(); renderWorkout();
+      };
+      if (typeof LocalApi !== "undefined") {
+        // Phone edition: the data lives here, so an open workout is simply picked up again.
+        if (!renderWorkout.resuming) { renderWorkout.resuming = true; resume().catch(e => toast(e.message)).finally(() => { renderWorkout.resuming = false; }); }
+        root.innerHTML = `<div class="card"><h2>Picking up your workout</h2></div>`;
+        return;
+      }
       root.innerHTML = `<div class="card"><h2>A workout is open</h2><p class="hint">Started ${esc((ip.started_at || "").slice(0, 16).replace("T", " "))}${sess ? " for " + esc(sess.title) : ""}, probably on your other device. Finish it there, or take it over here.</p>
         <div class="row"><button class="primary" id="takeover">Take over here</button><button class="danger" id="discardOpen">Discard it</button></div></div>`;
-      $("#takeover").addEventListener("click", async () => {
-        try {
-          const det = await api("GET", "/api/workouts/" + ip.client_id);
-          W = { client_id: det.client_id, session_id: det.session_id, date: det.date, started_at: det.started_at, title: sess ? sess.title : "Workout", kind: sess ? sess.kind : "adhoc", is_deload: sess && sess.is_deload, items: sess ? JSON.parse(JSON.stringify(sess.items)) : [], sets: {}, cardio: det.cardio.map(c => ({ client_id: c.client_id, plan_item_id: c.plan_item_id, minutes: c.minutes, intensity: c.intensity })), skipped: {}, open: {}, local: false };
-          det.sets.forEach(s => { (W.sets[s.plan_item_id || "x" + s.exercise_id] = W.sets[s.plan_item_id || "x" + s.exercise_id] || []).push({ client_id: s.client_id, set_no: s.set_no, reps: s.reps, weight: s.weight_kg, rpe: s.rpe, is_warmup: s.is_warmup, done_at: s.done_at }); });
-          saveW(); renderWorkout();
-        } catch (e) { toast(e.message); }
-      });
+      $("#takeover").addEventListener("click", () => resume().catch(e => toast(e.message)));
       $("#discardOpen").addEventListener("click", () => { if (confirm("Discard that open workout? Its sets will be removed.")) { mutate("workout", ip.client_id, { deleted: 1 }); S.in_progress = null; renderWorkout(); } });
       return;
     }
