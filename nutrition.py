@@ -233,7 +233,7 @@ def tokens(text):
     return [t for t in _token_re.split(str(text or "").lower()) if t]
 
 
-SOURCE_RANK = {"custom": 0, "nz": 0, "in": 0, "off": 1, "usda": 2}
+SOURCE_RANK = {"custom": 0, "nz": 0, "in": 0, "drinks": 0, "off": 1, "fdc": 1, "usda": 2}
 
 
 def rank_foods(query, foods, limit=30):
@@ -470,6 +470,109 @@ def off_barcode(code, contact=None, opener=None):
     return map_off_product(payload["product"])
 
 
+# ------------------------------------------------------- USDA FoodData Central
+
+FDC_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
+FDC_NUTRIENTS = {"208": "kcal_100", "203": "protein_100", "205": "carb_100", "204": "fat_100"}
+FDC_LIQUID = re.compile(r"\b(beer|ale|lager|stout|cider|wine|champagne|spirits?|whiske?y|vodka|rum|gin|liqueur|cocktail|juice|milk|lassi|drink|beverage|coffee|tea|soda|cola|lemonade|water|smoothie|shake|soup|broth|toddy)\b", re.I)
+FDC_TYPES = ["Survey (FNDDS)", "SR Legacy", "Foundation"]
+
+
+class FdcError(OffError):
+    """USDA FoodData Central could not answer. The message is user-facing."""
+
+
+def map_fdc_food(f):
+    """One FoodData Central search hit as a candidate food, or None when it has no usable numbers."""
+    name = str((f or {}).get("description") or "").strip()
+    if not name:
+        return None
+    vals = {}
+    for n in f.get("foodNutrients") or []:
+        key = FDC_NUTRIENTS.get(str(n.get("nutrientNumber")))
+        if key and isinstance(n.get("value"), (int, float)):
+            vals[key] = float(n["value"])
+    approx = 0
+    if "kcal_100" not in vals:
+        if not any(k in vals for k in ("protein_100", "carb_100", "fat_100")):
+            return None
+        vals["kcal_100"] = 4 * vals.get("protein_100", 0) + 4 * vals.get("carb_100", 0) + 9 * vals.get("fat_100", 0)
+        approx = 1
+    portions, seen = [], set()
+    for m in f.get("foodMeasures") or []:
+        label = str((m or {}).get("disseminationText") or "").strip()
+        grams = m.get("gramWeight") if m else None
+        if not label or not grams or grams <= 0 or "not specified" in label.lower() or label.lower() in seen:
+            continue
+        seen.add(label.lower())
+        portions.append((label[:80], round(float(grams), 1)))
+        if len(portions) == 4:
+            break
+    brand = str(f.get("brandOwner") or f.get("brandName") or "").strip() or None
+    barcode = re.sub(r"\D", "", str(f.get("gtinUpc") or "")) or None
+    r1 = lambda x: round(x or 0, 1)
+    return {
+        "name": name[:120], "brand": brand, "unit": "ml" if FDC_LIQUID.search(name) else "g",
+        "source": "fdc", "source_id": str(f.get("fdcId")), "barcode": barcode,
+        "kcal_100": r1(vals.get("kcal_100")), "protein_100": r1(vals.get("protein_100")),
+        "carb_100": r1(vals.get("carb_100")), "fat_100": r1(vals.get("fat_100")),
+        "approx": approx, "portions": portions, "quantity": None,
+    }
+
+
+def fdc_search(query, api_key=None, opener=None):
+    """Generic dishes and drinks (curries, biryani, beer, wine) from USDA FoodData Central.
+
+    The shared DEMO_KEY allows only a handful of searches an hour per address; a
+    personal key is free and allows a thousand. Branded products are left to
+    Open Food Facts because the USDA ones are American.
+    """
+    terms = str(query or "").strip()
+    if not terms:
+        return []
+    key = (api_key or "").strip() or "DEMO_KEY"
+    body = json.dumps({"query": terms, "dataType": FDC_TYPES, "pageSize": 15}).encode("utf-8")
+    req = urllib.request.Request(f"{FDC_URL}?api_key={urllib.parse.quote(key)}", data=body, method="POST",
+                                 headers={"Content-Type": "application/json", "Accept": "application/json"})
+    try:
+        opener = opener or urllib.request.urlopen
+        with opener(req, timeout=OFF_TIMEOUT) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            raise FdcError("USDA's shared key is used up for this hour. Add your own free key under Settings > Online food sources."
+                           if key == "DEMO_KEY" else "Your USDA key has reached its limit for this hour.")
+        if e.code == 403:
+            raise FdcError("USDA did not accept the API key. Check it under Settings > Online food sources.")
+        raise FdcError(f"USDA answered {e.code}.")
+    except (urllib.error.URLError, OSError, ValueError):
+        raise FdcError("Could not reach USDA FoodData Central.")
+    return [c for c in (map_fdc_food(f) for f in payload.get("foods") or []) if c]
+
+
+def online_search(query, contact=None, api_key=None, opener=None):
+    """Both online sources. USDA generics first, Open Food Facts packaged products after.
+
+    Returns {"hits": [...], "notes": [...]} where notes carry the message of a
+    source that failed while the other one still answered. Both failing raises.
+    """
+    terms = str(query or "").strip()
+    if not terms:
+        return {"hits": [], "notes": []}
+    hits, notes = [], []
+    try:
+        hits += fdc_search(terms, api_key, opener)[:10]
+    except OffError as e:
+        notes.append(str(e))
+    try:
+        hits += off_search(terms, contact, opener)
+    except OffError as e:
+        notes.append(str(e))
+    if not hits and len(notes) == 2:
+        raise OffError(" ".join(notes))
+    return {"hits": hits, "notes": notes}
+
+
 # ----------------------------------------------------------------- bundled lists
 
 def iter_usda_foods(path):
@@ -497,7 +600,7 @@ def iter_usda_foods(path):
 
 
 def iter_nz_foods(path, source="nz"):
-    """Rows from a hand-written CSV (foods_nz.csv, foods_indian.csv) as dicts ready to insert."""
+    """Rows from a hand-written CSV (foods_nz.csv, foods_indian.csv, foods_drinks.csv) as dicts ready to insert."""
     with open(path, encoding="utf-8", newline="") as fh:
         for r in csv.DictReader(fh):
             portions = []

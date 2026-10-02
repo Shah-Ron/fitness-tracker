@@ -18,11 +18,11 @@ Both come from this repository. GitHub builds the app file and publishes the web
 
 **Today** shows what is left to eat, protein, carbs and fat against target, this week's sessions, today's workout and quick buttons for weight, water, sleep and steps. A pace line tells you whether your weight trend is on track for the date you set.
 
-**Workout** is built for one hand at the gym. Each exercise shows what you did last time and the weight to aim for, with big steppers for weight and reps, an RPE row for how hard the set felt, and a tick. **How to do it** on any exercise opens a short description, the form cues and a YouTube tutorial from a well-known coaching channel; it stays closed until you ask for it. The tick starts the rest timer, which buzzes when it is time. The finisher has an interval timer. Finish shows your volume, hard sets, calories and effort score, and takes the numbers from your watch if you have one.
+**Workout** is built for one hand at the gym. Each exercise shows what you did last time and the weight to aim for, with big steppers for weight and reps, an RPE row for how hard the set felt, and a tick. **How to do it** on any exercise opens a short description, the form cues and a YouTube tutorial from a well-known coaching channel; it stays closed until you ask for it. The tick starts the rest timer, which buzzes when it is time and carries on where it was if you leave the app and come back. Barbell weights can be typed as the total on the bar or as the plates on each side, with the bar added for you; pick in Settings, where a one-time button converts anything you logged per side before. The finisher has an interval timer. Finish shows your volume, hard sets, calories and effort score, and takes the numbers from your watch if you have one.
 
 **Plan** is the week. Pick a split in Settings: **Upper / Lower**, **Full body**, **Push / Pull / Legs** or a **Bro split**, and how many days you train. Main lifts stay for a four-week block so you can build on them, accessories and cardio finishers rotate every week, and week 4 is a deload. Shuffle a week, swap an exercise when a machine is busy, pull a session forward to today or mark a day as rest.
 
-**Food** logs what you eat. Type a name and pick from the bundled list of about 7,500 foods: USDA generics, New Zealand brands and takeaways, and Kerala and Indian dishes from appam and puttu to beef fry, meen curry, thoran, avial, biryani and payasam. Choose a portion such as 1 appam or 1 cup, or type grams. Packaged products can be searched online or looked up by barcode through Open Food Facts, and once accepted they join your list. Save a meal to add it in one tap, or copy yesterday's.
+**Food** logs what you eat. Type a name and pick from the bundled list of about 7,700 foods: USDA generics, New Zealand brands and takeaways, about 250 Kerala and Indian dishes from appam and puttu to beef fry, meen curry, thoran, avial, sadya, biryani and payasam, and a drinks list with New Zealand beers, ciders, wines, spirits, RTDs and cocktails. Choose a portion such as 1 appam, 1 cup or 1 pint, or type grams. Anything missing can be searched online: USDA FoodData Central answers for dishes and drinks (chicken curry, biryani, beer), Open Food Facts for packaged products by name or barcode. Whatever you pick joins your list and works offline from then on. Save a meal to add it in one tap, or copy yesterday's.
 
 **Progress** charts estimated one-rep max on the main lifts, the strength index against your first block, sets per muscle each week, effort per session, your weight trend against the pace line, calories eaten against burned, and how many planned sessions you did.
 
@@ -42,7 +42,7 @@ Everything is on the phone, so if the phone is lost or wiped, so is your data. *
 - **Effort** is a score out of 100 from volume against your usual for that session, the share of hard sets, and calories for your body size.
 - **Weight trend** is the seven-day average, so one salty dinner does not read as a bad week.
 
-Every one of these is an estimate, for steering rather than medical decisions. The Kerala, Indian and New Zealand food values are typical home-style figures and are marked approximate.
+Every one of these is an estimate, for steering rather than medical decisions. The Kerala, Indian, New Zealand and drinks values are typical home-style or label figures and are marked approximate. Alcohol calories come from the strength on the label: 7 kcal per gram of alcohol plus the carbs.
 
 ## What is in this repository
 
@@ -65,4 +65,4 @@ Edit the files in `phone\` or `data\`, run `python tools\build_phone.py`, and op
 
 ## Privacy
 
-The app makes no network calls except the food name or barcode you choose to look up on Open Food Facts. There is no account and nothing is uploaded. The web app is served from GitHub Pages, which only ever sends the app's files to the phone, never anything back.
+The app makes no network calls except the food name or barcode you choose to look up online, which goes to Open Food Facts and USDA FoodData Central. USDA shares one demo key between everyone, good for a few searches an hour; a free personal key from fdc.nal.usda.gov allows a thousand and is pasted into Settings. There is no account and nothing is uploaded. The web app is served from GitHub Pages, which only ever sends the app's files to the phone, never anything back.

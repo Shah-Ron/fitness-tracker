@@ -104,6 +104,21 @@ const today = iso(new Date());
       log(wkP.sessions.some(x => x.kind.startsWith("push")), "ppl split applied from next week", wkP.sessions.map(x => x.kind));
       log(wkP.sessions.filter(x => Engine.isLifting(x.kind, LocalApi.prog)).every(x => x.est_minutes <= 60.01), "ppl days fit 60 min", wkP.sessions.map(x => x.est_minutes));
     } else log(true, "splits not in programme.json yet, skipped");
+    const exMain = (await api("GET", "/api/exercises")).find(x => x.id === main1.exercise_id);
+    if (exMain && ["barbell", "trap_bar"].includes(exMain.equipment)) {
+      const pick = sets => sets.find(x => x.exercise_id === main1.exercise_id && !x.is_warmup).weight_kg;
+      const before = pick((await api("GET", "/api/workouts/" + w.client_id)).sets);
+      const cv = await api("POST", "/api/sets/convert_barbell");
+      const after = pick((await api("GET", "/api/workouts/" + w.client_id)).sets);
+      const bar = exMain.min_load_kg != null ? +exMain.min_load_kg : 20;
+      log(cv.sets >= 3 && Math.abs(after - (bar + 2 * before)) < 0.01, "barbell per-side conversion adds the bar once", { before, after, cv });
+      const stC = await api("GET", "/api/state");
+      log(stC.settings.barbell_entry === "per_side" && !!stC.settings.barbell_converted_at, "barbell mode switched after conversion", stC.settings.barbell_entry);
+      let twice = false; try { await api("POST", "/api/sets/convert_barbell"); } catch (e) { twice = true; }
+      log(twice, "second conversion refused");
+    } else log(true, "main1 is not a barbell lift, conversion skipped");
+    const onl = await api("GET", "/api/foods/online?q=");
+    log(Array.isArray(onl.hits) && onl.hits.length === 0, "empty online search returns no hits", onl);
     const bk = await api("GET", "/api/backup.json");
     log(bk.collections && bk.collections.workouts.length === 1, "backup has the workout");
     await api("POST", "/api/wipe");

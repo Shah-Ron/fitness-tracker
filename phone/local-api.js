@@ -13,7 +13,7 @@ const LocalApi = (() => {
 
   class BadRequest extends Error { constructor(msg, code = 400) { super(msg); this.code = code; } }
 
-  const settings = () => { const s = Object.assign({}, E.NUTRITION_DEFAULTS, E.TRAIN_DEFAULTS, { split: "upper_lower", stay_running: true, keep_awake: true, theme: null, contact_email: null, rest_default_sec: 90 }); Object.assign(s, db.settings()); return s; };
+  const settings = () => { const s = Object.assign({}, E.NUTRITION_DEFAULTS, E.TRAIN_DEFAULTS, { split: "upper_lower", stay_running: true, keep_awake: true, barbell_entry: "total", barbell_converted_at: null, usda_api_key: null, theme: null, contact_email: null, rest_default_sec: 90 }); Object.assign(s, db.settings()); return s; };
   const refreshExercises = () => { EX_BY_KEY = {}; db.all("exercises").forEach(e => { EX_BY_KEY[e.key] = e; }); };
   const exPublic = e => Object.assign({}, e);
 
@@ -98,13 +98,13 @@ const LocalApi = (() => {
     }
     if (type === "food") {
       const name = text(p.name, "name", 120, false);
-      const row = { client_id: cid, name, brand: text(p.brand, "brand", 60), unit: choice(p.unit || "g", "unit", ["g", "ml"]), source: choice(p.source || "custom", "source", ["custom", "off"]),
+      const row = { client_id: cid, name, brand: text(p.brand, "brand", 60), unit: choice(p.unit || "g", "unit", ["g", "ml"]), source: choice(p.source || "custom", "source", ["custom", "off", "fdc"]),
         source_id: text(p.source_id, "source_id", 64), barcode: text(p.barcode, "barcode", 32), kcal_100: num(p.kcal_100, "calories per 100", 0, 1000),
         protein_100: num(p.protein_100, "protein", 0, 100, true) || 0, carb_100: num(p.carb_100, "carbs", 0, 100, true) || 0, fat_100: num(p.fat_100, "fat", 0, 100, true) || 0,
         approx: p.approx ? 1 : 0, portions: (p.portions || []).filter(x => x && x[0]).map(x => [text(x[0], "portion", 80), num(x[1], "grams", 0.1, 20000)]), active: deleted ? 0 : 1 };
-      const existing = db.all("foods").find(f => f.client_id === cid) || (row.source === "off" && row.source_id ? db.all("foods").find(f => f.source === "off" && f.source_id === row.source_id) : null);
+      const existing = db.all("foods").find(f => f.client_id === cid) || (row.source !== "custom" && row.source_id ? db.all("foods").find(f => f.source === row.source && f.source_id === row.source_id) : null);
       if (existing) { db.update("foods", existing.id, Object.assign(row, { id: existing.id, times_used: existing.times_used || 0, last_used: existing.last_used || null, portions: row.portions.length ? row.portions : existing.portions })); return { ok: true, id: existing.id }; }
-      const id = (row.source === "off" && row.barcode ? "off:" + row.barcode : "c:" + cid);
+      const id = (row.source === "off" && row.barcode ? "off:" + row.barcode : row.source === "fdc" && row.source_id ? "fdc:" + row.source_id : "c:" + cid);
       db.insert("foods", Object.assign(row, { id, times_used: 0, last_used: null }));
       return { ok: true, id };
     }
@@ -363,6 +363,49 @@ const LocalApi = (() => {
     if (!results.length && lastErr) throw lastErr;
     return results;
   }
+  /* USDA FoodData Central: generic dishes and drinks that Open Food Facts lacks (curries, biryani, beer, wine).
+     Values are per 100 g; the shared DEMO_KEY allows only a few searches an hour, a personal key a thousand. */
+  const FDC_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
+  const FDC_N = { "208": "kcal_100", "203": "protein_100", "205": "carb_100", "204": "fat_100" };
+  const FDC_LIQUID = /\b(beer|ale|lager|stout|cider|wine|champagne|spirits?|whisk(e)?y|vodka|rum|gin|liqueur|cocktail|juice|milk|lassi|drink|beverage|coffee|tea|soda|cola|lemonade|water|smoothie|shake|soup|broth|toddy)\b/i;
+  function mapFdc(f) {
+    const name = String(f && f.description || "").trim(); if (!name) return null;
+    const v = {}; (f.foodNutrients || []).forEach(n => { const k = FDC_N[String(n.nutrientNumber)]; if (k && n.value != null && !isNaN(+n.value)) v[k] = +n.value; });
+    let approx = 0;
+    if (v.kcal_100 == null) { if (v.protein_100 == null && v.carb_100 == null && v.fat_100 == null) return null; v.kcal_100 = 4 * (v.protein_100 || 0) + 4 * (v.carb_100 || 0) + 9 * (v.fat_100 || 0); approx = 1; }
+    const r1 = x => Math.round((x || 0) * 10) / 10;
+    const seen = new Set();
+    const portions = (f.foodMeasures || []).filter(m => m && m.gramWeight > 0 && m.disseminationText && !/not specified/i.test(m.disseminationText))
+      .filter(m => { const k = m.disseminationText.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 4)
+      .map(m => [String(m.disseminationText).slice(0, 80), Math.round(m.gramWeight * 10) / 10]);
+    const brand = String(f.brandOwner || f.brandName || "").trim() || null;
+    return { name: name.slice(0, 120), brand, unit: FDC_LIQUID.test(name) ? "ml" : "g", source: "fdc", source_id: String(f.fdcId), barcode: String(f.gtinUpc || "").replace(/\D/g, "") || null,
+      kcal_100: r1(v.kcal_100), protein_100: r1(v.protein_100), carb_100: r1(v.carb_100), fat_100: r1(v.fat_100), approx, portions, quantity: null };
+  }
+  async function fdcSearch(q) {
+    const terms = String(q || "").trim(); if (!terms) return [];
+    const key = String(settings().usda_api_key || "").trim() || "DEMO_KEY";
+    const body = JSON.stringify({ query: terms, dataType: ["Survey (FNDDS)", "SR Legacy", "Foundation"], pageSize: 15 });
+    let r;
+    try { r = await fetch(`${FDC_URL}?api_key=${encodeURIComponent(key)}`, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body, cache: "no-store" }); }
+    catch (e) { throw new BadRequest("Could not reach USDA FoodData Central.", 502); }
+    if (r.status === 429) throw new BadRequest(key === "DEMO_KEY" ? "USDA's shared key is used up for this hour. Add your own free key under Settings > Online food sources." : "Your USDA key has reached its limit for this hour.", 503);
+    if (r.status === 403) throw new BadRequest("USDA did not accept the API key. Check it under Settings > Online food sources.", 502);
+    if (!r.ok) throw new BadRequest(`USDA answered ${r.status}.`, 502);
+    const d = await r.json();
+    return (d.foods || []).map(mapFdc).filter(Boolean);
+  }
+  /* Both sources at once. Generic dishes from USDA come first, packaged products from Open Food Facts after.
+     One source failing is reported beside the results rather than hiding the other's hits. */
+  async function onlineSearch(q) {
+    const terms = String(q || "").trim(); if (!terms) return { hits: [], notes: [] };
+    const [fdc, off] = await Promise.allSettled([fdcSearch(terms), offSearch(terms)]);
+    const hits = [], notes = [];
+    if (fdc.status === "fulfilled") hits.push(...fdc.value.slice(0, 10)); else notes.push(fdc.reason.message);
+    if (off.status === "fulfilled") hits.push(...off.value); else notes.push(off.reason.message);
+    if (!hits.length && notes.length === 2) throw new BadRequest(notes.join(" "), 502);
+    return { hits, notes };
+  }
   async function offBarcode(code) {
     code = String(code || "").replace(/\D/g, ""); if (!code) throw new BadRequest("That is not a barcode.");
     const p = await offGet(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=${OFF_FIELDS}`);
@@ -370,8 +413,34 @@ const LocalApi = (() => {
     return mapOff(p.product);
   }
 
+  /* One-time fix for a user who logged barbell plates per side: stored weights become totals. */
+  function convertBarbell() {
+    const s = settings();
+    if (s.barbell_converted_at) throw new BadRequest(`Already converted on ${s.barbell_converted_at}`, 409);
+    const isBar = ex => ex && ["barbell", "trap_bar"].includes(ex.equipment);
+    const barOf = ex => ex.min_load_kg != null ? +ex.min_load_kg : 20;
+    const touched = new Set();
+    let n = 0;
+    db.all("set_logs").forEach(st => {
+      const ex = db.get("exercises", st.exercise_id);
+      if (!isBar(ex) || st.weight_kg == null) return;
+      db.update("set_logs", st.client_id, { weight_kg: Math.round((barOf(ex) + 2 * st.weight_kg) * 100) / 100 });
+      touched.add(st.workout_client_id); n++;
+    });
+    db.all("plan_items").forEach(it => {
+      if (it.target_weight == null || !it.exercise_id) return;
+      const ex = db.get("exercises", it.exercise_id);
+      if (!isBar(ex)) return;
+      db.update("plan_items", it.id, { target_weight: Math.round((barOf(ex) + 2 * it.target_weight) * 100) / 100 });
+    });
+    touched.forEach(w => { if (db.get("workouts", w)) E.recomputeWorkout(db, w, s, PROG); });
+    db.setSetting("barbell_converted_at", today());
+    db.setSetting("barbell_entry", "per_side");
+    return { ok: true, sets: n, workouts: touched.size };
+  }
+
   /* ---------------------------------------------------- settings, exercises */
-  const SETTING_KEYS = Object.keys(E.NUTRITION_DEFAULTS).concat(Object.keys(E.TRAIN_DEFAULTS), ["split", "stay_running", "keep_awake", "theme", "contact_email", "display_name", "rest_default_sec"]);
+  const SETTING_KEYS = Object.keys(E.NUTRITION_DEFAULTS).concat(Object.keys(E.TRAIN_DEFAULTS), ["split", "stay_running", "keep_awake", "barbell_entry", "barbell_converted_at", "usda_api_key", "theme", "contact_email", "display_name", "rest_default_sec"]);
   const TRAINING_KEYS = ["train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split"];
   function updateSettings(patch) {
     if (!patch || typeof patch !== "object") throw new BadRequest("Send an object of settings");
@@ -393,6 +462,9 @@ const LocalApi = (() => {
       else if (k === "split") v = choice(v, "split", Object.keys(PROG.splits || { upper_lower: 1 }));
       else if (k === "main1_swap_every_blocks") v = int(v, k, 1, 6);
       else if (k === "stay_running" || k === "keep_awake") v = !!v;
+      else if (k === "barbell_entry") v = choice(v, "barbell entry", ["total", "per_side"]);
+      else if (k === "barbell_converted_at") v = dateV(v, k, true);
+      else if (k === "usda_api_key") v = text(v, k, 80);
       else if (["theme", "contact_email", "display_name"].includes(k)) v = text(v, k, 120);
       if (JSON.stringify(s[k]) !== JSON.stringify(v)) { if (["target_weight_kg", "target_date"].includes(k)) goal = true; if (TRAINING_KEYS.includes(k)) training = true; }
       db.setSetting(k, v); s[k] = v;
@@ -456,7 +528,7 @@ const LocalApi = (() => {
       if (api === "plan/week") { let d = q.date ? dateV(q.date) : today(); if (d > E.addDays(today(), 28)) d = E.addDays(today(), 28); planReady(d); return E.weekView(db, d, today(), settings(), PROG, EX_BY_KEY); }
       if (api.startsWith("workouts/")) return workoutDetail(api.slice(9));
       if (api === "foods/list") return foodsList();
-      if (api === "foods/online") return offSearch(q.q || "");
+      if (api === "foods/online") return onlineSearch(q.q || "");
       if (api.startsWith("foods/barcode/")) { const r = await offBarcode(api.slice(14)); if (!r) throw new BadRequest("No product with that barcode on Open Food Facts", 404); return r; }
       if (api.startsWith("foods/")) return foodRow(api.slice(6));
       if (api === "meals") return mealsList();
@@ -476,6 +548,7 @@ const LocalApi = (() => {
         applyOp("workout", cid, { session_id: sid, date: today(), started_at: body.started_at || E.nowIso() });
         return workoutDetail(cid);
       }
+      if (api === "sets/convert_barbell") return convertBarbell();
       if (api === "sets") { const cid = body.client_id || crypto.randomUUID(); const r = applyOp("set", cid, body); return { ok: true, client_id: cid, id: r.id }; }
       if (api === "cardio") { const cid = body.client_id || crypto.randomUUID(); const r = applyOp("cardio", cid, body); return { ok: true, client_id: cid, id: r.id }; }
       if (api === "food_logs") { applyOp("food_log", body.client_id || crypto.randomUUID(), body); return foodDay(body.date || today()); }

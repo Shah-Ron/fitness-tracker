@@ -1240,6 +1240,67 @@ class FoodDbToolTests(unittest.TestCase):
         self.assertEqual(self.tool.shorten_name("Egg, whole, raw"), "Egg, whole, raw")
 
 
+FDC_FOOD = {
+    "fdcId": 2341788, "description": "Chicken curry", "dataType": "Survey (FNDDS)",
+    "foodNutrients": [{"nutrientNumber": "208", "value": 107}, {"nutrientNumber": "203", "value": 9.1},
+                      {"nutrientNumber": "205", "value": 4.2}, {"nutrientNumber": "204", "value": 6.0}],
+    "foodMeasures": [{"disseminationText": "Quantity not specified", "gramWeight": 240}, {"disseminationText": "1 cup", "gramWeight": 240},
+                     {"disseminationText": "1 CUP", "gramWeight": 240}],
+}
+
+
+def fdc_opener(fdc_payload, off_payload, calls):
+    """Serves USDA and Open Food Facts requests from one fake, keyed on the host."""
+    def opener(req, timeout=None):
+        calls.append(req.full_url)
+        payload = fdc_payload if "api.nal.usda.gov" in req.full_url else off_payload
+        if isinstance(payload, Exception):
+            raise payload
+        return _Resp(payload)
+    return opener
+
+
+class FdcTests(unittest.TestCase):
+    def test_map_fdc_food(self):
+        c = nutrition.map_fdc_food(FDC_FOOD)
+        self.assertEqual((c["source"], c["source_id"], c["unit"]), ("fdc", "2341788", "g"))
+        self.assertEqual((c["kcal_100"], c["protein_100"], c["carb_100"], c["fat_100"]), (107, 9.1, 4.2, 6.0))
+        self.assertEqual(c["portions"], [("1 cup", 240)])      # unspecified and duplicate measures dropped
+        self.assertEqual(c["approx"], 0)
+
+    def test_map_fdc_liquid_and_macro_fallback(self):
+        beer = {"fdcId": 1, "description": "Beer, regular", "foodNutrients": [{"nutrientNumber": "205", "value": 3.6}]}
+        c = nutrition.map_fdc_food(beer)
+        self.assertEqual(c["unit"], "ml")
+        self.assertEqual((c["kcal_100"], c["approx"]), (14.4, 1))
+        self.assertIsNone(nutrition.map_fdc_food({"fdcId": 2, "description": "Nothing", "foodNutrients": []}))
+
+    def test_fdc_search_posts_json_with_key(self):
+        calls = []
+        hits = nutrition.fdc_search("chicken curry", "abc", fdc_opener({"foods": [FDC_FOOD]}, None, calls))
+        self.assertEqual([h["name"] for h in hits], ["Chicken curry"])
+        self.assertIn("api_key=abc", calls[0])
+
+    def test_fdc_rate_limit_message_points_at_settings(self):
+        err = urllib.error.HTTPError("u", 429, "Too Many Requests", {}, None)
+        with self.assertRaises(nutrition.FdcError) as cm:
+            nutrition.fdc_search("beer", None, fdc_opener(err, None, []))
+        self.assertIn("own free key", str(cm.exception))
+
+    def test_online_search_merges_and_notes_a_failed_source(self):
+        calls = []
+        err = urllib.error.HTTPError("u", 429, "Too Many Requests", {}, None)
+        res = nutrition.online_search("chicken curry", "tester", None,
+                                      fdc_opener(err, {"hits": [OFF_PRODUCT]}, calls))
+        self.assertEqual([h["source"] for h in res["hits"]], ["off"])
+        self.assertEqual(len(res["notes"]), 1)
+        both = nutrition.online_search("chicken curry", "tester", None,
+                                       fdc_opener({"foods": [FDC_FOOD]}, {"hits": [OFF_PRODUCT]}, []))
+        self.assertEqual([h["source"] for h in both["hits"]], ["fdc", "off"])
+        self.assertEqual(both["notes"], [])
+        self.assertEqual(nutrition.online_search("", None, None), {"hits": [], "notes": []})
+
+
 if __name__ == "__main__":
     unittest.main()
 

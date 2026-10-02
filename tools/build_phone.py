@@ -31,7 +31,7 @@ def food_rows():
     for r in nutrition.iter_usda_foods(os.path.join(DATA, "foods_usda.json")):
         rows.append(["u:" + r["source_id"], r["name"], None, "g", "usda", r["kcal_100"], r["protein_100"], r["carb_100"], r["fat_100"], 0, 0, None,
                      [[lab, g] for lab, g in r["portions"]], r.get("search"), None])
-    for source, name in (("nz", "foods_nz.csv"), ("in", "foods_indian.csv")):
+    for source, name in (("nz", "foods_nz.csv"), ("in", "foods_indian.csv"), ("drinks", "foods_drinks.csv")):
         path = os.path.join(DATA, name)
         if not os.path.exists(path):
             continue

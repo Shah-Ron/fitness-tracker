@@ -197,11 +197,17 @@ if ("serviceWorker" in navigator && !IS_ANDROID_APP && location.protocol.startsW
 }
 
 /* ---------------------------------------------------------- shared bits */
+/* Barbell weights can be typed as the total on the bar or as plates each side; stored weights are always totals. */
+const isBarbell = ex => !!ex && (ex.equipment === "barbell" || ex.equipment === "trap_bar");
+const barOf = ex => (ex && ex.min_load_kg != null ? +ex.min_load_kg : 20);
+const perSideMode = () => !!(S && S.settings && S.settings.barbell_entry === "per_side");
+const perSide = (ex, total) => Math.max(0, Math.round((total - barOf(ex)) / 2 * 100) / 100);
+const fmtLoad = (ex, w) => w == null ? "" : (perSideMode() && isBarbell(ex) ? `${kg(w)} (${n1(perSide(ex, w))} a side)` : kg(w));
 function targetLine(it) {
   const t = it.target; if (!t) return "";
   const scheme = it.sets ? `${it.sets} x ${it.rep_low}-${it.rep_high}${it.exercise && it.exercise.timed ? " s" : ""}` : "";
   const last = t.last && t.last.sets && t.last.sets.length ? `Last (${fmtShort(t.last.date)}): ${summariseSets(t.last.sets, it.exercise)}` : "First time";
-  const tgt = t.weight != null ? `Target: ${scheme} at <b>${kg(t.weight)}</b>${it.exercise && it.exercise.per_hand ? " each" : ""}` : `Target: ${scheme}`;
+  const tgt = t.weight != null ? `Target: ${scheme} at <b>${fmtLoad(it.exercise, t.weight)}</b>${it.exercise && it.exercise.per_hand ? " each" : ""}` : `Target: ${scheme}`;
   return `${last}. ${tgt}<span class="why">${esc(t.text || "")}</span>`;
 }
 function summariseSets(sets, ex) {
@@ -213,7 +219,7 @@ function summariseSets(sets, ex) {
   });
   const rpes = sets.map(s => s.rpe).filter(x => x != null);
   const rpe = rpes.length ? ", RPE " + n1(rpes.reduce((a, b) => a + b, 0) / rpes.length) : "";
-  return groups.map(g => `${g.n} x ${g.r}${timed ? " s" : ""}${g.w ? " at " + kg(g.w) : ""}`).join(", ") + rpe;
+  return groups.map(g => `${g.n} x ${g.r}${timed ? " s" : ""}${g.w ? " at " + fmtLoad(ex, g.w) : ""}`).join(", ") + rpe;
 }
 function weekStrip(strip) {
   const today = todayIso();
@@ -463,12 +469,12 @@ function renderItem(it) {
   const rows = [];
   const showWarm = it.slot_key === "main1" && it.target && it.target.weight && !done.some(s => s.is_warmup) && !done.length;
   if (showWarm) {
-    rows.push(warmRow(it, 1, roundLoad(it.target.weight * 0.5, ex), 8));
-    rows.push(warmRow(it, 2, roundLoad(it.target.weight * 0.75, ex), 4));
+    rows.push(warmRow(it, ex, 1, Math.max(barOf(ex), roundLoad(it.target.weight * 0.5, ex)), 8));
+    rows.push(warmRow(it, ex, 2, Math.max(barOf(ex), roundLoad(it.target.weight * 0.75, ex)), 4));
   }
   const working = done.filter(s => !s.is_warmup);
   working.forEach(s => rows.push(`<div class="set logged${s.is_warmup ? " warm" : ""}" data-edit="${s.client_id}" data-item="${it.id}"><span class="n">${s.set_no}</span>
-    <span class="sum">${s.reps}${ex.timed ? " s" : " reps"}${s.weight ? " at " + kg(s.weight) : ""}${ex.per_hand && s.weight ? " each" : ""}<small>${s.rpe ? "RPE " + s.rpe : ""}</small></span><span class="tick">✓</span></div>`));
+    <span class="sum">${s.reps}${ex.timed ? " s" : " reps"}${s.weight ? " at " + fmtLoad(ex, s.weight) : ""}${ex.per_hand && s.weight ? " each" : ""}<small>${s.rpe ? "RPE " + s.rpe : ""}</small></span><span class="tick">✓</span></div>`));
   if (!skipped && (working.length < planned || W.open[it.id])) {
     const n = working.length + 1;
     const last = working[working.length - 1];
@@ -487,17 +493,21 @@ function renderItem(it) {
       ${!it.adhoc && !working.length && !skipped ? `<button class="ghost" data-swap="${it.id}">Swap</button><button class="ghost" data-skip="${it.id}">Skip</button>` : ""}</div></div>`;
 }
 function roundLoad(x, ex) { const step = ex && ex.equipment === "dumbbell" && x < 10 ? 1 : 2.5; return Math.floor(x / step + 0.5) * step; }
-function warmRow(it, n, w, reps) {
-  return `<div class="set warm" data-warm="${it.id}"><span class="n">W${n}</span><div class="muted small" style="grid-column:2/4">Warm-up: ${reps} at ${kg(w)}</div><button class="logbtn" data-logwarm="${it.id}" data-w="${w}" data-r="${reps}">✓</button></div>`;
+function warmRow(it, ex, n, w, reps) {
+  return `<div class="set warm" data-warm="${it.id}"><span class="n">W${n}</span><div class="muted small" style="grid-column:2/4">Warm-up: ${reps} at ${fmtLoad(ex, w)}</div><button class="logbtn" data-logwarm="${it.id}" data-w="${w}" data-r="${reps}">✓</button></div>`;
 }
+function sideLabel(bar, side) { return `kg a side (${kg(bar + 2 * (parseFloat(side) || 0))} total)`; }
 function setEntryRow(it, ex, n, defW, defR) {
   const step = ex.equipment === "dumbbell" && (defW || 0) < 10 ? 1 : 2.5;
   const noWeight = ex.timed || (ex.equipment === "bodyweight" && !ex.bodyweight_fraction) || ex.pattern === "mobility";
-  const label = ex.equipment === "assisted" ? "assist kg" : ex.per_hand ? "kg each" : "kg";
+  const side = perSideMode() && isBarbell(ex), bar = barOf(ex);
+  const stepW = side ? 1.25 : step;
+  const shownW = defW === "" || defW == null ? "" : (side ? perSide(ex, +defW) : defW);
+  const label = ex.equipment === "assisted" ? "assist kg" : side ? sideLabel(bar, shownW) : ex.per_hand ? "kg each" : "kg";
   return `<div class="set entry" data-entry="${it.id}">
     <span class="n">${n}</span>
     ${noWeight && ex.equipment !== "assisted" ? `<div class="stepper" style="visibility:${ex.equipment === "bodyweight" ? "visible" : "hidden"}"><button data-step="w" data-d="-${step}">−</button><div><input type="number" inputmode="decimal" step="${step}" class="w" value="${defW === "" || defW == null ? "" : defW}" placeholder="+kg"><div class="u">added kg</div></div><button data-step="w" data-d="${step}">+</button></div>` :
-      `<div class="stepper"><button data-step="w" data-d="-${step}">−</button><div><input type="number" inputmode="decimal" step="${step}" class="w" value="${defW === "" || defW == null ? "" : defW}" placeholder="kg"><div class="u">${label}</div></div><button data-step="w" data-d="${step}">+</button></div>`}
+      `<div class="stepper"><button data-step="w" data-d="-${stepW}">−</button><div><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="kg"><div class="u">${label}</div></div><button data-step="w" data-d="${stepW}">+</button></div>`}
     <div class="stepper"><button data-step="r" data-d="-1">−</button><div><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${ex.timed ? "s" : "reps"}"><div class="u">${ex.timed ? "seconds" : "reps"}</div></div><button data-step="r" data-d="${ex.timed ? 5 : 1}">+</button></div>
     <button class="primary logbtn" data-log="${it.id}" aria-label="Log set">✓</button>
     <div class="rpe"><span>RPE</span>${[6, 7, 8, 9, 10].map(v => `<button type="button" data-rpe="${v}">${v}</button>`).join("")}<button type="button" data-rpehalf title="add a half">½</button></div>
@@ -508,7 +518,9 @@ function wireWorkout(root) {
     const inp = $(b.dataset.step === "w" ? "input.w" : "input.r", b.closest(".stepper"));
     const d = parseFloat(b.dataset.d);
     inp.value = Math.max(0, Math.round(((parseFloat(inp.value) || 0) + d) * 100) / 100);
+    if (inp.dataset.side) inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value);
   }));
+  $$("input.w[data-side]", root).forEach(inp => inp.addEventListener("input", () => { inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value); }));
   $$("[data-rpe]", root).forEach(b => b.addEventListener("click", () => {
     const wrap = b.closest(".rpe");
     const on = b.classList.contains("on");
@@ -521,7 +533,8 @@ function wireWorkout(root) {
     const ex = it.exercise || exById(it.exercise_id) || {};
     const wInp = $("input.w", row), rInp = $("input.r", row);
     const reps = parseInt(rInp.value, 10);
-    const weight = wInp && wInp.value !== "" ? parseFloat(wInp.value) : (ex.timed || ex.equipment === "bodyweight" ? 0 : null);
+    let weight = wInp && wInp.value !== "" ? parseFloat(wInp.value) : (ex.timed || ex.equipment === "bodyweight" ? 0 : null);
+    if (weight != null && wInp && wInp.dataset.side) weight = Math.round((+wInp.dataset.side + 2 * weight) * 100) / 100;
     if (!reps && reps !== 0) { toast(ex.timed ? "How many seconds?" : "How many reps?"); rInp.focus(); return; }
     if (weight === null) { toast("What weight?"); wInp.focus(); return; }
     const on = $(".rpe .on[data-rpe]", row);
@@ -585,12 +598,15 @@ function editSet(itemKey, cid) {
   if (!s) return;
   openSheet(`<div class="handle"></div><h2>Set ${s.set_no}, ${esc(ex.name)}</h2>
     <div class="f-row"><label class="field grow"><span>${ex.timed ? "Seconds" : "Reps"}</span><input type="number" inputmode="numeric" id="e-reps" value="${s.reps}"></label>
-    <label class="field grow"><span>${ex.equipment === "assisted" ? "Assistance (kg)" : "Weight (kg)"}</span><input type="number" inputmode="decimal" step="0.5" id="e-w" value="${s.weight ?? ""}"></label>
+    <label class="field grow"><span>${ex.equipment === "assisted" ? "Assistance (kg)" : perSideMode() && isBarbell(ex) ? `Plates each side (kg), bar ${barOf(ex)} kg added` : "Weight (kg)"}</span><input type="number" inputmode="decimal" step="${perSideMode() && isBarbell(ex) ? 1.25 : 0.5}" id="e-w" value="${s.weight == null ? "" : perSideMode() && isBarbell(ex) ? perSide(ex, s.weight) : s.weight}"></label>
     <label class="field grow"><span>RPE</span><input type="number" inputmode="decimal" step="0.5" min="5" max="10" id="e-rpe" value="${s.rpe ?? ""}"></label></div>
     <div class="row"><button class="primary big" id="e-save">Save</button><button class="danger" id="e-del">Delete set</button><button class="ghost" id="e-cancel">Cancel</button></div>`, sh => {
     $("#e-cancel", sh).addEventListener("click", closeSheet);
     $("#e-save", sh).addEventListener("click", () => {
-      s.reps = parseInt($("#e-reps", sh).value, 10) || 0; s.weight = $("#e-w", sh).value === "" ? null : parseFloat($("#e-w", sh).value); s.rpe = $("#e-rpe", sh).value === "" ? null : parseFloat($("#e-rpe", sh).value);
+      s.reps = parseInt($("#e-reps", sh).value, 10) || 0;
+      let w = $("#e-w", sh).value === "" ? null : parseFloat($("#e-w", sh).value);
+      if (w != null && perSideMode() && isBarbell(ex)) w = Math.round((barOf(ex) + 2 * w) * 100) / 100;
+      s.weight = w; s.rpe = $("#e-rpe", sh).value === "" ? null : parseFloat($("#e-rpe", sh).value);
       saveW(); mutate("set", cid, { workout_client_id: W.client_id, exercise_id: it.exercise_id, reps: s.reps, weight_kg: s.weight, rpe: s.rpe });
       closeSheet(); renderWorkout();
     });
@@ -655,11 +671,12 @@ function cancelRestAlarm() {
   if (!IS_ANDROID_APP || !window.Android.cancelRest) return;
   try { window.Android.cancelRest(); } catch (e) {}
 }
-function startRest(sec, label) {
-  REST.total = sec; REST.end = Date.now() + sec * 1000; REST.finished = false; REST.label = label || "Rest";
+function startRest(sec, label, endAt) {
+  REST.total = sec; REST.end = endAt || Date.now() + sec * 1000; REST.finished = false; REST.label = label || "Rest";
   const bar = $("#timerbar"); bar.hidden = false;
   clearInterval(REST.timer);
-  scheduleRestAlarm();
+  ls.set("ft-rest", { end: REST.end, total: REST.total, label: REST.label });   // survives leaving the app
+  if (REST.end > Date.now()) scheduleRestAlarm();
   const draw = () => {
     const left = Math.ceil((REST.end - Date.now()) / 1000);
     if (left <= 0 && !REST.finished) {
@@ -680,7 +697,15 @@ function startRest(sec, label) {
   draw();
   REST.timer = setInterval(draw, 500);
 }
-function stopRest() { clearInterval(REST.timer); REST.finished = false; $("#timerbar").hidden = true; cancelRestAlarm(); }
+function stopRest() { clearInterval(REST.timer); REST.finished = false; $("#timerbar").hidden = true; ls.del("ft-rest"); cancelRestAlarm(); }
+/* After a reload or coming back from another app, pick the rest timer up where it was. */
+function resumeRest() {
+  const r = ls.get("ft-rest");
+  if (!r || !W) { ls.del("ft-rest"); return; }
+  if (r.end - Date.now() < -120000) { ls.del("ft-rest"); return; }   // long over, nothing to show
+  startRest(r.total, r.label, r.end);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && W && $("#timerbar").hidden && ls.get("ft-rest")) resumeRest(); });
 /* iPhones only allow sound after a tap, so the audio context is opened on the first touch and kept. */
 let audioCtx = null;
 function audioUnlock() {
@@ -851,7 +876,7 @@ async function showWorkoutDetail(cid) {
 /* ---------------------------------------------------------- Food */
 const FOODDAYS = {};
 const tokens = s => String(s || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-const SOURCE_RANK = { custom: 0, nz: 0, in: 0, off: 1, usda: 2 };
+const SOURCE_RANK = { custom: 0, nz: 0, in: 0, drinks: 0, off: 1, fdc: 1, usda: 2 };
 async function loadFoods() {
   try {
     const blob = await api("GET", "/api/foods/list");
@@ -896,7 +921,7 @@ async function renderFood() {
     <div class="card"><div class="searchbox"><input type="search" id="foodQ" placeholder="Type a food: eggs, Weet-Bix, flat white" autocomplete="off" value="${esc(UI.foodQ)}"><div class="results" id="foodResults" hidden></div></div>
       <div class="row mt"><button id="foodOnline">Search online</button><button id="foodBarcode">Barcode</button>${canScan ? `<button id="foodScan">Scan</button>` : ""}<button id="foodNew">New food</button><button id="foodMeal">Saved meals</button></div></div>
     ${SLOTS.map(slot => slotCard(slot, day, date)).join("")}
-    <p class="hint mt2">Search works offline over the bundled list, which includes New Zealand staples and Kerala and Indian dishes. Foods marked <span class="approx">approx</span> use typical values. Online search uses Open Food Facts and needs internet.</p>`;
+    <p class="hint mt2">Search works offline over the bundled list, which includes New Zealand staples and Kerala and Indian dishes. Foods marked <span class="approx">approx</span> use typical values. Online search asks USDA FoodData Central for dishes and drinks (curries, biryani, beer, wine) and Open Food Facts for packaged products, and needs internet.</p>`;
   $("#fdPrev").addEventListener("click", () => { UI.foodDate = addDays(date, -1); renderFood(); });
   $("#fdNext").addEventListener("click", () => { UI.foodDate = addDays(date, 1); renderFood(); });
   const ft = $("#fdToday"); if (ft) ft.addEventListener("click", () => { UI.foodDate = todayIso(); renderFood(); });
@@ -996,14 +1021,15 @@ function portionSheet(f, date, preSlot) {
 const isTodayDate = d => d === todayIso();
 async function onlineSearchSheet(q, date) {
   if (!navigator.onLine) { toast("Online search needs the internet"); return; }
-  openSheet(`<div class="handle"></div><h2>Search Open Food Facts</h2><p class="hint">Packaged products by name. Anything you pick is saved to your list, so next time it works offline.</p>
+  openSheet(`<div class="handle"></div><h2>Search online</h2><p class="hint">Dishes and drinks from USDA FoodData Central, packaged products from Open Food Facts. Anything you pick is saved to your list, so next time it works offline.</p>
     <div class="row"><input type="search" id="os-q" value="${esc(q)}" placeholder="Product name" style="flex:1"><button class="primary" id="os-go">Search</button></div><div id="os-res" class="mt"></div>`, sh => {
     const run = async () => {
       const term = $("#os-q", sh).value.trim(); if (!term) return;
       $("#os-res", sh).innerHTML = `<div class="empty">Searching</div>`;
       try {
-        const hits = await api("GET", "/api/foods/online?q=" + encodeURIComponent(term), undefined, { timeout: 25000 });
-        $("#os-res", sh).innerHTML = hits.length ? hits.map((h, i) => `<div class="result" data-i="${i}"><div><div class="n">${esc(h.name)}</div><div class="b">${esc(h.brand || "")}${h.quantity ? " · " + esc(h.quantity) : ""}${h.approx ? " · calories estimated" : ""}</div></div><div class="k">${n0(h.kcal_100)}<small>kcal / 100 ${esc(h.unit)}</small></div></div>`).join("") : `<div class="empty">Nothing found. Try fewer words, or add it as a new food.</div>`;
+        const r = await api("GET", "/api/foods/online?q=" + encodeURIComponent(term), undefined, { timeout: 25000 });
+        const hits = Array.isArray(r) ? r : (r.hits || []), notes = Array.isArray(r) ? [] : (r.notes || []);
+        $("#os-res", sh).innerHTML = (notes.length ? `<p class="hint">${esc(notes.join(" "))}</p>` : "") + (hits.length ? hits.map((h, i) => `<div class="result" data-i="${i}"><div><div class="n">${esc(h.name)}</div><div class="b">${esc(h.brand || "")}${h.brand ? " · " : ""}${h.source === "fdc" ? "USDA" : "Open Food Facts"}${h.quantity ? " · " + esc(h.quantity) : ""}${h.approx ? " · calories estimated" : ""}</div></div><div class="k">${n0(h.kcal_100)}<small>kcal / 100 ${esc(h.unit)}</small></div></div>`).join("") : `<div class="empty">Nothing found. Try fewer words, or add it as a new food.</div>`);
         $$(".result", sh).forEach(r => r.addEventListener("click", () => acceptOnline(hits[+r.dataset.i], date)));
       } catch (e) { $("#os-res", sh).innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
     };
@@ -1263,11 +1289,16 @@ function renderSettings() {
       <div class="f-row">${field("session_minutes", "Minutes per session", "number", 'inputmode="numeric" step="5" min="30" max="120"')}${field("rest_default_sec", "Default rest (seconds)", "number", 'inputmode="numeric" step="15"')}
       <label class="field narrow"><span>Experience</span><select id="s-experience"><option value="beginner"${st.experience === "beginner" ? " selected" : ""}>Beginner</option></select></label></div>
       <div class="cap">Cardio machines you will use</div><div class="chips" id="s-kit">${[["treadmill", "Treadmill"], ["bike", "Bike"], ["rower", "Rower"]].map(([k, l]) => `<button type="button" class="chip${kit.includes(k) ? " on" : ""}" data-kit="${k}">${l}</button>`).join("")}</div>
+      <div class="cap mt">Barbell weights</div><div class="chips mb" id="s-bar">${[["total", "Total on the bar"], ["per_side", "Plates each side"]].map(([k, l]) => `<button type="button" class="chip${(st.barbell_entry || "total") === k ? " on" : ""}" data-bar="${k}">${l}</button>`).join("")}</div>
+      <p class="hint">${(st.barbell_entry || "total") === "per_side" ? "You type the plates on one side and the app adds the bar: 20 kg, or 10 kg for an EZ bar. Targets and history show both figures." : "You type the whole weight including the bar. Switch to plates each side if that is how you think at the rack."}
+        ${typeof LocalApi !== "undefined" ? (st.barbell_converted_at ? ` Stored barbell weights were converted to totals on ${fmtDate(st.barbell_converted_at)}.` : ` If you have been logging plates per side until now, <button class="link" id="s-convertBar">convert what is stored</button> so your history and targets line up.`) : ""}</p>
       <div class="row mt"><label class="switch"><input type="checkbox" id="s-awake" ${st.keep_awake !== false ? "checked" : ""}><span class="slider"></span><span>Keep the screen on during a workout</span></label></div>
       <div class="row mt"><button id="s-regen" class="ghost">Rebuild the plan from today</button></div></div>
     <div class="card exlib"><h2>Exercise library</h2><p class="hint">Switch off anything your gym does not have and the plan stops picking it. Edit the cues to suit you, or add your own exercise.</p>
       <div class="row mb"><input type="search" id="exQ" placeholder="Search exercises" value="${esc(UI.exQ)}" style="max-width:260px"><button id="exAdd">Add an exercise</button></div><div id="exList"></div></div>
-    <div class="card"><h2>Foods and meals</h2><p class="hint">Foods you added or accepted from Open Food Facts. Hide anything wrong; the bundled list stays.</p><div id="myFoods"></div><div id="myMeals" class="mt"></div></div>
+    <div class="card"><h2>Foods and meals</h2><p class="hint">Foods you added or accepted from an online search. Hide anything wrong; the bundled list stays.</p><div id="myFoods"></div><div id="myMeals" class="mt"></div></div>
+    <div class="card"><h2>Online food sources</h2><p class="hint">Search online asks two free services. Open Food Facts needs no key. USDA FoodData Central shares one demo key between everyone, which runs out after a few searches an hour. A personal key is free, takes a minute and allows a thousand searches an hour. <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">Get a USDA key</a>, then paste it here.</p>
+      <div class="f-row"><label class="field grow"><span>USDA API key, blank for the shared demo key</span><input type="text" id="s-usda_api_key" value="${esc(st.usda_api_key || "")}" autocomplete="off" spellcheck="false" placeholder="DEMO_KEY"></label></div></div>
     <div class="card"><h2>Backups</h2><p class="hint">Everything lives on this ${IS_ANDROID_APP ? "phone" : "device"}. If it is lost or replaced, so is your data, so export a backup now and then and keep it somewhere safe. A backup restores onto any device running this app.</p>
       <div class="row"><button class="primary" id="bkExport">Export a backup</button><label class="btn" for="restoreFile">Restore a backup</label><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
       <div class="row mt"><button id="csvSets">Sets CSV</button><button id="csvFood">Food CSV</button><button id="csvBody">Body CSV</button></div>
@@ -1277,7 +1308,7 @@ function renderSettings() {
       <div class="row"><button id="upCheck">Check for updates</button><span class="muted small" id="upInfo"></span></div></div>`;
 
   const bind = (k, parse, msg) => { const el = $("#s-" + k, root); if (!el) return; el.addEventListener("change", () => { const v = el.value === "" ? null : (parse ? parse(el.value) : el.value); saveSettings({ [k]: v }, msg); }); };
-  ["sex", "birth_date", "target_date", "experience"].forEach(k => bind(k));
+  ["sex", "birth_date", "target_date", "experience", "usda_api_key"].forEach(k => bind(k));
   ["height_cm", "start_weight_kg", "target_weight_kg", "neat_factor", "deficit_cap", "protein_g_per_kg", "fat_g_per_kg", "kcal_floor", "session_minutes", "rest_default_sec"].forEach(k => bind(k, parseFloat));
   $$("#s-split .chip", root).forEach(b => b.addEventListener("click", () => saveSettings({ split: b.dataset.split }, "Plan rebuilt from today")));
   $$("#s-days .chip", root).forEach(b => b.addEventListener("click", () => {
@@ -1286,6 +1317,12 @@ function renderSettings() {
     if (next.length < 3) { toast("Keep at least three training days"); return; }
     saveSettings({ train_days: next }, "Plan rebuilt from today");
   }));
+  $$("#s-bar .chip", root).forEach(b => b.addEventListener("click", () => saveSettings({ barbell_entry: b.dataset.bar })));
+  const cv = $("#s-convertBar", root);
+  if (cv) cv.addEventListener("click", async () => {
+    if (!confirm("Convert every stored barbell weight from plates per side to the total on the bar? The bar weight is added once. This runs one time only.")) return;
+    try { const r = await api("POST", "/api/sets/convert_barbell"); toast(`Converted ${plural(r.sets, "set")} across ${plural(r.workouts, "workout")}`); await load(true); renderSettings(); } catch (e) { toast(e.message); }
+  });
   $$("#s-kit .chip", root).forEach(b => b.addEventListener("click", () => {
     const on = $$("#s-kit .chip.on", root).map(x => x.dataset.kit); const k = b.dataset.kit;
     const next = on.includes(k) ? on.filter(x => x !== k) : on.concat([k]);
@@ -1356,8 +1393,8 @@ function editExerciseSheet(ex) {
 }
 async function renderMyFoods(root) {
   if (!FOODS) await loadFoods();
-  const mine = (FOODS || []).filter(f => f.source === "custom" || f.source === "off").sort((a, b) => a.name.localeCompare(b.name));
-  $("#myFoods", root).innerHTML = mine.length ? mine.slice(0, 40).map(f => `<div class="lg-row"><div class="lg-what"><div class="t">${esc(f.name)}</div><div class="c">${esc(f.brand || "")}${f.brand ? " · " : ""}${n0(f.kcal_100)} kcal, ${n1(f.protein_100)} p per 100 ${esc(f.unit)} · ${f.source === "off" ? "Open Food Facts" : "yours"}</div></div>${f.id ? `<button class="ghost" data-hidefood="${f.id}">Hide</button>` : `<span class="pill">waiting to sync</span>`}</div>`).join("") : `<div class="muted small">No foods of your own yet. Add one from the Food tab.</div>`;
+  const mine = (FOODS || []).filter(f => f.source === "custom" || f.source === "off" || f.source === "fdc").sort((a, b) => a.name.localeCompare(b.name));
+  $("#myFoods", root).innerHTML = mine.length ? mine.slice(0, 40).map(f => `<div class="lg-row"><div class="lg-what"><div class="t">${esc(f.name)}</div><div class="c">${esc(f.brand || "")}${f.brand ? " · " : ""}${n0(f.kcal_100)} kcal, ${n1(f.protein_100)} p per 100 ${esc(f.unit)} · ${f.source === "off" ? "Open Food Facts" : f.source === "fdc" ? "USDA" : "yours"}</div></div>${f.id ? `<button class="ghost" data-hidefood="${f.id}">Hide</button>` : `<span class="pill">waiting to sync</span>`}</div>`).join("") : `<div class="muted small">No foods of your own yet. Add one from the Food tab.</div>`;
   $$("[data-hidefood]", root).forEach(b => b.addEventListener("click", async () => { try { await api("DELETE", "/api/foods/" + b.dataset.hidefood); FOODS = FOODS.filter(f => String(f.id) !== b.dataset.hidefood); toast("Hidden"); renderMyFoods(root); } catch (e) { toast(e.message); } }));
   try {
     const meals = await api("GET", "/api/meals");
@@ -1439,6 +1476,6 @@ async function downloadText(name, mime, text) {
   { const h = location.hash.replace("#", ""); if (["today", "workout", "plan", "food", "progress", "history", "settings"].includes(h)) UI.tab = h; }
   switchTab(UI.tab);
   await load();
-  if (W) tickElapsed();
+  if (W) { tickElapsed(); resumeRest(); }
 })();
 

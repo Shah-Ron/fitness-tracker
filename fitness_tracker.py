@@ -252,6 +252,9 @@ SETTING_DEFAULTS.update({
     "contact_email": None,
     "display_name": None,
     "rest_default_sec": 90,
+    "barbell_entry": "total",
+    "barbell_converted_at": None,
+    "usda_api_key": None,
     "seed_version": 0,
 })
 HIDDEN_SETTINGS = {"pair_key"}
@@ -362,12 +365,13 @@ def seed(conn):
                           ex.get("variation_of"), ex.get("carry"), json.dumps(ex["mets"]) if ex.get("mets") else None,
                           json.dumps(ex.get("cues") or [])))
         log(f"Exercise library loaded: {len(blob['exercises'])} exercises")
-    food_count = conn.execute("SELECT COUNT(*) FROM foods WHERE source IN ('usda', 'nz', 'in')").fetchone()[0]
+    food_count = conn.execute("SELECT COUNT(*) FROM foods WHERE source IN ('usda', 'nz', 'in', 'drinks')").fetchone()[0]
     if food_count == 0 or have_version < SEED_VERSION:
         rows = list(nutrition.iter_usda_foods(static_path("data/foods_usda.json")))
         rows += list(nutrition.iter_nz_foods(static_path("data/foods_nz.csv"), "nz"))
-        if os.path.exists(static_path("data/foods_indian.csv")):
-            rows += list(nutrition.iter_nz_foods(static_path("data/foods_indian.csv"), "in"))
+        for source, name in (("in", "foods_indian.csv"), ("drinks", "foods_drinks.csv")):
+            if os.path.exists(static_path("data/" + name)):
+                rows += list(nutrition.iter_nz_foods(static_path("data/" + name), source))
         n = 0
         for row in rows:
             n += insert_food(conn, row, seeding=True)
@@ -636,7 +640,7 @@ def apply_food_op(conn, client_id, p):
     row = {
         "client_id": client_id, "name": name, "brand": v_text(p.get("brand"), "brand", 60),
         "unit": v_choice(p.get("unit") or "g", "unit", ("g", "ml")),
-        "source": v_choice(p.get("source") or "custom", "source", ("custom", "off")),
+        "source": v_choice(p.get("source") or "custom", "source", ("custom", "off", "fdc")),
         "source_id": v_text(p.get("source_id"), "source_id", 64), "barcode": v_text(p.get("barcode"), "barcode", 32),
         "kcal_100": v_num(p.get("kcal_100"), "calories per 100", 0, 1000),
         "protein_100": v_num(p.get("protein_100"), "protein", 0, 100, allow_none=True) or 0,
@@ -656,8 +660,8 @@ def apply_food_op(conn, client_id, p):
             for i, (label, grams) in enumerate(row["portions"]):
                 conn.execute("INSERT INTO food_portions (food_id, label, grams, is_default) VALUES (?,?,?,?)", (existing["id"], label, grams, 1 if i == 0 else 0))
         return existing["id"]
-    if row["source"] == "off" and row["source_id"]:
-        dup = conn.execute("SELECT id FROM foods WHERE source = 'off' AND source_id = ?", (row["source_id"],)).fetchone()
+    if row["source"] in ("off", "fdc") and row["source_id"]:
+        dup = conn.execute("SELECT id FROM foods WHERE source = ? AND source_id = ?", (row["source"], row["source_id"])).fetchone()
         if dup:
             conn.execute("UPDATE foods SET client_id = COALESCE(client_id, ?) WHERE id = ?", (client_id, dup["id"]))
             return dup["id"]
@@ -1204,6 +1208,12 @@ def update_settings(conn, settings, patch):
             v = v_choice(v, "experience", tuple(PROG["rep_schemes"].keys()))
         elif k == "split":
             v = v_choice(v, "split", tuple(PROG.get("splits", {"upper_lower": 1}).keys()))
+        elif k == "barbell_entry":
+            v = v_choice(v, "barbell entry", ("total", "per_side"))
+        elif k == "barbell_converted_at":
+            v = v_date(v, k, allow_none=True)
+        elif k == "usda_api_key":
+            v = v_text(v, k, 80)
         elif k == "main1_swap_every_blocks":
             v = v_int(v, k, 1, 6)
         elif k in ("stay_running", "keep_awake"):
@@ -1642,7 +1652,7 @@ class Handler(BaseHTTPRequestHandler):
                 data = foods_list_bytes(conn, gz)
                 return self._send(200, data, "application/json; charset=utf-8", {"Content-Encoding": "gzip"} if gz else None)
             if api == "foods/online":
-                return self._json(nutrition.off_search(q.get("q", ""), settings.get("contact_email")))
+                return self._json(nutrition.online_search(q.get("q", ""), settings.get("contact_email"), settings.get("usda_api_key")))
             if api.startswith("foods/barcode/"):
                 res = nutrition.off_barcode(api.rsplit("/", 1)[1], settings.get("contact_email"))
                 if not res:
