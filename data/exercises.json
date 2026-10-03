@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "exercises": [
     {
       "key": "barbell_bench_press",
@@ -2323,7 +2323,7 @@
         "Press your arms straight out in front and hold.",
         "Resist the pull, keeping your hips and shoulders square."
       ],
-      "unilateral": 0,
+      "unilateral": 1,
       "per_hand": 0,
       "timed": 0,
       "bodyweight_fraction": 0,

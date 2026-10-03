@@ -273,6 +273,11 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .rpe { display: flex; gap: 4px; grid-column: 1 / -1; align-items: center; }
 .rpe span { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 4px; }
 .rpe button { flex: 1; min-height: 36px; padding: 0; border-radius: 10px; font-family: var(--display); font-weight: 600; font-size: 14px; }
+.hold { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.hold .cap { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 4px; }
+.hold button { min-height: 36px; padding: 0 12px; border-radius: 10px; font-family: var(--display); font-weight: 600; font-size: 14px; }
+.hold button.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.hold .hold-t { margin-left: auto; font-family: var(--display); font-weight: 600; font-variant-numeric: tabular-nums; }
 .rpe button.on { background: var(--burn); border-color: var(--burn); color: #fff; }
 .logbtn { min-height: var(--tap); min-width: var(--tap); border-radius: 14px; font-size: 20px; padding: 0 14px; }
 .proto { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }

@@ -117,6 +117,15 @@ const today = iso(new Date());
       let twice = false; try { await api("POST", "/api/sets/convert_barbell"); } catch (e) { twice = true; }
       log(twice, "second conversion refused");
     } else log(true, "main1 is not a barbell lift, conversion skipped");
+    const tread = (await api("GET", "/api/exercises")).find(x => x.key === "treadmill");
+    const w2 = await api("POST", "/api/workouts", {});
+    await api("POST", "/api/sync", { ops: [{ type: "set", client_id: "st-tread", payload: { workout_client_id: w2.client_id, exercise_id: tread.id, set_no: 1, reps: 30, weight_kg: null, rpe: 7 } }] });
+    const mig = await api("POST", "/api/maintenance/cardio_sets");
+    const det2 = await api("GET", "/api/workouts/" + w2.client_id);
+    log(mig.made === 1 && det2.cardio.length === 1 && det2.cardio[0].minutes === 30 && det2.sets.length === 0, "treadmill set of 30 reps becomes 30 minutes of cardio", { mig, cardio: det2.cardio });
+    const sp = await api("POST", "/api/cardio", { workout_client_id: w2.client_id, exercise_id: tread.id, minutes: 20, speed_kmh: 6.5, distance_km: 2.17, intensity: "moderate" });
+    log(sp.ok && (await api("GET", "/api/workouts/" + w2.client_id)).cardio.some(c => c.speed_kmh === 6.5), "cardio keeps the speed");
+    await api("PUT", "/api/workouts/" + w2.client_id, { deleted: 1 }).catch(() => api("POST", "/api/sync", { ops: [{ type: "workout", client_id: w2.client_id, payload: { deleted: 1 } }] }));
     const onl = await api("GET", "/api/foods/online?q=");
     log(Array.isArray(onl.hits) && onl.hits.length === 0, "empty online search returns no hits", onl);
     const bk = await api("GET", "/api/backup.json");

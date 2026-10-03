@@ -24,6 +24,10 @@ const LocalApi = (() => {
     refreshExercises();
     const problems = E.validateSeed(PROG, EX_BY_KEY);
     if (problems.length) console.warn("programme.json does not match the exercise library:", problems);
+    try {
+      const m = E.migrateCardioSets(db, settings(), PROG);
+      if (m.made) { console.info(`Converted ${m.made} cardio set(s) into cardio logs`); db.setSetting("cardio_sets_migrated_at", today()); }
+    } catch (e) { console.warn("Could not convert old cardio sets", e); }
   }
 
   /* ---------------------------------------------------- validation */
@@ -88,11 +92,12 @@ const LocalApi = (() => {
         if ("exercise_id" in p) fields.exercise_id = int(p.exercise_id, "exercise_id", 1, null, true);
         if ("minutes" in p || !ex) fields.minutes = num(p.minutes, "minutes", 0, 600);
         if ("distance_km" in p) fields.distance_km = num(p.distance_km, "distance", 0, 500, true);
+        if ("speed_kmh" in p) fields.speed_kmh = num(p.speed_kmh, "speed", 0, 60, true);
         if ("intensity" in p || !ex) fields.intensity = choice(p.intensity || "moderate", "intensity", INTENSITIES);
         if ("protocol" in p) fields.protocol = text(p.protocol, "protocol", 60);
       }
       if (ex) db.update(coll, cid, fields);
-      else db.insert(coll, Object.assign({ client_id: cid, plan_item_id: null, reps: null, weight_kg: null, rpe: null, is_warmup: 0, done_at: null, distance_km: null, protocol: null, kcal_est: null }, fields));
+      else db.insert(coll, Object.assign({ client_id: cid, plan_item_id: null, reps: null, weight_kg: null, rpe: null, is_warmup: 0, done_at: null, distance_km: null, speed_kmh: null, protocol: null, kcal_est: null }, fields));
       E.recomputeWorkout(db, wcid, s, PROG);
       return { ok: true, id: cid };
     }
@@ -549,6 +554,7 @@ const LocalApi = (() => {
         return workoutDetail(cid);
       }
       if (api === "sets/convert_barbell") return convertBarbell();
+      if (api === "maintenance/cardio_sets") return E.migrateCardioSets(db, settings(), PROG);
       if (api === "sets") { const cid = body.client_id || crypto.randomUUID(); const r = applyOp("set", cid, body); return { ok: true, client_id: cid, id: r.id }; }
       if (api === "cardio") { const cid = body.client_id || crypto.randomUUID(); const r = applyOp("cardio", cid, body); return { ok: true, client_id: cid, id: r.id }; }
       if (api === "food_logs") { applyOp("food_log", body.client_id || crypto.randomUUID(), body); return foodDay(body.date || today()); }

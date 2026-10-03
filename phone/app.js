@@ -203,6 +203,28 @@ const barOf = ex => (ex && ex.min_load_kg != null ? +ex.min_load_kg : 20);
 const perSideMode = () => !!(S && S.settings && S.settings.barbell_entry === "per_side");
 const perSide = (ex, total) => Math.max(0, Math.round((total - barOf(ex)) / 2 * 100) / 100);
 const fmtLoad = (ex, w) => w == null ? "" : (perSideMode() && isBarbell(ex) ? `${kg(w)} (${n1(perSide(ex, w))} a side)` : kg(w));
+/* What the Workout screen has to collect for an exercise. Mirrors Engine.entryMode in phone/engine.js, which the tests check. */
+const isCardioEx = ex => !!ex && (String(ex.pattern || "").startsWith("cardio") || ["treadmill", "bike", "rower"].includes(ex.equipment));
+function entryMode(ex) {
+  const base = { kind: "weight_reps", weight: true, reps: true, time: false, perSide: false, perHand: false, bar: null, timer: null };
+  if (!ex) return base;
+  if (isCardioEx(ex)) return Object.assign(base, { kind: "cardio", weight: false, reps: false, time: true, timer: "cardio" });
+  if (String(ex.pattern || "") === "mobility" || ex.equipment === "none") return Object.assign(base, { kind: "routine", weight: false, reps: false, time: true, timer: "countdown" });
+  base.perSide = !!ex.unilateral;
+  base.perHand = !!ex.per_hand;
+  if (ex.timed) {
+    const weighted = !["bodyweight", "none", "band", "assisted"].includes(ex.equipment);
+    return Object.assign(base, { kind: weighted ? "weight_time" : "time", weight: weighted, reps: false, time: true, bar: isBarbell(ex) ? barOf(ex) : null, timer: "hold" });
+  }
+  if (ex.equipment === "assisted") return Object.assign(base, { kind: "assisted" });
+  if (ex.equipment === "bodyweight") return Object.assign(base, { kind: ex.bodyweight_fraction ? "bodyweight_reps" : "reps", weight: "optional" });
+  return Object.assign(base, { bar: isBarbell(ex) ? barOf(ex) : null });
+}
+function fmtSet(ex, mode, reps, weight) {
+  return `${reps}${mode.time ? " s" : " reps"}${mode.perSide ? " each side" : ""}${weight ? " at " + fmtLoad(ex, weight) : ""}${mode.perHand && weight ? " each" : ""}`;
+}
+function fmtCardio(c) { return `${n0(c.minutes)} min${c.speed_kmh ? ` at ${n1(c.speed_kmh)} km/h` : ""}${c.distance_km ? `, ${n1(c.distance_km)} km` : ""}${c.intensity ? ", " + c.intensity : ""}`; }
+const prText = p => { const ex = p.exercise_id ? exById(p.exercise_id) : null; return p.text + (p.weight && ex && perSideMode() && isBarbell(ex) ? ` (${n1(perSide(ex, p.weight))} a side)` : ""); };
 function targetLine(it) {
   const t = it.target; if (!t) return "";
   const scheme = it.sets ? `${it.sets} x ${it.rep_low}-${it.rep_high}${it.exercise && it.exercise.timed ? " s" : ""}` : "";
@@ -219,7 +241,7 @@ function summariseSets(sets, ex) {
   });
   const rpes = sets.map(s => s.rpe).filter(x => x != null);
   const rpe = rpes.length ? ", RPE " + n1(rpes.reduce((a, b) => a + b, 0) / rpes.length) : "";
-  return groups.map(g => `${g.n} x ${g.r}${timed ? " s" : ""}${g.w ? " at " + fmtLoad(ex, g.w) : ""}`).join(", ") + rpe;
+  return groups.map(g => `${g.n} x ${g.r}${timed ? " s" : ""}${ex && ex.unilateral ? " each side" : ""}${g.w ? " at " + fmtLoad(ex, g.w) : ""}`).join(", ") + rpe;
 }
 function weekStrip(strip) {
   const today = todayIso();
@@ -276,7 +298,7 @@ function renderToday() {
       </div>
     </div>`;
   }
-  const prs = S.recent_prs && S.recent_prs.length ? `<div class="card"><h2>Personal bests from your last session</h2><ul class="prs">${S.recent_prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(p.text)}</li>`).join("")}</ul></div>` : "";
+  const prs = S.recent_prs && S.recent_prs.length ? `<div class="card"><h2>Personal bests from your last session</h2><ul class="prs">${S.recent_prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(prText(p))}</li>`).join("")}</ul></div>` : "";
   const adh = S.week ? S.week.adherence : null;
   const stats = `<div class="grid g3">
     <div class="stat"><div class="l">This week</div><div class="v num">${adh ? `${adh.done} / ${adh.planned}` : "-"}</div><div class="f">sessions done${S.week && S.week.week.is_deload ? ", deload week" : ""}</div></div>
@@ -373,7 +395,7 @@ function renderWorkout() {
       const sess = sessionById(ip.session_id);
       const resume = async () => {
         const det = await api("GET", "/api/workouts/" + ip.client_id);
-        W = { client_id: det.client_id, session_id: det.session_id, date: det.date, started_at: det.started_at, title: sess ? sess.title : "Workout", kind: sess ? sess.kind : "adhoc", is_deload: sess && sess.is_deload, items: sess ? JSON.parse(JSON.stringify(sess.items)) : [], sets: {}, cardio: det.cardio.map(c => ({ client_id: c.client_id, plan_item_id: c.plan_item_id, minutes: c.minutes, intensity: c.intensity })), skipped: {}, open: {}, local: false };
+        W = { client_id: det.client_id, session_id: det.session_id, date: det.date, started_at: det.started_at, title: sess ? sess.title : "Workout", kind: sess ? sess.kind : "adhoc", is_deload: sess && sess.is_deload, items: sess ? JSON.parse(JSON.stringify(sess.items)) : [], sets: {}, cardio: det.cardio.map(c => ({ client_id: c.client_id, plan_item_id: c.plan_item_id, minutes: c.minutes, intensity: c.intensity, distance_km: c.distance_km, speed_kmh: c.speed_kmh })), skipped: {}, open: {}, local: false };
         det.sets.forEach(s => { (W.sets[s.plan_item_id || "x" + s.exercise_id] = W.sets[s.plan_item_id || "x" + s.exercise_id] || []).push({ client_id: s.client_id, set_no: s.set_no, reps: s.reps, weight: s.weight_kg, rpe: s.rpe, is_warmup: s.is_warmup, done_at: s.done_at }); });
         saveW(); renderWorkout();
       };
@@ -445,46 +467,41 @@ function wireVideos(root) {
 function loggedSets(it) { return W.sets[it.id] || []; }
 function renderItem(it) {
   const ex = it.exercise || exById(it.exercise_id) || { name: "Exercise", cues: [] };
+  const mode = entryMode(ex);
   const done = loggedSets(it);
   const skipped = W.skipped[it.id];
-  if (it.section === "warmup" || it.section === "cooldown") {
-    const isCardio = it.protocol;
-    const howOpen = HOWTO_OPEN.has(String(it.id));
-    const hasHow = !!(ex.how_to || (ex.video && ex.video.id));
-    return `<div class="ex${done.length || skipped ? " done" : ""}" data-item="${it.id}">
-      <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${n0(it.minutes)} min</span></h3>
-      ${isCardio ? `<div class="target">${esc(it.protocol_text || "Easy pace.")}</div>` : `<ul class="cues">${(ex.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ul>`}
+  const howOpen = HOWTO_OPEN.has(String(it.id));
+  const hasHow = !!(ex.how_to || (ex.video && ex.video.id));
+  if (mode.kind === "cardio") return cardioCard(it, ex, skipped, howOpen);
+  if (mode.kind === "routine") {
+    const mins = it.minutes || 3;
+    return `<div class="ex${skipped ? " done" : ""}" data-item="${it.id}">
+      <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${n0(mins)} min</span></h3>
+      <ul class="cues">${(ex.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ul>
       ${howOpen ? howToBlock(ex, { cues: false }) : ""}</div>
       <button class="${skipped ? "" : "good"}" data-tickwu="${it.id}">${skipped ? "Undo" : "Done"}</button></div>
-      ${hasHow ? `<div class="tools"><button class="ghost" data-howto="${it.id}">${howOpen ? "Hide video" : "Watch how"}</button></div>` : ""}</div>`;
-  }
-  if (it.section === "finisher") {
-    const c = W.cardio.find(x => x.plan_item_id === it.id);
-    return `<div class="ex${c || skipped ? " done" : ""}" data-item="${it.id}">
-      <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} finisher <span class="scheme">${n0(it.minutes)} min</span></h3><div class="target">${esc(it.protocol_text || "")}</div></div></div>
-      <div class="tools">${c ? `<span class="pill good">Logged ${n0(c.minutes)} min, ${esc(c.intensity)}</span><button class="ghost" data-uncardio="${it.id}">Remove</button>` : skipped ? `<span class="pill">Skipped</span><button class="ghost" data-unskip="${it.id}">Undo</button>` :
-        `${it.protocol_detail && it.protocol_detail.work_sec ? `<button data-interval="${it.id}">Interval timer</button>` : `<button data-countdown="${it.id}">Timer</button>`}<button class="good" data-logcardio="${it.id}">Log it</button><button class="ghost" data-skip="${it.id}">Skip</button>`}</div></div>`;
+      <div class="tools"><button data-countdown="${it.id}">${n0(mins)} min timer</button>${hasHow ? `<button class="ghost" data-howto="${it.id}">${howOpen ? "Hide video" : "Watch how"}</button>` : ""}</div></div>`;
   }
   const planned = it.sets || 3;
   const rows = [];
-  const showWarm = it.slot_key === "main1" && it.target && it.target.weight && !done.some(s => s.is_warmup) && !done.length;
+  const showWarm = it.slot_key === "main1" && mode.kind === "weight_reps" && it.target && it.target.weight && !done.some(s => s.is_warmup) && !done.length;
   if (showWarm) {
     rows.push(warmRow(it, ex, 1, Math.max(barOf(ex), roundLoad(it.target.weight * 0.5, ex)), 8));
     rows.push(warmRow(it, ex, 2, Math.max(barOf(ex), roundLoad(it.target.weight * 0.75, ex)), 4));
   }
   const working = done.filter(s => !s.is_warmup);
-  working.forEach(s => rows.push(`<div class="set logged${s.is_warmup ? " warm" : ""}" data-edit="${s.client_id}" data-item="${it.id}"><span class="n">${s.set_no}</span>
-    <span class="sum">${s.reps}${ex.timed ? " s" : " reps"}${s.weight ? " at " + fmtLoad(ex, s.weight) : ""}${ex.per_hand && s.weight ? " each" : ""}<small>${s.rpe ? "RPE " + s.rpe : ""}</small></span><span class="tick">✓</span></div>`));
+  working.forEach(s => rows.push(`<div class="set logged" data-edit="${s.client_id}" data-item="${it.id}"><span class="n">${s.set_no}</span>
+    <span class="sum">${fmtSet(ex, mode, s.reps, s.weight)}<small>${s.rpe ? "RPE " + s.rpe : ""}</small></span><span class="tick">✓</span></div>`));
   if (!skipped && (working.length < planned || W.open[it.id])) {
     const n = working.length + 1;
     const last = working[working.length - 1];
     const defW = last ? last.weight : (it.target && it.target.weight != null ? it.target.weight : "");
-    const defR = last ? last.reps : (ex.timed ? it.rep_low : it.rep_low);
-    rows.push(setEntryRow(it, ex, n, defW, defR));
+    const defR = last ? last.reps : it.rep_low;
+    rows.push(setEntryRow(it, ex, n, defW, defR, mode));
   }
-  const howOpen = HOWTO_OPEN.has(String(it.id));
+  const scheme = `${planned} x ${it.rep_low}-${it.rep_high}${mode.time ? " s" : ""}${mode.perSide ? " each side" : ""}${mode.perHand ? ", each hand" : ""}`;
   return `<div class="ex${working.length >= planned || skipped ? " done" : ""}" data-item="${it.id}">
-    <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${planned} x ${it.rep_low}-${it.rep_high}${ex.timed ? " s" : ""}${ex.per_hand ? ", each hand" : ""}</span></h3>
+    <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${scheme}</span></h3>
       <div class="target">${targetLine(it)}</div>
       ${howOpen ? howToBlock(ex) : ""}</div></div>
     <div class="sets">${skipped ? `<div class="muted small">Skipped. <button class="link" data-unskip="${it.id}">Undo</button></div>` : rows.join("")}</div>
@@ -492,26 +509,94 @@ function renderItem(it) {
       ${!skipped && working.length >= planned ? `<button class="ghost" data-more="${it.id}">Add a set</button>` : ""}
       ${!it.adhoc && !working.length && !skipped ? `<button class="ghost" data-swap="${it.id}">Swap</button><button class="ghost" data-skip="${it.id}">Skip</button>` : ""}</div></div>`;
 }
+/* Treadmill, bike and rower anywhere in the session: a timer and a cardio log, never weight and reps. */
+function cardioMinutes(it) {
+  if (it.minutes) return +it.minutes;
+  const p = it.protocol_detail;
+  if (p && p.work_sec) return Math.round((it.rounds || 6) * (p.work_sec + (p.rest_sec || 0)) / 60);
+  return 10;
+}
+function cardioCard(it, ex, skipped, howOpen) {
+  const c = W.cardio.find(x => String(x.plan_item_id) === String(it.id));
+  const mins = cardioMinutes(it);
+  const label = it.section === "finisher" ? " finisher" : it.section === "warmup" ? " warm-up" : "";
+  const timerBtn = it.protocol_detail && it.protocol_detail.work_sec ? `<button data-interval="${it.id}">Interval timer</button>` : `<button data-countdown="${it.id}">${n0(mins)} min timer</button>`;
+  const head = `<h3>${esc(ex.name)}${label} <span class="scheme">${n0(mins)} min</span></h3><div class="target">${esc(it.protocol_text || "Steady pace.")}</div>${howOpen ? howToBlock(ex, { cues: false }) : ""}`;
+  if (it.section === "warmup") return `<div class="ex${skipped ? " done" : ""}" data-item="${it.id}"><div class="ex-top"><div class="grow">${head}</div><button class="${skipped ? "" : "good"}" data-tickwu="${it.id}">${skipped ? "Undo" : "Done"}</button></div><div class="tools">${timerBtn}</div></div>`;
+  return `<div class="ex${c || skipped ? " done" : ""}" data-item="${it.id}"><div class="ex-top"><div class="grow">${head}</div></div>
+    <div class="tools">${c ? `<span class="pill good">Logged ${esc(fmtCardio(c))}</span><button class="ghost" data-uncardio="${it.id}">Remove</button>` : skipped ? `<span class="pill">Skipped</span><button class="ghost" data-unskip="${it.id}">Undo</button>` :
+      `${timerBtn}<button class="good" data-logcardio="${it.id}">Log it</button><button class="ghost" data-skip="${it.id}">Skip</button>`}</div></div>`;
+}
 function roundLoad(x, ex) { const step = ex && ex.equipment === "dumbbell" && x < 10 ? 1 : 2.5; return Math.floor(x / step + 0.5) * step; }
 function warmRow(it, ex, n, w, reps) {
   return `<div class="set warm" data-warm="${it.id}"><span class="n">W${n}</span><div class="muted small" style="grid-column:2/4">Warm-up: ${reps} at ${fmtLoad(ex, w)}</div><button class="logbtn" data-logwarm="${it.id}" data-w="${w}" data-r="${reps}">✓</button></div>`;
 }
 function sideLabel(bar, side) { return `kg a side (${kg(bar + 2 * (parseFloat(side) || 0))} total)`; }
-function setEntryRow(it, ex, n, defW, defR) {
-  const step = ex.equipment === "dumbbell" && (defW || 0) < 10 ? 1 : 2.5;
-  const noWeight = ex.timed || (ex.equipment === "bodyweight" && !ex.bodyweight_fraction) || ex.pattern === "mobility";
-  const side = perSideMode() && isBarbell(ex), bar = barOf(ex);
-  const stepW = side ? 1.25 : step;
-  const shownW = defW === "" || defW == null ? "" : (side ? perSide(ex, +defW) : defW);
-  const label = ex.equipment === "assisted" ? "assist kg" : side ? sideLabel(bar, shownW) : ex.per_hand ? "kg each" : "kg";
+function setEntryRow(it, ex, n, defW, defR, mode) {
+  mode = mode || entryMode(ex);
+  const side = perSideMode() && mode.bar != null, bar = mode.bar || 0;
+  const dumbbellStep = ex.equipment === "dumbbell" && (defW || 0) < 10 ? 1 : 2.5;
+  const stepW = side ? 1.25 : dumbbellStep;
+  const optional = mode.weight === "optional";
+  const shownW = defW === "" || defW == null || (optional && !defW) ? "" : (side ? perSide(ex, +defW) : defW);
+  const label = ex.equipment === "assisted" ? "assist kg" : optional ? "added kg" : side ? sideLabel(bar, shownW) : mode.perHand ? "kg each" : "kg";
+  const weightBox = !mode.weight
+    ? `<div class="stepper" style="visibility:hidden" aria-hidden="true"><button type="button" tabindex="-1">−</button><div><input type="number" class="w" value="" disabled><div class="u"></div></div><button type="button" tabindex="-1">+</button></div>`
+    : `<div class="stepper"><button data-step="w" data-d="-${stepW}">−</button><div><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="${optional ? "+kg" : "kg"}"><div class="u">${label}</div></div><button data-step="w" data-d="${stepW}">+</button></div>`;
+  const stepR = mode.time ? 5 : 1;
   return `<div class="set entry" data-entry="${it.id}">
     <span class="n">${n}</span>
-    ${noWeight && ex.equipment !== "assisted" ? `<div class="stepper" style="visibility:${ex.equipment === "bodyweight" ? "visible" : "hidden"}"><button data-step="w" data-d="-${step}">−</button><div><input type="number" inputmode="decimal" step="${step}" class="w" value="${defW === "" || defW == null ? "" : defW}" placeholder="+kg"><div class="u">added kg</div></div><button data-step="w" data-d="${step}">+</button></div>` :
-      `<div class="stepper"><button data-step="w" data-d="-${stepW}">−</button><div><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="kg"><div class="u">${label}</div></div><button data-step="w" data-d="${stepW}">+</button></div>`}
-    <div class="stepper"><button data-step="r" data-d="-1">−</button><div><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${ex.timed ? "s" : "reps"}"><div class="u">${ex.timed ? "seconds" : "reps"}</div></div><button data-step="r" data-d="${ex.timed ? 5 : 1}">+</button></div>
+    ${weightBox}
+    <div class="stepper"><button data-step="r" data-d="-${stepR}">−</button><div><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${mode.time ? "s" : "reps"}"><div class="u">${mode.time ? "seconds" : "reps"}${mode.perSide ? " each side" : ""}</div></div><button data-step="r" data-d="${stepR}">+</button></div>
     <button class="primary logbtn" data-log="${it.id}" aria-label="Log set">✓</button>
+    ${mode.timer === "hold" ? holdRow(it, mode) : ""}
     <div class="rpe"><span>RPE</span>${[6, 7, 8, 9, 10].map(v => `<button type="button" data-rpe="${v}">${v}</button>`).join("")}<button type="button" data-rpehalf title="add a half">½</button></div>
   </div>`;
+}
+/* Hold timer for planks and carries: tap to start, tap to stop, the seconds land in the box. One-side moves get a button per side. */
+const HOLD = { key: null, side: null, start: null, timer: null, beeped: false, done: {} };
+function holdRow(it, mode) {
+  const k = String(it.id), st = HOLD.done[k] || {};
+  const running = HOLD.key === k ? HOLD.side : null;
+  const btn = (side, text) => `<button type="button" data-hold="${k}" data-hside="${side}" class="${running === side ? "on" : ""}">${running === side ? "■ Stop" : st[side] != null ? text + " again" : text}</button>`;
+  const status = running ? `${Math.floor((Date.now() - HOLD.start) / 1000)} s` : mode.perSide
+    ? [st.L != null ? `L ${st.L} s` : "", st.R != null ? `R ${st.R} s` : ""].filter(Boolean).join(" · ")
+    : st.one != null ? `${st.one} s held` : "";
+  return `<div class="hold"><span class="cap">Hold, aim ${it.rep_low}-${it.rep_high} s</span>${mode.perSide ? btn("L", "▶ Left") + btn("R", "▶ Right") : btn("one", "▶ Start")}<span class="hold-t num" id="hold-${k}">${status}</span></div>`;
+}
+function holdButton(key, side) { return document.querySelector(`.hold button[data-hold="${key}"][data-hside="${side}"]`); }
+function toggleHold(key, side) {
+  if (HOLD.key === key && HOLD.side === side) { stopHold(); return; }
+  if (HOLD.key) stopHold();
+  HOLD.key = key; HOLD.side = side; HOLD.start = Date.now(); HOLD.beeped = false;
+  const b = holdButton(key, side); if (b) { b.classList.add("on"); b.textContent = "■ Stop"; }
+  haptic("light");
+  clearInterval(HOLD.timer);
+  HOLD.timer = setInterval(tickHold, 250);
+  tickHold();
+}
+function tickHold() {
+  if (!HOLD.key) { clearInterval(HOLD.timer); return; }
+  const secs = Math.floor((Date.now() - HOLD.start) / 1000);
+  const el = document.getElementById("hold-" + HOLD.key);
+  if (el) el.textContent = `${secs} s`;
+  const row = el && el.closest(".set"), inp = row && $("input.r", row);
+  if (inp) inp.value = secs;
+  const it = W && W.items.find(i => String(i.id) === HOLD.key);
+  if (it && it.rep_high && secs >= it.rep_high && !HOLD.beeped) { HOLD.beeped = true; haptic("double"); beep(); }
+}
+function stopHold() {
+  clearInterval(HOLD.timer);
+  const { key, side, start } = HOLD; if (!key) return;
+  const secs = Math.max(1, Math.round((Date.now() - start) / 1000));
+  const d = HOLD.done[key] = HOLD.done[key] || {}; d[side] = secs;
+  HOLD.key = null; HOLD.side = null; HOLD.start = null;
+  haptic("light");
+  const b = holdButton(key, side); if (b) { b.classList.remove("on"); b.textContent = (side === "L" ? "▶ Left" : side === "R" ? "▶ Right" : "▶ Start") + " again"; }
+  const el = document.getElementById("hold-" + key);
+  if (el) el.textContent = d.L != null || d.R != null ? [d.L != null ? `L ${d.L} s` : "", d.R != null ? `R ${d.R} s` : ""].filter(Boolean).join(" · ") : `${secs} s held`;
+  const row = el && el.closest(".set"), inp = row && $("input.r", row);
+  if (inp) inp.value = d.L != null && d.R != null ? Math.min(d.L, d.R) : (d.one ?? d.L ?? d.R);
 }
 function wireWorkout(root) {
   $$("[data-step]", root).forEach(b => b.addEventListener("click", () => {
@@ -540,8 +625,11 @@ function wireWorkout(root) {
     const on = $(".rpe .on[data-rpe]", row);
     let rpe = on ? parseFloat(on.dataset.rpe) : null;
     if (rpe && $("[data-rpehalf]", row).classList.contains("on") && rpe < 10) rpe += 0.5;
+    if (HOLD.key === String(it.id)) stopHold();
+    delete HOLD.done[String(it.id)];
     logSet(it, reps, weight, rpe, 0);
   }));
+  $$("[data-hold]", root).forEach(b => b.addEventListener("click", () => toggleHold(b.dataset.hold, b.dataset.hside)));
   $$("[data-logwarm]", root).forEach(b => b.addEventListener("click", () => {
     const it = W.items.find(i => String(i.id) === b.dataset.logwarm);
     logSet(it, +b.dataset.r, +b.dataset.w, null, 1, true);
@@ -560,7 +648,7 @@ function wireWorkout(root) {
     if (idx >= 0) { const c = W.cardio.splice(idx, 1)[0]; saveW(); mutate("cardio", c.client_id, { deleted: 1 }); renderWorkout(); }
   }));
   $$("[data-interval]", root).forEach(b => b.addEventListener("click", () => intervalTimer(W.items.find(i => String(i.id) === b.dataset.interval))));
-  $$("[data-countdown]", root).forEach(b => b.addEventListener("click", () => { const it = W.items.find(i => String(i.id) === b.dataset.countdown); startRest(Math.round((it.minutes || 10) * 60), "Finisher"); }));
+  $$("[data-countdown]", root).forEach(b => b.addEventListener("click", () => { const it = W.items.find(i => String(i.id) === b.dataset.countdown); const ex = it.exercise || exById(it.exercise_id) || {}; startRest(Math.round((isCardioEx(ex) ? cardioMinutes(it) : it.minutes || 3) * 60), ex.name || "Timer", null, "timer"); }));
   $("#finishBtn").addEventListener("click", finishSheet);
   $("#finishBtn2").addEventListener("click", finishSheet);
   $("#discardBtn").addEventListener("click", () => {
@@ -642,22 +730,33 @@ function addExerciseSheet() {
   });
 }
 function logCardioSheet(it) {
-  const machines = (S && S.exercises || []).filter(e => e.pattern.startsWith("cardio"));
+  const machines = (S && S.exercises || []).filter(e => isCardioEx(e));
   const ex = it ? (it.exercise || exById(it.exercise_id)) : null;
   const proto = it && it.protocol_detail || {};
-  openSheet(`<div class="handle"></div><h2>${it ? "Log the finisher" : "Log cardio"}</h2>
-    ${it ? `<p class="hint">${esc(ex ? ex.name : "")}: ${esc(it.protocol_text || "")}</p>` : `<label class="field mb"><span>Machine</span><select id="c-ex">${machines.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select></label>`}
-    <div class="f-row"><label class="field grow"><span>Minutes</span><input type="number" inputmode="decimal" step="1" id="c-min" value="${it ? it.minutes || 10 : 20}"></label>
-    <label class="field grow"><span>Distance (km), optional</span><input type="number" inputmode="decimal" step="0.1" id="c-km"></label></div>
+  const defMin = it ? cardioMinutes(it) : 20;
+  const title = it ? `Log ${ex ? ex.name.toLowerCase() : "cardio"}${it.section === "finisher" ? " finisher" : ""}` : "Log cardio";
+  openSheet(`<div class="handle"></div><h2>${esc(title)}</h2>
+    ${it ? `<p class="hint">${esc(it.protocol_text || "Steady pace.")}</p>` : `<label class="field mb"><span>Machine</span><select id="c-ex">${machines.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select></label>`}
+    <div class="f-row"><label class="field grow"><span>Minutes</span><input type="number" inputmode="decimal" step="1" id="c-min" value="${defMin}"></label>
+    <label class="field grow"><span>Speed (km/h), optional</span><input type="number" inputmode="decimal" step="0.1" id="c-speed" placeholder="from the machine"></label>
+    <label class="field grow"><span>Distance (km), optional</span><input type="number" inputmode="decimal" step="0.01" id="c-km"></label></div>
     <label class="field mb"><span>How hard</span><select id="c-int">${["easy", "moderate", "vigorous", "interval"].map(v => `<option value="${v}"${(proto.intensity || "moderate") === v ? " selected" : ""}>${v[0].toUpperCase() + v.slice(1)}</option>`).join("")}</select></label>
+    <p class="hint">Type the speed shown on the machine and the distance fills itself, or type the distance you saw.</p>
     <div class="row"><button class="primary big" id="c-save">Save</button><button class="ghost" id="c-cancel">Cancel</button></div>`, sh => {
+    const km = $("#c-km", sh);
+    const auto = () => { const sp = parseFloat($("#c-speed", sh).value), m = parseFloat($("#c-min", sh).value); if (sp > 0 && m > 0 && !km.dataset.typed) km.value = Math.round(sp * m / 60 * 100) / 100; };
+    $("#c-speed", sh).addEventListener("input", auto);
+    $("#c-min", sh).addEventListener("input", auto);
+    km.addEventListener("input", () => { km.dataset.typed = km.value ? "1" : ""; });
     $("#c-cancel", sh).addEventListener("click", closeSheet);
     $("#c-save", sh).addEventListener("click", () => {
       const cid = uid();
-      const rec = { client_id: cid, plan_item_id: it ? it.id : null, exercise_id: it ? it.exercise_id : +$("#c-ex", sh).value, minutes: parseFloat($("#c-min", sh).value) || 0, intensity: $("#c-int", sh).value, protocol: it ? it.protocol : null, distance_km: $("#c-km", sh).value ? parseFloat($("#c-km", sh).value) : null };
+      const speed = $("#c-speed", sh).value ? parseFloat($("#c-speed", sh).value) : null;
+      const rec = { client_id: cid, plan_item_id: it ? it.id : null, exercise_id: it ? it.exercise_id : +$("#c-ex", sh).value, minutes: parseFloat($("#c-min", sh).value) || 0, intensity: $("#c-int", sh).value, protocol: it ? it.protocol : null,
+        distance_km: km.value ? parseFloat(km.value) : null, speed_kmh: speed };
       if (!rec.minutes) { toast("How many minutes?"); return; }
       W.cardio.push(rec); saveW();
-      mutate("cardio", cid, { workout_client_id: W.client_id, plan_item_id: rec.plan_item_id, exercise_id: rec.exercise_id, minutes: rec.minutes, intensity: rec.intensity, protocol: rec.protocol, distance_km: rec.distance_km });
+      mutate("cardio", cid, { workout_client_id: W.client_id, plan_item_id: it && !it.adhoc ? it.id : null, exercise_id: rec.exercise_id, minutes: rec.minutes, intensity: rec.intensity, protocol: rec.protocol, distance_km: rec.distance_km, speed_kmh: rec.speed_kmh });
       closeSheet(); renderWorkout(); toast("Cardio logged");
     });
   });
@@ -671,11 +770,11 @@ function cancelRestAlarm() {
   if (!IS_ANDROID_APP || !window.Android.cancelRest) return;
   try { window.Android.cancelRest(); } catch (e) {}
 }
-function startRest(sec, label, endAt) {
-  REST.total = sec; REST.end = endAt || Date.now() + sec * 1000; REST.finished = false; REST.label = label || "Rest";
+function startRest(sec, label, endAt, kind) {
+  REST.total = sec; REST.end = endAt || Date.now() + sec * 1000; REST.finished = false; REST.label = label || "Rest"; REST.kind = kind || "rest";
   const bar = $("#timerbar"); bar.hidden = false;
   clearInterval(REST.timer);
-  ls.set("ft-rest", { end: REST.end, total: REST.total, label: REST.label });   // survives leaving the app
+  ls.set("ft-rest", { end: REST.end, total: REST.total, label: REST.label, kind: REST.kind });   // survives leaving the app
   if (REST.end > Date.now()) scheduleRestAlarm();
   const draw = () => {
     const left = Math.ceil((REST.end - Date.now()) / 1000);
@@ -684,13 +783,13 @@ function startRest(sec, label, endAt) {
       cancelRestAlarm();
       haptic("double");
       beep();
-      bar.innerHTML = `<span class="t">Go</span><span class="l">${esc(REST.label)}</span><span class="spacer"></span><button class="primary" id="restClose">Next set</button>`;
+      bar.innerHTML = `<span class="t">${REST.kind === "timer" ? "Time" : "Go"}</span><span class="l">${esc(REST.label)}</span><span class="spacer"></span><button class="primary" id="restClose">${REST.kind === "timer" ? "Done" : "Next set"}</button>`;
       $("#restClose").addEventListener("click", stopRest);
       setTimeout(() => { if (REST.finished) stopRest(); }, 8000);
       clearInterval(REST.timer);
       return;
     }
-    bar.innerHTML = `<span class="t num">${mmss(left)}</span><span class="l">rest, ${esc(REST.label)}</span><span class="spacer"></span><button id="restPlus">+30 s</button><button id="restSkip">Skip</button>`;
+    bar.innerHTML = `<span class="t num">${mmss(left)}</span><span class="l">${REST.kind === "timer" ? "" : "rest, "}${esc(REST.label)}</span><span class="spacer"></span><button id="restPlus">+30 s</button><button id="restSkip">${REST.kind === "timer" ? "Stop" : "Skip"}</button>`;
     $("#restPlus").addEventListener("click", () => { REST.end += 30000; scheduleRestAlarm(); draw(); });
     $("#restSkip").addEventListener("click", stopRest);
   };
@@ -703,7 +802,7 @@ function resumeRest() {
   const r = ls.get("ft-rest");
   if (!r || !W) { ls.del("ft-rest"); return; }
   if (r.end - Date.now() < -120000) { ls.del("ft-rest"); return; }   // long over, nothing to show
-  startRest(r.total, r.label, r.end);
+  startRest(r.total, r.label, r.end, r.kind);
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && W && $("#timerbar").hidden && ls.get("ft-rest")) resumeRest(); });
 /* iPhones only allow sound after a tap, so the audio context is opened on the first touch and kept. */
@@ -804,7 +903,7 @@ async function showWorkoutSummary(cid) {
       <div class="summary"><div class="row" style="align-items:baseline;gap:14px"><div class="big num">${d.effort ?? "-"}</div><div><div class="tiny muted">effort out of 100</div><div class="muted small">${n0(d.kcal_used)} kcal burned${d.kcal_wearable ? " (from your watch)" : " (estimated)"}</div></div></div>
       <div class="parts"><div><b>${d.work_sets}</b><span>sets</span></div><div><b>${n0(d.volume)}</b><span>kg lifted</span></div><div><b>${d.hard_sets}</b><span>hard sets</span></div></div>
       ${parts.volume != null ? `<p class="hint mt">Effort parts: volume ${n1(parts.volume)}, hard sets ${n1(parts.hard_sets)}, calories ${n1(parts.calories)}${parts.ref_volume ? `. Your usual volume for this session is ${n0(parts.ref_volume)} kg` : ""}.</p>` : ""}
-      ${d.prs && d.prs.length ? `<h3 class="mt">Personal bests</h3><ul class="prs">${d.prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(p.text)}</li>`).join("")}</ul>` : ""}</div>
+      ${d.prs && d.prs.length ? `<h3 class="mt">Personal bests</h3><ul class="prs">${d.prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(prText(p))}</li>`).join("")}</ul>` : ""}</div>
       <div class="row mt2"><button class="primary big" id="sumClose">Close</button></div>`, sh => $("#sumClose", sh).addEventListener("click", closeSheet));
   } catch (e) {}
 }
@@ -845,7 +944,7 @@ function planDay(s, today) {
   const items = s.items.filter(i => ["main", "accessory", "core"].includes(i.section) && i.sets);
   const fin = s.items.find(i => i.section === "finisher");
   const canEdit = s.status === "planned" && !(s.workout && s.workout.started_at) && s.date >= today;
-  const list = s.kind === "rest" ? `<p class="muted small">Recovery day.</p>` : `<ul>${items.map(i => `<li><span>${esc(i.exercise ? i.exercise.name : "")}${i.optional ? ' <span class="tiny muted">(if time)</span>' : ""}</span><span class="s">${i.sets} x ${i.rep_low}-${i.rep_high}${i.target && i.target.weight ? " · " + n1(i.target.weight) : ""}${canEdit ? ` <button class="ghost" data-pswap="${i.id}" title="Swap for another">⇄</button>` : ""}</span></li>`).join("")}
+  const list = s.kind === "rest" ? `<p class="muted small">Recovery day.</p>` : `<ul>${items.map(i => `<li><span>${esc(i.exercise ? i.exercise.name : "")}${i.optional ? ' <span class="tiny muted">(if time)</span>' : ""}</span><span class="s">${i.sets} x ${i.rep_low}-${i.rep_high}${i.target && i.target.weight ? " · " + fmtLoad(i.exercise, i.target.weight) : ""}${canEdit ? ` <button class="ghost" data-pswap="${i.id}" title="Swap for another">⇄</button>` : ""}</span></li>`).join("")}
     ${fin ? `<li><span class="muted">${esc(fin.exercise ? fin.exercise.name : "Cardio")} finisher</span><span class="s">${n0(fin.minutes)} min</span></li>` : ""}
     ${s.items.filter(i => i.section === "main" && i.protocol).map(i => `<li><span>${esc(i.exercise ? i.exercise.name : "")}: ${esc(i.protocol_text || "")}</span><span class="s">${n0(i.minutes)} min</span></li>`).join("")}</ul>`;
   const acts = s.kind === "rest" ? "" : s.status === "done" && s.workout ? `<button data-view="${s.workout.client_id}">View</button>` :
@@ -862,9 +961,9 @@ async function showWorkoutDetail(cid) {
     d.sets.forEach(s => (byEx[s.exercise_name] = byEx[s.exercise_name] || []).push(s));
     openSheet(`<div class="handle"></div><h2>${esc(d.session ? d.session.title : "Workout")}, ${fmtDay(d.date)}</h2>
       <div class="summary"><div class="parts"><div><b>${d.effort ?? "-"}</b><span>effort</span></div><div><b>${n0(d.kcal_used)}</b><span>kcal</span></div><div><b>${n0(d.volume)}</b><span>kg lifted</span></div></div></div>
-      ${Object.entries(byEx).map(([name, sets]) => `<div class="mt"><b>${esc(name)}</b><div class="muted small">${sets.map(s => `${s.is_warmup ? "warm-up " : ""}${s.reps}${s.weight_kg ? " at " + kg(s.weight_kg) : ""}${s.rpe ? " @" + s.rpe : ""}`).join(", ")}</div></div>`).join("")}
-      ${d.cardio.length ? `<div class="mt"><b>Cardio</b><div class="muted small">${d.cardio.map(c => `${esc(c.exercise_name || "")} ${n0(c.minutes)} min, ${esc(c.intensity)}, ${n0(c.kcal_est)} kcal`).join("; ")}</div></div>` : ""}
-      ${d.prs && d.prs.length ? `<h3 class="mt">Personal bests</h3><ul class="prs">${d.prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(p.text)}</li>`).join("")}</ul>` : ""}
+      ${Object.entries(byEx).map(([name, sets]) => { const ex0 = exById(sets[0].exercise_id) || {}, m0 = entryMode(ex0); return `<div class="mt"><b>${esc(name)}</b><div class="muted small">${sets.map(s => `${s.is_warmup ? "warm-up " : ""}${s.reps}${m0.time ? " s" : ""}${m0.perSide ? " each side" : ""}${s.weight_kg ? " at " + fmtLoad(ex0, s.weight_kg) : ""}${s.rpe ? " @" + s.rpe : ""}`).join(", ")}</div></div>`; }).join("")}
+      ${d.cardio.length ? `<div class="mt"><b>Cardio</b><div class="muted small">${d.cardio.map(c => `${esc(c.exercise_name || "")} ${esc(fmtCardio(c))}, ${n0(c.kcal_est)} kcal`).join("; ")}</div></div>` : ""}
+      ${d.prs && d.prs.length ? `<h3 class="mt">Personal bests</h3><ul class="prs">${d.prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(prText(p))}</li>`).join("")}</ul>` : ""}
       ${d.notes ? `<p class="hint mt">${esc(d.notes)}</p>` : ""}
       <div class="row mt2"><button class="primary" id="wdClose">Close</button><button class="danger" id="wdDelete">Delete workout</button></div>`, sh => {
       $("#wdClose", sh).addEventListener("click", closeSheet);

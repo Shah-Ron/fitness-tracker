@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS set_logs (
 
 CREATE TABLE IF NOT EXISTS cardio_logs (
   id INTEGER PRIMARY KEY, client_id TEXT UNIQUE NOT NULL, workout_client_id TEXT NOT NULL,
-  plan_item_id INTEGER, exercise_id INTEGER REFERENCES exercises(id), minutes REAL, distance_km REAL,
+  plan_item_id INTEGER, exercise_id INTEGER REFERENCES exercises(id), minutes REAL, distance_km REAL, speed_kmh REAL,
   intensity TEXT, protocol TEXT, kcal_est REAL, updated_at TEXT NOT NULL, deleted INTEGER NOT NULL DEFAULT 0);
 
 CREATE TABLE IF NOT EXISTS foods (
@@ -260,7 +260,7 @@ SETTING_DEFAULTS.update({
 HIDDEN_SETTINGS = {"pair_key"}
 TRAINING_KEYS = {"train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split"}
 GOAL_KEYS = {"target_weight_kg", "target_date"}
-SEED_VERSION = 3
+SEED_VERSION = 4
 
 
 def connect():
@@ -307,6 +307,7 @@ def init_db():
         conn.execute("PRAGMA journal_mode = WAL")
         conn.execute("PRAGMA synchronous = NORMAL")
         conn.executescript(SCHEMA)
+        ensure_column(conn, "cardio_logs", "speed_kmh", "REAL")
         have = {r["key"] for r in conn.execute("SELECT key FROM settings")}
         for k, v in SETTING_DEFAULTS.items():
             if k not in have:
@@ -316,10 +317,66 @@ def init_db():
         conn.commit()
         with SEED_LOCK:
             seed(conn)
+        migrate_cardio_sets(conn, get_settings(conn))
         refresh_settings_cache(conn)
     finally:
         conn.close()
     log(("Created " if fresh else "Opened ") + DB_PATH)
+
+
+def migrate_cardio_sets(conn, settings):
+    """Sets logged against a treadmill, bike or rower become cardio logs: the reps were minutes.
+
+    Before cardio items had a card of their own, the Workout screen offered only
+    weight and reps for them, so people typed the minutes into the reps box.
+    One cardio row per workout and item; identical sets count once, different
+    ones add up. The sets are soft-deleted, the workout recomputed. Idempotent.
+    """
+    rows = conn.execute("""SELECT s.* FROM set_logs s JOIN exercises e ON e.id = s.exercise_id
+                           WHERE s.deleted = 0 AND (e.pattern LIKE 'cardio%' OR e.equipment IN ('treadmill', 'bike', 'rower'))
+                           ORDER BY s.workout_client_id, s.plan_item_id, s.set_no""").fetchall()
+    if not rows:
+        return 0
+    protos = programme.protocols_by_id(PROG)
+    groups = {}
+    for r in rows:
+        groups.setdefault((r["workout_client_id"], r["plan_item_id"] or f"x{r['exercise_id']}"), []).append(r)
+    made, touched, now = 0, set(), now_iso()
+    for (wcid, _key), sets in groups.items():
+        first = sets[0]
+        item = conn.execute("SELECT * FROM plan_items WHERE id = ?", (first["plan_item_id"],)).fetchone() if first["plan_item_id"] else None
+        reps = [int(x["reps"] or 0) for x in sets if (x["reps"] or 0) > 0]
+        if reps:
+            minutes = reps[0] if len(set(reps)) == 1 else sum(reps)
+        else:
+            minutes = float(item["minutes"] or 0) if item else 0
+        if minutes <= 0:
+            continue
+        minutes = min(minutes, 600)
+        proto = protos.get(item["protocol"]) if item and item["protocol"] else None
+        rpes = [x["rpe"] for x in sets if x["rpe"] is not None]
+        mean = sum(rpes) / len(rpes) if rpes else None
+        if proto and proto.get("intensity"):
+            intensity = proto["intensity"]
+        elif mean is None:
+            intensity = "moderate"
+        else:
+            intensity = "vigorous" if mean >= 8.5 else "easy" if mean < 6.5 else "moderate"
+        cid = "mig-" + first["client_id"]
+        if not conn.execute("SELECT 1 FROM cardio_logs WHERE client_id = ?", (cid,)).fetchone():
+            conn.execute("""INSERT INTO cardio_logs (client_id, workout_client_id, plan_item_id, exercise_id, minutes, distance_km, intensity, protocol, updated_at, deleted)
+                            VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, 0)""",
+                         (cid, wcid, first["plan_item_id"], first["exercise_id"], minutes, intensity, item["protocol"] if item else None, now))
+            made += 1
+        conn.executemany("UPDATE set_logs SET deleted = 1, updated_at = ? WHERE client_id = ?", [(now, x["client_id"]) for x in sets])
+        touched.add(wcid)
+    for wcid in touched:
+        if conn.execute("SELECT 1 FROM workouts WHERE client_id = ?", (wcid,)).fetchone():
+            effort.recompute_workout(conn, wcid, settings, PROG)
+    conn.commit()
+    if made:
+        log(f"Converted {made} cardio set(s) into cardio logs")
+    return made
 
 
 def load_programme_files():
@@ -492,7 +549,7 @@ def v_client_id(v):
 SYNC_TABLES = {
     "workout": ("workouts", ["session_id", "date", "started_at", "ended_at", "session_rpe", "kcal_wearable", "hr_avg", "notes"]),
     "set": ("set_logs", ["workout_client_id", "plan_item_id", "exercise_id", "set_no", "reps", "weight_kg", "rpe", "is_warmup", "done_at"]),
-    "cardio": ("cardio_logs", ["workout_client_id", "plan_item_id", "exercise_id", "minutes", "distance_km", "intensity", "protocol"]),
+    "cardio": ("cardio_logs", ["workout_client_id", "plan_item_id", "exercise_id", "minutes", "distance_km", "speed_kmh", "intensity", "protocol"]),
     "food_log": ("food_logs", ["date", "slot", "food_id", "food_client_id", "grams", "portion_label", "qty", "kcal", "protein", "carb", "fat"]),
     "body": ("body_logs", ["date", "weight_kg", "waist_cm", "chest_cm", "arm_cm", "hip_cm", "thigh_cm", "note"]),
     "daily": ("daily_logs", ["date", "water_ml", "sleep_h", "steps"]),
@@ -552,6 +609,8 @@ def validate_payload(typ, p, existing):
             out["minutes"] = v_num(p.get("minutes"), "minutes", 0, 600)
         if "distance_km" in p:
             out["distance_km"] = v_num(p["distance_km"], "distance", 0, 500, allow_none=True)
+        if "speed_kmh" in p:
+            out["speed_kmh"] = v_num(p["speed_kmh"], "speed", 0, 60, allow_none=True)
         if "intensity" in p or not existing:
             out["intensity"] = v_choice(p.get("intensity") or "moderate", "intensity", INTENSITIES)
         if "protocol" in p:

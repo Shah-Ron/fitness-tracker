@@ -150,6 +150,71 @@ const Engine = (() => {
   }
   const finishedWorkouts = db => db.all("workouts").filter(w => w.ended_at);
 
+  /* ---- what the Workout screen has to collect for an exercise.
+     kind: cardio (minutes, speed, how hard, with a timer), routine (warm-up or cool-down, tick plus a timer),
+     time (seconds with a hold timer), weight_time (a loaded hold or carry), reps (bodyweight, optional added kg),
+     bodyweight_reps (bodyweight with a known body fraction, optional added kg), assisted (assistance kg plus reps),
+     weight_reps (the usual). perSide marks one-side-at-a-time moves; bar is the bar weight for barbell lifts. */
+  const CARDIO_EQUIP = ["treadmill", "bike", "rower"];
+  function isCardioEx(ex) { return !!ex && (String(ex.pattern || "").startsWith("cardio") || CARDIO_EQUIP.includes(ex.equipment)); }
+  function isBarbellEx(ex) { return !!ex && (ex.equipment === "barbell" || ex.equipment === "trap_bar"); }
+  function barWeight(ex) { return isBarbellEx(ex) ? (ex.min_load_kg != null ? +ex.min_load_kg : 20) : null; }
+  function entryMode(ex) {
+    const base = { kind: "weight_reps", weight: true, reps: true, time: false, perSide: false, perHand: false, bar: null, timer: null };
+    if (!ex) return base;
+    if (isCardioEx(ex)) return Object.assign(base, { kind: "cardio", weight: false, reps: false, time: true, timer: "cardio" });
+    if (String(ex.pattern || "") === "mobility" || ex.equipment === "none") return Object.assign(base, { kind: "routine", weight: false, reps: false, time: true, timer: "countdown" });
+    base.perSide = !!ex.unilateral;
+    base.perHand = !!ex.per_hand;
+    if (ex.timed) {
+      const weighted = !["bodyweight", "none", "band", "assisted"].includes(ex.equipment);
+      return Object.assign(base, { kind: weighted ? "weight_time" : "time", weight: weighted, reps: false, time: true, bar: barWeight(ex), timer: "hold" });
+    }
+    if (ex.equipment === "assisted") return Object.assign(base, { kind: "assisted" });
+    if (ex.equipment === "bodyweight") return Object.assign(base, { kind: ex.bodyweight_fraction ? "bodyweight_reps" : "reps", weight: "optional" });
+    return Object.assign(base, { bar: barWeight(ex) });
+  }
+
+  /* Before cardio items had a card of their own, treadmill, bike and rower work could only be logged as sets with
+     the minutes typed into the reps box. Turn those sets into cardio logs: minutes = reps. Safe to run every start. */
+  function migrateCardioSets(db, settings, prog) {
+    const protocols = protocolsById(prog);
+    const groups = new Map();
+    db.all("set_logs").forEach(st => {
+      const ex = exOf(db, st.exercise_id);
+      if (!isCardioEx(ex)) return;
+      const k = st.workout_client_id + "|" + (st.plan_item_id || "x" + st.exercise_id);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(st);
+    });
+    const touched = new Set(); let made = 0, removed = 0;
+    groups.forEach(sets => {
+      sets.sort((a, b) => (a.set_no || 0) - (b.set_no || 0));
+      const first = sets[0];
+      const item = first.plan_item_id ? db.get("plan_items", first.plan_item_id) : null;
+      const reps = sets.map(x => +x.reps || 0).filter(r => r > 0);
+      const allSame = reps.every(r => r === reps[0]);
+      let minutes = reps.length ? (allSame ? reps[0] : reps.reduce((a, b) => a + b, 0)) : +((item && item.minutes) || 0);
+      if (!(minutes > 0)) return;                       // nothing usable, leave those sets alone
+      minutes = Math.min(minutes, 600);
+      const proto = item && item.protocol ? protocols[item.protocol] : null;
+      const rpes = sets.map(x => x.rpe).filter(r => r != null);
+      const meanRpe = rpes.length ? rpes.reduce((a, b) => a + b, 0) / rpes.length : null;
+      const intensity = proto && proto.intensity ? proto.intensity : meanRpe == null ? "moderate" : meanRpe >= 8.5 ? "vigorous" : meanRpe < 6.5 ? "easy" : "moderate";
+      const cid = "mig-" + first.client_id;
+      if (!db.get("cardio_logs", cid)) {
+        db.insert("cardio_logs", { client_id: cid, workout_client_id: first.workout_client_id, plan_item_id: first.plan_item_id || null, exercise_id: first.exercise_id,
+          minutes, distance_km: null, speed_kmh: null, intensity, protocol: item ? item.protocol || null : null, kcal_est: null, updated_at: nowIso(),
+          note: `converted from ${sets.length === 1 ? "a set" : sets.length + " sets"} logged as ${reps.join(", ")} reps` });
+        made++;
+      }
+      sets.forEach(x => { db.remove("set_logs", x.client_id); removed++; });
+      touched.add(first.workout_client_id);
+    });
+    touched.forEach(w => { if (db.get("workouts", w)) recomputeWorkout(db, w, settings, prog); });
+    return { made, removed, workouts: touched.size };
+  }
+
   function recomputeWorkout(db, wcid, settings, prog) {
     const w = db.get("workouts", wcid);
     if (!w) return null;
@@ -229,10 +294,10 @@ const Engine = (() => {
         if (e.value && !e.low && !ex.bodyweight_fraction) topE = Math.max(topE || 0, e.value);
         topW = Math.max(topW || 0, load);
         const prev = bests.reps_at_weight[String(Math.round(load * 100) / 100)];
-        if (prev != null && Math.round(s.reps || 0) > prev) out.push({ exercise: ex.name, kind: "reps", text: `${Math.round(s.reps)} reps at ${load} kg, previous best ${prev}` });
+        if (prev != null && Math.round(s.reps || 0) > prev) out.push({ exercise: ex.name, exercise_id: +exId, kind: "reps", weight: load, text: `${Math.round(s.reps)} reps at ${load} kg, previous best ${prev}` });
       });
-      if (topE && bests.best_e1rm && topE > bests.best_e1rm) out.push({ exercise: ex.name, kind: "e1rm", text: `Estimated 1RM ${topE.toFixed(1)} kg, up from ${bests.best_e1rm.toFixed(1)}` });
-      if (topW && bests.best_weight && topW > bests.best_weight) out.push({ exercise: ex.name, kind: "weight", text: `Heaviest set ${topW} kg, previous ${bests.best_weight}` });
+      if (topE && bests.best_e1rm && topE > bests.best_e1rm) out.push({ exercise: ex.name, exercise_id: +exId, kind: "e1rm", text: `Estimated 1RM ${topE.toFixed(1)} kg, up from ${bests.best_e1rm.toFixed(1)}` });
+      if (topW && bests.best_weight && topW > bests.best_weight) out.push({ exercise: ex.name, exercise_id: +exId, kind: "weight", weight: topW, text: `Heaviest set ${topW} kg, previous ${bests.best_weight}` });
     });
     const seen = new Set();
     return out.filter(p => { const k = p.exercise + "|" + p.kind; if (seen.has(k)) return false; seen.add(k); return true; });
@@ -735,6 +800,7 @@ const Engine = (() => {
     NUTRITION_DEFAULTS, TRAIN_DEFAULTS, LIFTING_KINDS, ADHERENCE_KINDS, PlanError,
     ageOn, trendWeight, paceWeight, weeklyPace, paceVerdict, bmr, profileComplete, targets, foodLogValues,
     roundLoad, setLoad, setVolume, e1rm, hardRatio, liftingMet, cardioMet, kcal, liftMinutes, effortScore, cardioEffort,
+    isCardioEx, isBarbellEx, barWeight, entryMode, migrateCardioSets,
     bodyLogs, bodyweightOn, recomputeWorkout, historyForExercise, bestsForExercise, prsForWorkout, weeklyMuscleSets, weeklyE1rm, strengthIndex,
     validateSeed, protocolsById, protocolMinutes, trainSettings, templateFor, isLifting, pick, estMinutes, sessionMinutes, trimToBudget,
     createBlock, ensurePlanThrough, sweepMissed, rebuildWeek, shuffleWeek, regenerateFrom, swapItem, moveSession, markRest,

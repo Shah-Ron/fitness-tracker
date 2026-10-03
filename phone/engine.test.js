@@ -771,6 +771,134 @@ describe("programme", () => {
 
 /* ================================================================ effort */
 
+describe("entry modes", () => {
+  /* What the Workout screen collects for every exercise in the library. The table is the audit:
+     a new exercise must be added here, and a wrong flag in exercises.json fails the test. */
+  const EXPECT = {
+    // barbell and trap-bar lifts: total weight, with plates a side when that mode is on (bar 20, EZ bar 10)
+    barbell_bench_press: "weight_reps bar20", incline_barbell_bench_press: "weight_reps bar20", close_grip_bench_press: "weight_reps bar20",
+    barbell_overhead_press: "weight_reps bar20", barbell_row: "weight_reps bar20", pendlay_row: "weight_reps bar20",
+    back_squat: "weight_reps bar20", front_squat: "weight_reps bar20", romanian_deadlift: "weight_reps bar20", trap_bar_deadlift: "weight_reps bar20",
+    barbell_deadlift: "weight_reps bar20", sumo_deadlift: "weight_reps bar20", good_morning: "weight_reps bar20", hip_thrust: "weight_reps bar20",
+    skull_crusher: "weight_reps bar10", ez_bar_curl: "weight_reps bar10",
+    // two-hand dumbbell, cable and machine work: weight and reps
+    incline_db_press: "weight_reps hand", dumbbell_bench_press: "weight_reps hand", seated_db_shoulder_press: "weight_reps hand", arnold_press: "weight_reps hand",
+    db_lateral_raise: "weight_reps hand", db_overhead_extension: "weight_reps hand", hammer_curl: "weight_reps hand", db_curl: "weight_reps hand",
+    incline_db_curl: "weight_reps hand", rear_delt_row: "weight_reps hand", dumbbell_romanian_deadlift: "weight_reps hand",
+    goblet_squat: "weight_reps", dumbbell_pullover: "weight_reps",
+    machine_chest_press: "weight_reps", cable_fly: "weight_reps", machine_shoulder_press: "weight_reps", seated_cable_row: "weight_reps",
+    chest_supported_row: "weight_reps", straight_arm_pulldown: "weight_reps", lat_pulldown: "weight_reps", cable_lateral_raise: "weight_reps",
+    machine_lateral_raise: "weight_reps", upright_row: "weight_reps", cable_pushdown: "weight_reps", overhead_cable_extension: "weight_reps",
+    cable_curl: "weight_reps", face_pull: "weight_reps", reverse_fly_machine: "weight_reps", leg_press: "weight_reps", hack_squat: "weight_reps",
+    leg_extension: "weight_reps", lying_leg_curl: "weight_reps", seated_leg_curl: "weight_reps", cable_pull_through: "weight_reps",
+    standing_calf_raise: "weight_reps", seated_calf_raise: "weight_reps", leg_press_calf_raise: "weight_reps", cable_crunch: "weight_reps",
+    // one side at a time: reps each side, dumbbell in each hand where that applies
+    single_arm_db_row: "weight_reps hand side", triceps_kickback: "weight_reps hand side", concentration_curl: "weight_reps hand side",
+    bulgarian_split_squat: "weight_reps hand side", walking_lunge: "weight_reps hand side", reverse_lunge: "weight_reps hand side",
+    lateral_lunge: "weight_reps hand side", step_up: "weight_reps hand side", glute_kickback: "weight_reps side", cable_woodchop: "weight_reps side",
+    pallof_press: "weight_reps side",
+    // bodyweight: reps, with optional added weight
+    push_up: "bodyweight_reps", inverted_row: "bodyweight_reps", pull_up: "bodyweight_reps",
+    nordic_curl: "reps", glute_bridge: "reps", dead_bug: "reps", hanging_knee_raise: "reps", ab_wheel: "reps", bicycle_crunch: "reps", russian_twist: "reps",
+    single_leg_calf_raise: "reps side", bird_dog: "reps side",
+    assisted_pull_up: "assisted", assisted_dip: "assisted",
+    // holds: seconds with a hold timer, a button per side for one-side holds, weight too for carries
+    wall_sit: "time hold", plank: "time hold", mountain_climber: "time hold", hollow_hold: "time hold", side_plank: "time hold side",
+    farmers_carry: "weight_time hold hand",
+    // machines and routines
+    treadmill: "cardio", bike: "cardio", rower: "cardio",
+    dynamic_warmup_upper: "routine", dynamic_warmup_lower: "routine", dynamic_warmup_full: "routine", cooldown_upper: "routine", cooldown_lower: "routine",
+    cooldown_full: "routine", mobility_flow: "routine",
+  };
+  const describeMode = m => [m.kind, m.bar != null ? "bar" + m.bar : "", m.timer === "hold" ? "hold" : "", m.perHand ? "hand" : "", m.perSide ? "side" : ""].filter(Boolean).join(" ");
+
+  it("every exercise in the library is in the table and classified as expected", () => {
+    const missing = EXJ.exercises.map(e => e.key).filter(k => !(k in EXPECT));
+    assert.deepEqual(missing, [], "add these to EXPECT");
+    const stale = Object.keys(EXPECT).filter(k => !EXJ_BY_KEY[k]);
+    assert.deepEqual(stale, [], "these are not in exercises.json");
+    const wrong = EXJ.exercises.map(e => [e.key, describeMode(E.entryMode(e)), EXPECT[e.key]]).filter(([, got, want]) => got !== want);
+    assert.deepEqual(wrong, []);
+  });
+  it("names and equipment agree, so a barbell lift is never shown as plain kg", () => {
+    const barbellNames = /barbell|back squat|front squat|romanian deadlift|trap bar|sumo deadlift|good morning|hip thrust|ez bar|skull crusher|pendlay|close-grip/i;
+    EXJ.exercises.forEach(e => {
+      if (barbellNames.test(e.name) && !/dumbbell/i.test(e.name)) assert.ok(E.isBarbellEx(e), `${e.key} looks like a barbell lift but equipment is ${e.equipment}`);
+      if (/dumbbell|goblet|arnold|hammer curl|concentration|triceps kickback|farmer/i.test(e.name)) assert.equal(e.equipment, "dumbbell", e.key);
+      if (/\bcable\b|pulldown|pushdown|face pull|pallof|pull-through|woodchop/i.test(e.name)) assert.equal(e.equipment, "cable", e.key);
+      if (/treadmill|bike|rowing/i.test(e.name)) assert.ok(E.isCardioEx(e), e.key);
+      if (/warm-up|cool-down|mobility/i.test(e.name)) assert.equal(E.entryMode(e).kind, "routine", e.key);
+      if (/plank|hold|wall sit|carry/i.test(e.name)) assert.equal(E.entryMode(e).timer, "hold", `${e.key} should have a hold timer`);
+      if (/single|one-arm|side plank|bulgarian|lunge|step-up|bird dog|kickback|woodchop|concentration|pallof/i.test(e.name)) assert.ok(E.entryMode(e).perSide, `${e.key} is one side at a time`);
+      if (e.per_hand) assert.equal(e.equipment, "dumbbell", `${e.key}: per_hand only makes sense for dumbbells`);
+    });
+  });
+  it("bar weight comes from the exercise, 20 kg unless the library says otherwise", () => {
+    assert.equal(E.barWeight(EXJ_BY_KEY.back_squat), 20);
+    assert.equal(E.barWeight(EXJ_BY_KEY.ez_bar_curl), 10);
+    assert.equal(E.barWeight(EXJ_BY_KEY.goblet_squat), null);
+    assert.equal(E.barWeight({ equipment: "barbell" }), 20);
+  });
+  it("a cardio exercise is recognised by pattern or by machine", () => {
+    assert.ok(E.isCardioEx({ pattern: "cardio_bike", equipment: "bike" }));
+    assert.ok(E.isCardioEx({ pattern: "custom", equipment: "treadmill" }));
+    assert.ok(!E.isCardioEx({ pattern: "core", equipment: "bodyweight" }));
+    assert.equal(E.entryMode(null).kind, "weight_reps");
+  });
+});
+
+describe("cardio sets become cardio logs", () => {
+  const treadmillId = exByKey => exByKey.treadmill.id;
+  it("one set of 30 reps on the treadmill is 30 minutes, moderate when no protocol and RPE is middling", () => {
+    const { db, exByKey, settings } = fresh();
+    const w = addWorkout(db, TODAY);
+    addSets(db, exByKey, w, "treadmill", [[30, null, 7]]);
+    addSets(db, exByKey, w, "back_squat", [[8, 60, 7]]);
+    const r = E.migrateCardioSets(db, settings, PROG);
+    assert.deepEqual(r, { made: 1, removed: 1, workouts: 1 });
+    const cardio = db.all("cardio_logs").filter(c => c.workout_client_id === w);
+    assert.equal(cardio.length, 1);
+    assert.equal(cardio[0].minutes, 30);
+    assert.equal(cardio[0].intensity, "moderate");
+    assert.equal(cardio[0].exercise_id, treadmillId(exByKey));
+    assert.ok(cardio[0].kcal_est > 100, "the workout was recomputed with the cardio calories");
+    const left = db.all("set_logs").filter(x => x.workout_client_id === w);
+    assert.equal(left.length, 1, "the squat set stays");
+    assert.equal(left[0].exercise_id, exByKey.back_squat.id);
+  });
+  it("takes the protocol's intensity when the set hangs off a plan item, and identical sets count once", () => {
+    const { db, exByKey, settings } = fresh();
+    const w = addWorkout(db, TODAY);
+    const item = db.insert("plan_items", { session_id: 999, ord: 1, section: "main", slot_key: "cond", exercise_id: treadmillId(exByKey), minutes: 20, protocol: "cond_tread_run_walk", rounds: 10 });
+    addSets(db, exByKey, w, "treadmill", [[20, null, 9], [20, null, 9], [20, null, 9]], item.id);
+    const r = E.migrateCardioSets(db, settings, PROG);
+    assert.equal(r.made, 1);
+    const c = db.all("cardio_logs").find(x => x.workout_client_id === w);
+    assert.equal(c.minutes, 20);
+    assert.equal(c.intensity, "interval");
+    assert.equal(c.protocol, "cond_tread_run_walk");
+    assert.equal(c.plan_item_id, item.id);
+  });
+  it("different values add up, hard RPE reads as vigorous, and running again changes nothing", () => {
+    const { db, exByKey, settings } = fresh();
+    const w = addWorkout(db, TODAY);
+    addSets(db, exByKey, w, "bike", [[10, null, 9], [15, null, 9]]);
+    assert.equal(E.migrateCardioSets(db, settings, PROG).made, 1);
+    const c = db.all("cardio_logs").find(x => x.workout_client_id === w);
+    assert.equal(c.minutes, 25);
+    assert.equal(c.intensity, "vigorous");
+    assert.deepEqual(E.migrateCardioSets(db, settings, PROG), { made: 0, removed: 0, workouts: 0 });
+    assert.equal(db.all("cardio_logs").filter(x => x.workout_client_id === w).length, 1);
+  });
+  it("leaves a set alone when it carries no usable minutes", () => {
+    const { db, exByKey, settings } = fresh();
+    const w = addWorkout(db, TODAY);
+    addSets(db, exByKey, w, "rower", [[0, null, null]]);
+    assert.deepEqual(E.migrateCardioSets(db, settings, PROG), { made: 0, removed: 0, workouts: 0 });
+    assert.equal(db.all("set_logs").filter(x => x.workout_client_id === w).length, 1);
+  });
+});
+
 describe("effort", () => {
   describe("per-set maths and calories", () => {
     it("e1rm Epley: 100 x 5 is 116.67", () => {

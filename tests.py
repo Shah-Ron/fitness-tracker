@@ -1301,6 +1301,61 @@ class FdcTests(unittest.TestCase):
         self.assertEqual(nutrition.online_search("", None, None), {"hits": [], "notes": []})
 
 
+class CardioSetMigrationTests(unittest.TestCase):
+    """Sets logged against a treadmill, bike or rower were really minutes."""
+
+    def settings(self, conn):
+        return ft.get_settings(conn)
+
+    def test_treadmill_set_becomes_thirty_minutes(self):
+        conn = fresh_conn()
+        w = add_workout(conn, date(2026, 9, 24))
+        add_sets(conn, w, "treadmill", [(30, None, 7)])
+        add_sets(conn, w, "back_squat", [(8, 60, 7)])
+        quiet, ft.log = ft.log, lambda msg: None
+        try:
+            made = ft.migrate_cardio_sets(conn, self.settings(conn))
+        finally:
+            ft.log = quiet
+        self.assertEqual(made, 1)
+        c = conn.execute("SELECT * FROM cardio_logs WHERE workout_client_id = ?", (w,)).fetchone()
+        self.assertEqual((c["minutes"], c["intensity"], c["exercise_id"]), (30, "moderate", ex_id("treadmill")))
+        self.assertGreater(c["kcal_est"], 100)
+        live = conn.execute("SELECT exercise_id FROM set_logs WHERE workout_client_id = ? AND deleted = 0", (w,)).fetchall()
+        self.assertEqual([r["exercise_id"] for r in live], [ex_id("back_squat")])
+        self.assertEqual(ft.migrate_cardio_sets(conn, self.settings(conn)), 0)
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM cardio_logs WHERE workout_client_id = ?", (w,)).fetchone()[0], 1)
+
+    def test_protocol_sets_intensity_and_identical_sets_count_once(self):
+        conn = fresh_conn()
+        w = add_workout(conn, date(2026, 9, 24))
+        conn.commit()
+        conn.execute("PRAGMA foreign_keys = OFF")     # a bare plan item is enough here, no session needed
+        conn.execute("""INSERT INTO plan_items (session_id, ord, section, slot_key, exercise_id, minutes, protocol, rounds)
+                        VALUES (999, 1, 'main', 'cond', ?, 20, 'cond_bike_30_60', 15)""", (ex_id("bike"),))
+        item_id = conn.execute("SELECT id FROM plan_items WHERE session_id = 999").fetchone()[0]
+        add_sets(conn, w, "bike", [(20, None, 9), (20, None, 9)], plan_item_id=item_id)
+        quiet, ft.log = ft.log, lambda msg: None
+        try:
+            ft.migrate_cardio_sets(conn, self.settings(conn))
+        finally:
+            ft.log = quiet
+        c = conn.execute("SELECT * FROM cardio_logs WHERE workout_client_id = ?", (w,)).fetchone()
+        self.assertEqual((c["minutes"], c["intensity"], c["protocol"], c["plan_item_id"]), (20, "interval", "cond_bike_30_60", item_id))
+
+    def test_cardio_speed_is_accepted_by_sync(self):
+        conn = fresh_conn()
+        w = add_workout(conn, date(2026, 9, 24), ended=False)
+        res = sync(conn, self.settings(conn), [{"type": "cardio", "client_id": "c-speed", "at": "2026-09-24T18:30:00",
+                                                "payload": {"workout_client_id": w, "exercise_id": ex_id("treadmill"), "minutes": 30, "speed_kmh": 6.5, "intensity": "moderate"}}])
+        self.assertEqual(res["rejected"], [])
+        c = conn.execute("SELECT speed_kmh, distance_km FROM cardio_logs WHERE client_id = 'c-speed'").fetchone()
+        self.assertEqual(c["speed_kmh"], 6.5)
+        bad = sync(conn, self.settings(conn), [{"type": "cardio", "client_id": "c-fast", "at": "2026-09-24T18:31:00",
+                                                "payload": {"workout_client_id": w, "exercise_id": ex_id("treadmill"), "minutes": 30, "speed_kmh": 99}}])
+        self.assertEqual(len(bad["rejected"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
 
