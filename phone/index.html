@@ -130,6 +130,10 @@ header.top { display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
 .notice.crit { background: var(--crit-tint); color: var(--crit); }
 .notice .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
 .notice.warn .dot { background: var(--warn); } .notice.crit .dot { background: var(--crit); }
+#notice:empty { display: none; }
+.upd { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--accent-tint); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin: 10px 0; font-size: 14px; color: var(--ink-2); }
+.upd .spacer { flex: 1; }
+.upd button { min-height: 36px; }
 
 .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; color: var(--muted); }
 .switch input { position: absolute; opacity: 0; width: 0; height: 0; }

@@ -28,6 +28,10 @@ Both come from this repository. GitHub builds the app file and publishes the web
 
 **History** lists workouts and food days with CSV exports. **Settings** holds your profile and goal, the split and training days, the exercise library, your own foods and meals, and backups.
 
+## Updates
+
+The app checks GitHub for a new version when it opens, at most every six hours, and shows a banner with an Update button when there is one. Later hides that version until the next. Android downloads the new package and opens the installer; the web app reloads into the new build. Settings > Updates has the switch to turn the automatic check off, a Check now button and the time of the last check.
+
 ## Backups
 
 Everything is on the phone, so if the phone is lost or wiped, so is your data. **Settings, Backups, Export a backup** saves a JSON file (into Downloads in the Android app, or through the share sheet in the web app). Do it now and then and keep the file somewhere safe. **Restore a backup** puts it onto any phone or browser running this app.

@@ -26,6 +26,12 @@ import nutrition  # noqa: E402
 FIELDS = ["id", "name", "brand", "unit", "source", "kcal_100", "protein_100", "carb_100", "fat_100", "approx", "times_used", "last_used", "portions", "search", "barcode"]
 
 
+def make_page():
+    """phone/index.html and phone/app.js are derived from app.html; regenerate them before copying data."""
+    import runpy
+    runpy.run_path(os.path.join(HERE, "make_phone_page.py"), run_name="__main__")
+
+
 def food_rows():
     rows = []
     for r in nutrition.iter_usda_foods(os.path.join(DATA, "foods_usda.json")):
@@ -51,6 +57,7 @@ def sha(paths):
 
 
 def main():
+    make_page()
     os.makedirs(os.path.join(PHONE, "data"), exist_ok=True)
     rows = food_rows()
     with open(os.path.join(PHONE, "data", "foods.json"), "w", encoding="utf-8") as fh:

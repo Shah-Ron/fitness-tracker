@@ -30,6 +30,21 @@ const SWEEP = String(async () => {
   const fails = [], note = (k, m) => fails.push(k + ": " + m);
   await LocalApi.call("PUT", "/api/settings", { sex: "m", birth_date: "1996-05-10", height_cm: 178, start_weight_kg: 82, target_weight_kg: 74, target_date: "2027-10-01", barbell_entry: "per_side" });
   await load(true);
+  // the automatic update banner: a newer version shows it, Later silences that version, an up-to-date build shows nothing
+  ls.set("ft-update", { at: Date.now(), latest: "99.0", cur: S.version, url: null, newer: true, dismissed: null });
+  updateNotice();
+  if (!document.querySelector("#updbar .upd")) note("updates", "no banner for a newer version");
+  else {
+    document.getElementById("updLater").click();
+    if (document.querySelector("#updbar .upd")) note("updates", "Later did not hide the banner");
+    if ((ls.get("ft-update") || {}).dismissed !== "99.0") note("updates", "Later did not remember the version");
+  }
+  ls.del("ft-update");
+  const lv = await latestVersion();
+  if (lv.newer || lv.latest !== S.version) note("updates", "the running build should read as current: " + JSON.stringify(lv));
+  await autoUpdateCheck(true);
+  if (document.querySelector("#updbar .upd")) note("updates", "banner shown although up to date");
+  if (!(ls.get("ft-update") || {}).at) note("updates", "the automatic check did not record when it ran");
   startFreestyle();
   await sleep(600);
   if (!W) return JSON.stringify({ checked: 0, fails: ["no workout could be started"] });

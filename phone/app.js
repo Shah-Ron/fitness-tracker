@@ -92,7 +92,15 @@ async function mutate(type, client_id, payload, local) {
   return client_id;
 }
 async function flush() {}
-async function updateNotice() { $("#notice").innerHTML = ""; }
+function updateNotice() {
+  let n = $("#updbar");
+  if (!n) { const m = $("main"); if (!m) return; n = document.createElement("div"); n.id = "updbar"; m.prepend(n); }
+  const st = updateState();
+  if (!st.newer || !st.latest || st.latest === st.dismissed || W) { n.innerHTML = ""; return; }
+  n.innerHTML = `<div class="upd"><span>Version ${esc(st.latest)} is ready${st.cur ? `. You have ${esc(st.cur)}` : ""}.</span><span class="spacer"></span><button class="primary" id="updNow">Update</button><button class="ghost" id="updLater">Later</button></div>`;
+  $("#updNow").addEventListener("click", () => applyUpdate(st));
+  $("#updLater").addEventListener("click", () => { ls.set("ft-update", Object.assign(updateState(), { dismissed: st.latest })); n.innerHTML = ""; });
+}
 
 /* ---------------------------------------------------------- load */
 async function load(quiet) {
@@ -1403,8 +1411,10 @@ function renderSettings() {
       <div class="row mt"><button id="csvSets">Sets CSV</button><button id="csvFood">Food CSV</button><button id="csvBody">Body CSV</button></div>
       <div class="row mt"><button class="danger" id="bkWipe">Start fresh</button><span class="muted small">Removes everything on this device. Export first.</span></div>
       <p class="hint mt" id="bkInfo"></p></div>
-    <div class="card"><h2>Updates</h2><p class="hint">New versions are published on GitHub. ${IS_ANDROID_APP ? "Checking downloads the new package and opens the installer; your data stays." : "Checking reloads the app into the newest build."}</p>
-      <div class="row"><button id="upCheck">Check for updates</button><span class="muted small" id="upInfo"></span></div></div>`;
+    <div class="card"><h2>Updates</h2><p class="hint">New versions are published on GitHub. The app checks by itself when it opens, at most every six hours, and shows a banner when there is one. ${IS_ANDROID_APP ? "Updating downloads the new package and opens the installer; your data stays." : "Updating reloads the app into the newest build."}</p>
+      <div class="row"><label class="switch"><input type="checkbox" id="s-autoupdate" ${st.auto_update_check === false ? "" : "checked"}><span class="slider"></span><span>Check for updates automatically</span></label></div>
+      <div class="row mt"><button id="upCheck">Check now</button><span class="muted small" id="upInfo"></span></div>
+      <p class="hint mt" id="upLast">${lastCheckedText()}</p></div>`;
 
   const bind = (k, parse, msg) => { const el = $("#s-" + k, root); if (!el) return; el.addEventListener("change", () => { const v = el.value === "" ? null : (parse ? parse(el.value) : el.value); saveSettings({ [k]: v }, msg); }); };
   ["sex", "birth_date", "target_date", "experience", "usda_api_key"].forEach(k => bind(k));
@@ -1441,6 +1451,7 @@ function renderSettings() {
     try { const data = JSON.parse(await file.text()); await api("POST", "/api/restore", data); toast("Restored"); W = null; saveW(); FOODS = null; await load(true); renderSettings(); } catch (err) { toast(err.message); }
   });
   $("#upCheck").onclick = checkForUpdate;
+  $("#s-autoupdate").addEventListener("change", e => { saveSettings({ auto_update_check: e.target.checked }); if (e.target.checked) autoUpdateCheck(true); });
   renderExLib(root);
   renderMyFoods(root);
   renderBackupInfo(root);
@@ -1513,43 +1524,71 @@ async function renderBackupInfo(root) {
   const appVer = IS_ANDROID_APP && window.Android.appVersion ? window.Android.appVersion() : null;
   el.textContent = `${plural(counts.workouts, "workout")} stored. ${IS_ANDROID_APP ? "Android app " + (appVer || "") : swVersion ? "Installed for offline use, version " + swVersion : "Running in the browser"}, build ${S.version}.`;
 }
-/* Updates: the Android app fetches the latest GitHub release and installs it; the web app reloads into the newest build. */
+/* Updates: the Android app fetches the latest GitHub release and installs it; the web app reloads into the newest
+   build. The check runs by itself on start and when the app comes back to the front, at most every six hours, and
+   shows a banner; it never interrupts a workout and "Later" silences that version. */
 const REPO = "Shah-Ron/fitness-tracker";
+const UPDATE_EVERY_MS = 6 * 60 * 60 * 1000;
 const verParts = v => String(v || "").replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
 function newerVersion(a, b) { const x = verParts(a), y = verParts(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; }
+function updateState() { return ls.get("ft-update", {}) || {}; }
+async function latestVersion() {
+  if (IS_ANDROID_APP) {
+    const cur = window.Android.appVersion ? window.Android.appVersion() : "0";
+    const rel = await LocalApi.fetchJson(`https://api.github.com/repos/${REPO}/releases/latest`);
+    const latest = String(rel.tag_name || "").replace(/^v/, "");
+    const apk = (rel.assets || []).find(a => String(a.name || "").toLowerCase().endsWith(".apk"));
+    return { latest, cur, url: apk ? apk.browser_download_url : null, newer: !!(latest && apk && newerVersion(latest, cur)) };
+  }
+  const v = await (await fetch("./version.json?ts=" + Date.now(), { cache: "no-store" })).json();
+  const cur = S ? S.version : null;
+  return { latest: v.version || null, cur, url: null, newer: !!(v.version && cur && v.version !== cur) };
+}
+function lastCheckedText() {
+  const st = updateState(); if (!st.at) return "Not checked yet.";
+  const when = new Date(st.at);
+  return `Last checked ${when.toLocaleDateString("en-NZ", { day: "numeric", month: "short" })} at ${when.toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })}${st.newer ? `, version ${st.latest} is available` : st.error ? ", could not reach GitHub" : ", up to date"}.`;
+}
+async function autoUpdateCheck(force) {
+  if (!S || S.settings.auto_update_check === false || !navigator.onLine) return;
+  const st = updateState();
+  if (!force && st.at && Date.now() - st.at < UPDATE_EVERY_MS) { updateNotice(); return; }
+  try {
+    const r = await latestVersion();
+    ls.set("ft-update", { at: Date.now(), latest: r.latest, cur: r.cur, url: r.url, newer: r.newer, dismissed: st.dismissed || null });
+  } catch (e) { ls.set("ft-update", Object.assign(st, { at: Date.now(), error: e.message })); }
+  updateNotice();
+  const l = $("#upLast"); if (l) l.textContent = lastCheckedText();
+}
+async function applyUpdate(r) {
+  if (IS_ANDROID_APP) {
+    if (!r.url) { toast("The latest release has no package to install"); return; }
+    try { const res = window.Android.installUpdate(r.url); toast(res === "started" ? "Downloading. The installer opens when it is ready; tap Install there." : res, null, 8000); }
+    catch (e) { toast(e.message); }
+    return;
+  }
+  toast("Reloading into the new version");
+  try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
+  setTimeout(() => location.reload(), 1200);
+}
 async function checkForUpdate() {
   const info = $("#upInfo"), btn = $("#upCheck");
   if (!info || !btn) return;
   info.textContent = "Checking";
   btn.disabled = true;
   try {
-    if (IS_ANDROID_APP) {
-      const cur = window.Android.appVersion ? window.Android.appVersion() : "0";
-      const rel = await LocalApi.fetchJson(`https://api.github.com/repos/${REPO}/releases/latest`);
-      const latest = String(rel.tag_name || "").replace(/^v/, "");
-      const apk = (rel.assets || []).find(a => /\.apk$/i.test(a.name || ""));
-      if (latest && newerVersion(latest, cur) && apk) {
-        info.textContent = `Version ${latest} is available. You have ${cur}.`;
-        btn.textContent = `Install ${latest}`; btn.classList.add("primary");
-        btn.onclick = () => {
-          try { const r = window.Android.installUpdate(apk.browser_download_url); info.textContent = r === "started" ? "Downloading. The installer opens when it is ready; tap Install there." : r; btn.disabled = true; }
-          catch (e) { info.textContent = e.message; }
-        };
-      } else {
-        info.textContent = `You have the latest version (${cur}).`;
-      }
+    const r = await latestVersion();
+    ls.set("ft-update", Object.assign(updateState(), { at: Date.now(), latest: r.latest, cur: r.cur, url: r.url, newer: r.newer, dismissed: null, error: null }));
+    if (r.newer) {
+      info.textContent = IS_ANDROID_APP ? `Version ${r.latest} is available. You have ${r.cur}.` : "A newer version is available.";
+      btn.textContent = IS_ANDROID_APP ? `Install ${r.latest}` : "Reload into it"; btn.classList.add("primary");
+      btn.onclick = () => { applyUpdate(r); if (IS_ANDROID_APP) { info.textContent = "Downloading. The installer opens when it is ready; tap Install there."; btn.disabled = true; } };
     } else {
-      const v = await (await fetch("./version.json?ts=" + Date.now(), { cache: "no-store" })).json();
-      if (v.version && S && v.version !== S.version) {
-        info.textContent = "A newer version is available. Reloading.";
-        try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
-        setTimeout(() => location.reload(), 1800);
-      } else {
-        info.textContent = `You have the latest version (${S ? S.version : "?"}).`;
-      }
+      info.textContent = `You have the latest version (${r.cur || "?"}).`;
     }
+    updateNotice();
   } catch (e) { info.textContent = "Could not check: " + e.message; }
-  finally { btn.disabled = false; }
+  finally { btn.disabled = false; const l = $("#upLast"); if (l) l.textContent = lastCheckedText(); }
 }
 async function downloadText(name, mime, text) {
   if (IS_ANDROID_APP) { window.Android.saveFile(name, mime, text); toast(`Saved ${name} to Downloads`); return; }
@@ -1576,5 +1615,7 @@ async function downloadText(name, mime, text) {
   switchTab(UI.tab);
   await load();
   if (W) { tickElapsed(); resumeRest(); }
+  autoUpdateCheck();
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") autoUpdateCheck(); });
 })();
 

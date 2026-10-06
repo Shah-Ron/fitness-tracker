@@ -253,6 +253,7 @@ SETTING_DEFAULTS.update({
     "display_name": None,
     "rest_default_sec": 90,
     "barbell_entry": "total",
+    "auto_update_check": True,
     "barbell_converted_at": None,
     "usda_api_key": None,
     "seed_version": 0,
@@ -1275,7 +1276,7 @@ def update_settings(conn, settings, patch):
             v = v_text(v, k, 80)
         elif k == "main1_swap_every_blocks":
             v = v_int(v, k, 1, 6)
-        elif k in ("stay_running", "keep_awake"):
+        elif k in ("stay_running", "keep_awake", "auto_update_check"):
             v = bool(v)
         elif k in ("theme", "contact_email", "display_name"):
             v = v_text(v, k, 120)
