@@ -61,7 +61,8 @@ const today = iso(new Date());
     log(wk3.sessions.find(x => x.id === sess.id).status === "done", "session done");
     const wkNext = await api("GET", "/api/plan/week?date=" + Engine.addDays(today, 7));
     const nxt = wkNext.sessions.flatMap(x => x.items).find(i => i.exercise_id === main1.exercise_id && i.slot_key === "main1");
-    log(nxt && nxt.target.weight === 42.5 && nxt.target.source === "increase", "next week target 42.5 increase", nxt && nxt.target);
+    const incMain = ((await api("GET", "/api/exercises")).find(x => x.id === main1.exercise_id) || {}).increment_kg || 2.5;
+    log(nxt && nxt.target.weight === 40 + incMain && nxt.target.source === "increase", `next week target ${40 + incMain} increase`, nxt && nxt.target);
     const foods = await api("GET", "/api/foods/list");
     log(foods.foods.length > 7000, "foods list loaded", foods.foods.length);
     const idx = foods.fields.indexOf("name");
@@ -104,6 +105,16 @@ const today = iso(new Date());
       log(wkP.sessions.some(x => x.kind.startsWith("push")), "ppl split applied from next week", wkP.sessions.map(x => x.kind));
       log(wkP.sessions.filter(x => Engine.isLifting(x.kind, LocalApi.prog)).every(x => x.est_minutes <= 60.01), "ppl days fit 60 min", wkP.sessions.map(x => x.est_minutes));
     } else log(true, "splits not in programme.json yet, skipped");
+    for (const [split, want] of [["hiit", "hiit_"], ["cardio", "cardio_"]]) {
+      s = await api("PUT", "/api/settings", { split });
+      const wkS = await api("GET", "/api/plan/week?date=" + Engine.addDays(today, 7));
+      const kinds = wkS.sessions.map(x => x.kind);
+      log(kinds.some(k => k.startsWith(want)) && kinds.includes("full_a"), split + " split applied from next week", kinds);
+      log(wkS.sessions.every(x => x.est_minutes <= 60.01), split + " days fit 60 min", wkS.sessions.map(x => [x.kind, x.est_minutes]));
+      const cardioDay = wkS.sessions.find(x => x.kind.startsWith(want));
+      log(cardioDay.items.some(i => i.section === "main" && i.protocol && i.protocol_text) && !cardioDay.items.some(i => i.section === "main" && i.sets), split + " main block is a timed protocol, not sets", cardioDay.items.map(i => [i.slot_key, i.protocol, i.sets]));
+    }
+    s = await api("PUT", "/api/settings", { split: "upper_lower" });
     const exMain = (await api("GET", "/api/exercises")).find(x => x.id === main1.exercise_id);
     if (exMain && ["barbell", "trap_bar"].includes(exMain.equipment)) {
       const pick = sets => sets.find(x => x.exercise_id === main1.exercise_id && !x.is_warmup).weight_kg;

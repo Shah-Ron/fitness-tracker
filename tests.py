@@ -655,6 +655,44 @@ class ProgrammeTests(unittest.TestCase):
                         est = programme.session_minutes(items(conn, sess["id"]), ft.PROG["set_overhead_sec"])
                         self.assertLessEqual(est, 60, f"{sess['kind']} on {sess['date']} takes {est} min")
 
+    def test_every_split_fits_and_cardio_days_are_timed(self):
+        """HIIT, cardio-first and the lifting splits: 3 to 6 days, 8 weeks, every session under an hour."""
+        machines = set(programme.CARDIO_MACHINES)
+        self.assertEqual(programme.validate_seed(ft.PROG, ft.EX_BY_KEY), [])
+        for split in ft.PROG["splits"]:
+            for n in (3, 4, 5, 6):
+                conn = fresh_conn()
+                s = ft.get_settings(conn)
+                s["train_days"] = [1, 2, 3, 4, 5, 6][:n]
+                s["split"] = split
+                wks = plan_weeks(conn, s, 8)
+                for wk in wks:
+                    used = []
+                    for sess in sessions(conn, wk["id"]):
+                        if sess["kind"] == "rest":
+                            continue
+                        its = items(conn, sess["id"])
+                        est = programme.session_minutes(its, ft.PROG["set_overhead_sec"])
+                        self.assertLessEqual(est, 60, f"{split}/{sess['kind']} on {sess['date']} takes {est} min")
+                        self.assertEqual(its[-1]["section"], "cooldown", f"{split}/{sess['kind']} ends with a cool-down")
+                        if programme.is_cardio_session(sess["kind"], ft.PROG):
+                            mains = [i for i in its if i["section"] in ("main", "finisher") and i["protocol"]]
+                            self.assertTrue(mains, f"{split}/{sess['kind']} has a timed main block")
+                            self.assertIn(mains[0]["exercise_key"], machines)
+                            used.append(mains[0]["exercise_key"])
+                        else:
+                            self.assertTrue(any(i["slot_key"] == "main1" for i in its), f"{split}/{sess['kind']} is a lifting day")
+                    self.assertGreaterEqual(len(set(used)), min(len(used), len(machines)), f"machines spread in {split}: {used}")
+
+    def test_hiit_and_cardio_templates(self):
+        self.assertEqual(programme.template_for({"train_days": [1, 2, 3, 4, 5], "split": "hiit"}, ft.PROG),
+                         ["hiit_machine", "full_a", "hiit_circuit", "full_b", "hiit_mixed"])
+        self.assertEqual(programme.template_for({"train_days": [1, 2, 3, 4, 5, 6], "split": "cardio"}, ft.PROG),
+                         ["cardio_intervals", "full_a", "cardio_tempo", "full_b", "cardio_long", "zone2"])
+        self.assertTrue(programme.is_cardio_session("hiit_circuit", ft.PROG))
+        self.assertFalse(programme.is_lifting("cardio_long", ft.PROG))
+        self.assertTrue(programme.is_lifting("full_a", ft.PROG))
+
     def test_default_upper_estimate(self):
         self.assertEqual(programme.est_minutes({"slot_key": "main1", "sets": 3, "rest_sec": 150}), 11.5)
         self.assertEqual(programme.est_minutes({"slot_key": "acc1", "sets": 3, "rest_sec": 60}), 5.0)

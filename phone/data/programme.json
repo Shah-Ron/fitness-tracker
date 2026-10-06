@@ -1,12 +1,13 @@
 {
-  "version": 1,
+  "version": 2,
   "set_overhead_sec": 40,
   "rest_sec": {
     "main1": 150,
     "main2": 90,
     "accessory": 60,
     "core": 45,
-    "circuit": 30
+    "circuit": 30,
+    "metcon": 30
   },
   "rep_schemes": {
     "beginner": {
@@ -33,6 +34,11 @@
       "circuit": {
         "sets": 3,
         "rep_low": 10,
+        "rep_high": 15
+      },
+      "metcon": {
+        "sets": 4,
+        "rep_low": 12,
         "rep_high": 15
       }
     }
@@ -187,6 +193,70 @@
           "legs",
           "arms",
           "conditioning"
+        ]
+      }
+    },
+    "hiit": {
+      "name": "HIIT",
+      "description": "Short, hard interval sessions on the machines and in circuits, with two full-body lifting days so you keep building strength.",
+      "templates": {
+        "3": [
+          "hiit_machine",
+          "full_a",
+          "hiit_circuit"
+        ],
+        "4": [
+          "hiit_machine",
+          "full_a",
+          "hiit_circuit",
+          "full_b"
+        ],
+        "5": [
+          "hiit_machine",
+          "full_a",
+          "hiit_circuit",
+          "full_b",
+          "hiit_mixed"
+        ],
+        "6": [
+          "hiit_machine",
+          "full_a",
+          "hiit_circuit",
+          "full_b",
+          "hiit_mixed",
+          "zone2"
+        ]
+      }
+    },
+    "cardio": {
+      "name": "Cardio first",
+      "description": "Most days on the treadmill, bike or rower: intervals, a tempo session and a long steady one, with two full-body lifting days so you keep your muscle.",
+      "templates": {
+        "3": [
+          "cardio_intervals",
+          "full_a",
+          "cardio_long"
+        ],
+        "4": [
+          "cardio_intervals",
+          "full_a",
+          "cardio_tempo",
+          "cardio_long"
+        ],
+        "5": [
+          "cardio_intervals",
+          "full_a",
+          "cardio_tempo",
+          "full_b",
+          "cardio_long"
+        ],
+        "6": [
+          "cardio_intervals",
+          "full_a",
+          "cardio_tempo",
+          "full_b",
+          "cardio_long",
+          "zone2"
         ]
       }
     }
@@ -1798,7 +1868,10 @@
             "bicycle_crunch"
           ]
         }
-      ]
+      ],
+      "cardio": true,
+      "cooldown_slot": "mobility",
+      "cooldown_minutes": 10
     },
     "zone2": {
       "title": "Zone 2",
@@ -1813,6 +1886,271 @@
           "optional": false,
           "pool": [],
           "protocol_group": "zone2"
+        }
+      ],
+      "cardio": true,
+      "warmup_cardio": false
+    },
+    "hiit_machine": {
+      "title": "HIIT intervals",
+      "cardio": true,
+      "warmup": "dynamic_warmup_full",
+      "cooldown": "cooldown_full",
+      "slots": [
+        {
+          "key": "hiit1",
+          "section": "main",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "hiit"
+        },
+        {
+          "key": "hiit2",
+          "section": "main",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "hiit"
+        },
+        {
+          "key": "circ1",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "plank",
+            "hollow_hold",
+            "dead_bug"
+          ]
+        },
+        {
+          "key": "circ2",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "mountain_climber",
+            "bicycle_crunch",
+            "russian_twist"
+          ]
+        }
+      ]
+    },
+    "hiit_circuit": {
+      "title": "HIIT circuit",
+      "cardio": true,
+      "warmup": "dynamic_warmup_full",
+      "cooldown": "cooldown_full",
+      "slots": [
+        {
+          "key": "c1",
+          "section": "accessory",
+          "scheme": "metcon",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "jump_squat",
+            "goblet_squat",
+            "dumbbell_thruster"
+          ]
+        },
+        {
+          "key": "c2",
+          "section": "accessory",
+          "scheme": "metcon",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "burpee",
+            "push_up"
+          ]
+        },
+        {
+          "key": "c3",
+          "section": "accessory",
+          "scheme": "metcon",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "walking_lunge",
+            "reverse_lunge",
+            "lateral_lunge"
+          ]
+        },
+        {
+          "key": "c4",
+          "section": "accessory",
+          "scheme": "metcon",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "inverted_row",
+            "single_arm_db_row"
+          ]
+        },
+        {
+          "key": "c5",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "high_knees",
+            "skater_jump",
+            "mountain_climber"
+          ]
+        },
+        {
+          "key": "finisher",
+          "section": "finisher",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "hiit"
+        }
+      ]
+    },
+    "hiit_mixed": {
+      "title": "HIIT mixed",
+      "cardio": true,
+      "warmup": "dynamic_warmup_full",
+      "cooldown": "cooldown_full",
+      "slots": [
+        {
+          "key": "hiit1",
+          "section": "main",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "hiit"
+        },
+        {
+          "key": "c1",
+          "section": "accessory",
+          "scheme": "metcon",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "dumbbell_thruster",
+            "goblet_squat"
+          ]
+        },
+        {
+          "key": "c2",
+          "section": "accessory",
+          "scheme": "metcon",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "dumbbell_swing",
+            "dumbbell_romanian_deadlift"
+          ]
+        },
+        {
+          "key": "c3",
+          "section": "accessory",
+          "scheme": "metcon",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "burpee",
+            "push_up"
+          ]
+        },
+        {
+          "key": "circ1",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "side_plank",
+            "plank",
+            "hollow_hold"
+          ]
+        }
+      ]
+    },
+    "cardio_intervals": {
+      "title": "Intervals",
+      "cardio": true,
+      "warmup": null,
+      "cooldown": "cooldown_full",
+      "slots": [
+        {
+          "key": "iv",
+          "section": "main",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "intervals"
+        },
+        {
+          "key": "circ1",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "plank",
+            "dead_bug",
+            "hollow_hold"
+          ]
+        }
+      ]
+    },
+    "cardio_tempo": {
+      "title": "Tempo",
+      "cardio": true,
+      "warmup": null,
+      "cooldown": "cooldown_full",
+      "slots": [
+        {
+          "key": "tempo",
+          "section": "main",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "tempo"
+        },
+        {
+          "key": "circ1",
+          "section": "core",
+          "scheme": "circuit",
+          "select": "rotate",
+          "optional": false,
+          "pool": [
+            "side_plank",
+            "bird_dog",
+            "pallof_press"
+          ]
+        }
+      ]
+    },
+    "cardio_long": {
+      "title": "Long steady",
+      "cardio": true,
+      "warmup": null,
+      "warmup_cardio": false,
+      "cooldown": "cooldown_full",
+      "slots": [
+        {
+          "key": "long",
+          "section": "main",
+          "scheme": null,
+          "select": "rotate",
+          "optional": false,
+          "pool": [],
+          "protocol_group": "long"
         }
       ]
     }
@@ -1928,6 +2266,183 @@
       "minutes_min": 30,
       "intensity": "moderate",
       "text": "Steady pace for 35 minutes. You can still speak in full sentences."
+    },
+    {
+      "id": "hiit_tread_40_20",
+      "group": "hiit",
+      "machine": "treadmill",
+      "work_sec": 40,
+      "rest_sec": 20,
+      "rounds": 12,
+      "rounds_min": 8,
+      "intensity": "interval",
+      "text": "Run hard 40 seconds, walk 20 seconds, 12 rounds."
+    },
+    {
+      "id": "hiit_tread_30_30",
+      "group": "hiit",
+      "machine": "treadmill",
+      "work_sec": 30,
+      "rest_sec": 30,
+      "rounds": 16,
+      "rounds_min": 10,
+      "intensity": "interval",
+      "text": "Sprint 30 seconds, walk 30 seconds, 16 rounds."
+    },
+    {
+      "id": "hiit_bike_20_10",
+      "group": "hiit",
+      "machine": "bike",
+      "work_sec": 20,
+      "rest_sec": 10,
+      "rounds": 12,
+      "rounds_min": 8,
+      "intensity": "interval",
+      "text": "Tabata on the bike: 20 seconds flat out, 10 seconds easy, 12 rounds."
+    },
+    {
+      "id": "hiit_bike_40_20",
+      "group": "hiit",
+      "machine": "bike",
+      "work_sec": 40,
+      "rest_sec": 20,
+      "rounds": 12,
+      "rounds_min": 8,
+      "intensity": "interval",
+      "text": "Hard 40 seconds, easy 20 seconds, 12 rounds."
+    },
+    {
+      "id": "hiit_rower_30_30",
+      "group": "hiit",
+      "machine": "rower",
+      "work_sec": 30,
+      "rest_sec": 30,
+      "rounds": 16,
+      "rounds_min": 10,
+      "intensity": "interval",
+      "text": "Hard 30 seconds, easy 30 seconds, 16 rounds."
+    },
+    {
+      "id": "hiit_rower_20_10",
+      "group": "hiit",
+      "machine": "rower",
+      "work_sec": 20,
+      "rest_sec": 10,
+      "rounds": 12,
+      "rounds_min": 8,
+      "intensity": "interval",
+      "text": "Tabata on the rower: 20 seconds flat out, 10 seconds easy, 12 rounds."
+    },
+    {
+      "id": "end_tread_4x4",
+      "group": "intervals",
+      "machine": "treadmill",
+      "work_sec": 240,
+      "rest_sec": 180,
+      "rounds": 4,
+      "rounds_min": 3,
+      "intensity": "interval",
+      "text": "Run 4 minutes hard, jog or walk 3 minutes easy, 4 rounds."
+    },
+    {
+      "id": "end_tread_8x2",
+      "group": "intervals",
+      "machine": "treadmill",
+      "work_sec": 120,
+      "rest_sec": 90,
+      "rounds": 8,
+      "rounds_min": 5,
+      "intensity": "interval",
+      "text": "Run 2 minutes hard, 90 seconds easy, 8 rounds."
+    },
+    {
+      "id": "end_bike_4x4",
+      "group": "intervals",
+      "machine": "bike",
+      "work_sec": 240,
+      "rest_sec": 180,
+      "rounds": 4,
+      "rounds_min": 3,
+      "intensity": "interval",
+      "text": "Ride 4 minutes hard, 3 minutes easy, 4 rounds."
+    },
+    {
+      "id": "end_bike_8x2",
+      "group": "intervals",
+      "machine": "bike",
+      "work_sec": 120,
+      "rest_sec": 90,
+      "rounds": 8,
+      "rounds_min": 5,
+      "intensity": "interval",
+      "text": "Ride 2 minutes hard, 90 seconds easy, 8 rounds."
+    },
+    {
+      "id": "end_rower_4x4",
+      "group": "intervals",
+      "machine": "rower",
+      "work_sec": 240,
+      "rest_sec": 180,
+      "rounds": 4,
+      "rounds_min": 3,
+      "intensity": "interval",
+      "text": "Row 4 minutes hard, 3 minutes easy, 4 rounds."
+    },
+    {
+      "id": "end_rower_8x2",
+      "group": "intervals",
+      "machine": "rower",
+      "work_sec": 120,
+      "rest_sec": 90,
+      "rounds": 8,
+      "rounds_min": 5,
+      "intensity": "interval",
+      "text": "Row 2 minutes hard, 90 seconds easy, 8 rounds."
+    },
+    {
+      "id": "tempo_tread",
+      "group": "tempo",
+      "machine": "treadmill",
+      "minutes": 25,
+      "minutes_min": 20,
+      "intensity": "vigorous",
+      "text": "Comfortably hard for 25 minutes. A few words at a time, not sentences."
+    },
+    {
+      "id": "tempo_bike",
+      "group": "tempo",
+      "machine": "bike",
+      "minutes": 25,
+      "minutes_min": 20,
+      "intensity": "vigorous",
+      "text": "Comfortably hard for 25 minutes. A few words at a time, not sentences."
+    },
+    {
+      "id": "tempo_rower",
+      "group": "tempo",
+      "machine": "rower",
+      "minutes": 25,
+      "minutes_min": 20,
+      "intensity": "vigorous",
+      "text": "Comfortably hard for 25 minutes, steady stroke rate. A few words at a time."
+    },
+    {
+      "id": "long_steady_45",
+      "group": "long",
+      "machine": "any",
+      "minutes": 45,
+      "minutes_min": 35,
+      "intensity": "moderate",
+      "text": "Steady for 45 minutes. You can still talk in sentences."
+    },
+    {
+      "id": "long_build_45",
+      "group": "long",
+      "machine": "any",
+      "minutes": 45,
+      "minutes_min": 35,
+      "intensity": "moderate",
+      "text": "15 minutes easy, 20 minutes steady, 10 minutes brisk. 45 minutes in all."
     }
   ],
   "warmup_moves": {

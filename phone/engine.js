@@ -353,7 +353,10 @@ const Engine = (() => {
   const ADHERENCE_KINDS = LIFTING_KINDS.concat(["conditioning"]);
   const STALE_DAYS = 28;
   const TRAIN_DEFAULTS = { train_days: [1, 2, 3, 4, 5], session_minutes: 60, experience: "beginner", cardio_kit: ["treadmill", "bike", "rower"], main1_swap_every_blocks: 2, programme_start: null, split: "upper_lower" };
-  const isLifting = (kind, prog) => !!(prog.sessions || {})[kind] && !["conditioning", "zone2"].includes(kind);
+  /* A cardio session is built around the machines: conditioning, Zone 2, the HIIT days and the cardio-first days. */
+  const isCardioSession = (kind, prog) => { const sess = (prog.sessions || {})[kind]; return !!sess && (!!sess.cardio || kind === "conditioning" || kind === "zone2"); };
+  const isLifting = (kind, prog) => !!(prog.sessions || {})[kind] && !isCardioSession(kind, prog);
+  const CARDIO_MACHINES = ["treadmill", "bike", "rower"];
   const countsForAdherence = kind => kind !== "rest" && kind !== "zone2";
   function templateFor(ts, prog) {
     const n = ts.train_days.length;
@@ -378,6 +381,11 @@ const Engine = (() => {
       (sess.slots || []).forEach(slot => (slot.pool || []).forEach(k => { if (!exByKey[k]) problems.push(`${kind}/${slot.key}: ${k} missing`); }));
     });
     (prog.protocols || []).forEach(p => { if (p.machine && p.machine !== "any" && !exByKey[p.machine]) problems.push(`protocol ${p.id}: machine ${p.machine} missing`); });
+    Object.entries(prog.sessions || {}).forEach(([kind, sess]) => (sess.slots || []).forEach(slot => {
+      if (!slot.protocol_group) return;
+      CARDIO_MACHINES.forEach(m => { if (!(prog.protocols || []).some(p => p.group === slot.protocol_group && (p.machine === m || p.machine === "any"))) problems.push(`${kind}/${slot.key}: no ${slot.protocol_group} protocol for the ${m}`); });
+    }));
+    Object.entries(prog.splits || {}).forEach(([k, sp]) => Object.values(sp.templates || {}).forEach(t => t.forEach(kind => { if (!(prog.sessions || {})[kind]) problems.push(`split ${k}: session ${kind} is not defined`); })));
     return problems;
   }
   const protocolsById = prog => Object.fromEntries((prog.protocols || []).map(p => [p.id, p]));
@@ -451,41 +459,50 @@ const Engine = (() => {
     if (sess.cooldown) add({ section: "cooldown", slot_key: "cooldown", exercise_key: sess.cooldown, minutes: 3 });
     return items;
   }
-  function buildConditioningItems(blockNo, weekSeed, isDeload, prevPicks, prevMachine, ts, prog, exByKey) {
-    const sess = prog.sessions.conditioning, protos = protocolsById(prog), kit = ts.cardio_kit;
-    const machine = pick(kit, weekSeed, "conditioning:machine", prevMachine);
+  /* Any session built around the machines. The day's machine rotates week to week and avoids the machines already
+     used this week, so a cardio-heavy week spreads over treadmill, bike and rower. Protocol slots pick a protocol for
+     that machine (never the same one twice in a session), exercise slots pick a circuit move. */
+  function buildCardioItems(kind, blockNo, weekSeed, isDeload, prevPicks, usedMachines, ts, prog, exByKey) {
+    const sess = prog.sessions[kind], protos = protocolsById(prog), kit = ts.cardio_kit;
+    const prevMachine = Object.values(prevPicks).map(p => p.exercise).find(k => kit.includes(k)) || null;
+    const free = kit.filter(m => !(usedMachines || []).includes(m));
+    const machine = pick(free.length ? free : kit, weekSeed, `${kind}:machine`, prevMachine);
     const items = []; let n = 0;
     const add = kw => items.push(blankItem(++n, kw));
-    const wu = prog.warmup_cardio || { key: "wu_cardio", protocol: "warm_easy_5" };
-    add({ section: "warmup", slot_key: wu.key, exercise_key: machine, protocol: wu.protocol, minutes: protocolMinutes(protos[wu.protocol] || { minutes: 5 }) });
+    if (sess.warmup_cardio !== false) {
+      const wu = prog.warmup_cardio || { key: "wu_cardio", protocol: "warm_easy_5" };
+      add({ section: "warmup", slot_key: wu.key, exercise_key: machine, protocol: wu.protocol, minutes: protocolMinutes(protos[wu.protocol] || { minutes: 5 }) });
+    }
+    if (sess.warmup) add({ section: "warmup", slot_key: "wu_dynamic", exercise_key: sess.warmup, minutes: 2 });
+    const chosen = [];
     sess.slots.forEach(slot => {
       if (slot.protocol_group) {
-        const pool = (prog.protocols || []).filter(p => p.group === slot.protocol_group && (p.machine === machine || p.machine === "any")).map(p => p.id);
-        const pid = pick(pool, weekSeed, `conditioning:${slot.key}`, (prevPicks[slot.key] || {}).protocol);
-        const proto = protos[pid];
-        add({ section: slot.section, slot_key: slot.key, exercise_key: machine, protocol: pid, minutes: protocolMinutes(proto, isDeload), rounds: protocolRounds(proto, isDeload) });
+        const group = (prog.protocols || []).filter(p => p.group === slot.protocol_group);
+        let fit = group.filter(p => p.machine === machine || p.machine === "any");
+        if (!fit.length) fit = group;                                   // no protocol for this machine: take the group's
+        const fresh = fit.filter(p => !chosen.includes(p.id));
+        const pool = (fresh.length ? fresh : fit).map(p => p.id);
+        const pid = pick(pool, weekSeed, `${kind}:${slot.key}`, (prevPicks[slot.key] || {}).protocol);
+        const proto = protos[pid]; chosen.push(pid);
+        add({ section: slot.section, slot_key: slot.key, exercise_key: proto.machine && proto.machine !== "any" ? proto.machine : machine, protocol: pid, minutes: protocolMinutes(proto, isDeload), rounds: protocolRounds(proto, isDeload) });
       } else {
         const pool = activePool(slot.pool, exByKey);
-        const key = pick(pool, weekSeed, `conditioning:${slot.key}`, (prevPicks[slot.key] || {}).exercise);
+        const key = pick(pool, weekSeed, `${kind}:${slot.key}`, (prevPicks[slot.key] || {}).exercise);
         const ex = exByKey[key], sc = scheme(prog, ts, slot.scheme || "circuit");
         let lo = sc.rep_low, hi = sc.rep_high, sets = sc.sets;
         if (ex.timed) { lo = (prog.timed_scheme || {}).rep_low || 30; hi = (prog.timed_scheme || {}).rep_high || 60; }
         if (isDeload) sets = Math.max(1, sets + (+(prog.deload.set_delta ?? -1)));
-        add({ section: slot.section, slot_key: slot.key, exercise_key: key, sets, rep_low: lo, rep_high: hi, rest_sec: prog.rest_sec.circuit || 30 });
+        add({ section: slot.section, slot_key: slot.key, exercise_key: key, sets, rep_low: lo, rep_high: hi, rest_sec: prog.rest_sec[slot.scheme || "circuit"] || 30 });
       }
     });
-    if (sess.cooldown) add({ section: "cooldown", slot_key: "mobility", exercise_key: sess.cooldown, minutes: 10 });
+    if (sess.cooldown) add({ section: "cooldown", slot_key: sess.cooldown_slot || "cooldown", exercise_key: sess.cooldown, minutes: +(sess.cooldown_minutes || 3) });
     return { items, machine };
   }
+  function buildConditioningItems(blockNo, weekSeed, isDeload, prevPicks, prevMachine, ts, prog, exByKey) {
+    return buildCardioItems("conditioning", blockNo, weekSeed, isDeload, prevMachine ? Object.assign({ wu_cardio: { exercise: prevMachine } }, prevPicks) : prevPicks, [], ts, prog, exByKey);
+  }
   function buildZone2Items(weekSeed, condMachine, isDeload, ts, prog) {
-    const protos = protocolsById(prog);
-    const kit = ts.cardio_kit.filter(m => m !== condMachine); const use = kit.length ? kit : ts.cardio_kit;
-    const machine = pick(use, weekSeed, "zone2:machine");
-    const proto = protos.zone2_steady || (prog.protocols || []).find(p => p.group === "zone2");
-    const items = [blankItem(1, { section: "main", slot_key: "zone2", exercise_key: machine, minutes: protocolMinutes(proto, isDeload), protocol: proto.id })];
-    const sess = (prog.sessions || {}).zone2 || {};
-    if (sess.cooldown) items.push(blankItem(2, { section: "cooldown", slot_key: "cooldown", exercise_key: sess.cooldown, minutes: 3 }));
-    return items;
+    return buildCardioItems("zone2", 1, weekSeed, isDeload, {}, condMachine ? [condMachine] : [], ts, prog, {}).items;
   }
   function trimToBudget(items, budget, prog) {
     const protos = protocolsById(prog), oh = prog.set_overhead_sec || 40;
@@ -515,11 +532,10 @@ const Engine = (() => {
     if (isLifting(kind, prog)) {
       items = trimToBudget(buildLiftingItems(kind, block.block_no, week.seed, !!week.is_deload, prev, ctx.last_finisher, ts, prog, exByKey), +ts.session_minutes, prog);
       items.forEach(i => { if (i.section === "finisher") ctx.last_finisher = i.protocol; });
-    } else if (kind === "conditioning") {
-      const r = buildConditioningItems(block.block_no, week.seed, !!week.is_deload, prev, (prev.wu_cardio || {}).exercise, ts, prog, exByKey);
-      items = r.items; ctx.conditioning_machine = r.machine;
-    } else if (kind === "zone2") items = buildZone2Items(week.seed, ctx.conditioning_machine, !!week.is_deload, ts, prog);
-    else return;
+    } else if (isCardioSession(kind, prog)) {
+      const r = buildCardioItems(kind, block.block_no, week.seed, !!week.is_deload, prev, ctx.machines_used || [], ts, prog, exByKey);
+      items = r.items; ctx.machines_used = (ctx.machines_used || []).concat([r.machine]);
+    } else return;
     insertItems(db, session.id, items, exByKey);
   }
   function weekKinds(ts, prog) { const t = templateFor(ts, prog); const k = {}; ts.train_days.slice(0, t.length).forEach((wd, i) => { k[wd] = t[i]; }); return k; }
@@ -578,7 +594,7 @@ const Engine = (() => {
       if (row && !untouched) {
         db.all("plan_items").filter(i => i.session_id === row.id).forEach(it => {
           if (it.slot_key === "finisher") ctx.last_finisher = it.protocol;
-          if (row.kind === "conditioning" && it.slot_key === "wu_cardio") { const ex = exOf(db, it.exercise_id); ctx.conditioning_machine = ex ? ex.key : null; }
+          if (isCardioSession(row.kind, prog)) { const ex = exOf(db, it.exercise_id); if (ex && CARDIO_MACHINES.includes(ex.key) && !(ctx.machines_used || []).includes(ex.key)) ctx.machines_used = (ctx.machines_used || []).concat([ex.key]); }
         });
         continue;
       }
@@ -802,7 +818,7 @@ const Engine = (() => {
     roundLoad, setLoad, setVolume, e1rm, hardRatio, liftingMet, cardioMet, kcal, liftMinutes, effortScore, cardioEffort,
     isCardioEx, isBarbellEx, barWeight, entryMode, migrateCardioSets,
     bodyLogs, bodyweightOn, recomputeWorkout, historyForExercise, bestsForExercise, prsForWorkout, weeklyMuscleSets, weeklyE1rm, strengthIndex,
-    validateSeed, protocolsById, protocolMinutes, trainSettings, templateFor, isLifting, pick, estMinutes, sessionMinutes, trimToBudget,
+    validateSeed, protocolsById, protocolMinutes, trainSettings, templateFor, isLifting, isCardioSession, buildCardioItems, pick, estMinutes, sessionMinutes, trimToBudget,
     createBlock, ensurePlanThrough, sweepMissed, rebuildWeek, shuffleWeek, regenerateFrom, swapItem, moveSession, markRest,
     progression, targetFor, targetText, freezeTargets, weekForDate, sessionView, weekView, adherenceByWeek,
   };

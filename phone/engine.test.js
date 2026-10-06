@@ -771,6 +771,90 @@ describe("programme", () => {
 
 /* ================================================================ effort */
 
+describe("HIIT and cardio-first splits", () => {
+  const MACHINES = ["treadmill", "bike", "rower"];
+  const firstDays = n => [1, 2, 3, 4, 5, 6].slice(0, n);
+  const minutesOf = items => E.sessionMinutes(items, PROG.set_overhead_sec || 40);
+  const groupOf = pid => (PROG.protocols.find(p => p.id === pid) || {}).group;
+  const singleOption = pid => PROG.protocols.filter(p => p.group === groupOf(pid)).length < 2;   // Zone 2 has one protocol, so it must repeat
+
+  it("the templates put the hard days apart and the lifting days between them", () => {
+    assert.deepEqual(E.templateFor({ train_days: firstDays(5), split: "hiit" }, PROG), ["hiit_machine", "full_a", "hiit_circuit", "full_b", "hiit_mixed"]);
+    assert.deepEqual(E.templateFor({ train_days: firstDays(6), split: "cardio" }, PROG), ["cardio_intervals", "full_a", "cardio_tempo", "full_b", "cardio_long", "zone2"]);
+    assert.deepEqual(E.templateFor({ train_days: firstDays(3), split: "cardio" }, PROG), ["cardio_intervals", "full_a", "cardio_long"]);
+  });
+  it("the seed data is complete: every protocol slot has a protocol for every machine, every template a session", () => {
+    assert.deepEqual(E.validateSeed(PROG, EXJ_BY_KEY), []);
+    ["hiit_machine", "hiit_circuit", "hiit_mixed", "cardio_intervals", "cardio_tempo", "cardio_long", "conditioning", "zone2"].forEach(k => assert.ok(E.isCardioSession(k, PROG), k));
+    ["full_a", "upper_a", "push_a", "chest"].forEach(k => assert.ok(E.isLifting(k, PROG) && !E.isCardioSession(k, PROG), k));
+  });
+  for (const split of Object.keys(PROG.splits)) {
+    for (const n of [3, 4, 5, 6]) {
+      it(`${split} with ${n} days: every session fits 60 minutes, cardio days have a timed main block and spread over the machines`, () => {
+        const { db, exByKey, settings } = fresh({ split, train_days: firstDays(n) });
+        const wks = planWeeks(db, settings, exByKey, 8);
+        let prevProtos = null;
+        for (const wk of wks) {
+          const sessions = sessionsOf(db, wk.id).filter(x => x.kind !== "rest");
+          assert.equal(sessions.length, n);
+          const machinesThisWeek = [], protos = new Map();
+          for (const sess of sessions) {
+            const its = itemsOf(db, sess.id);
+            assert.ok(minutesOf(its) <= 60.01, `${sess.kind} in the week of ${wk.start_date} takes ${minutesOf(its)} min`);
+            assert.ok(its.length >= 2, `${sess.kind} has items`);
+            assert.equal(its[its.length - 1].section, "cooldown", `${sess.kind} ends with a cool-down`);
+            if (E.isCardioSession(sess.kind, PROG)) {
+              const mains = its.filter(i => ["main", "finisher"].includes(i.section) && i.protocol);
+              assert.ok(mains.length >= 1, `${sess.kind} has a timed protocol block`);
+              mains.forEach(m => { assert.ok(MACHINES.includes(m.exercise_key), `${sess.kind} main is on a machine`); assert.ok(m.minutes > 0, "minutes set"); });
+              const ids = its.filter(i => i.protocol && i.slot_key !== "wu_cardio").map(i => i.protocol);
+              assert.equal(new Set(ids).size, ids.length, `${sess.kind} never repeats a protocol within the session`);
+              machinesThisWeek.push(mains[0].exercise_key);
+              its.filter(i => i.protocol && i.section !== "warmup").forEach(i => protos.set(`${sess.kind}/${i.slot_key}`, i.protocol));
+            } else {
+              assert.ok(its.some(i => i.slot_key === "main1"), `${sess.kind} is a lifting day`);
+            }
+          }
+          const cardioDays = Math.min(machinesThisWeek.length, MACHINES.length);
+          assert.ok(new Set(machinesThisWeek).size >= cardioDays, `machines spread over the week: ${machinesThisWeek.join(", ")}`);
+          if (prevProtos && !wk.is_deload) for (const [k, v] of protos) if (prevProtos.has(k) && !singleOption(v)) assert.notEqual(v, prevProtos.get(k), `${k} repeated in the week of ${wk.start_date}`);
+          prevProtos = protos;
+        }
+      });
+    }
+  }
+  it("a HIIT circuit is four rounds of twelve to fifteen with short rests, plus an interval finisher", () => {
+    const { db, exByKey, settings } = fresh({ split: "hiit", train_days: firstDays(5) });
+    const wk = planWeeks(db, settings, exByKey, 1)[0];
+    const circuit = sessionsOf(db, wk.id).find(x => x.kind === "hiit_circuit");
+    const its = itemsOf(db, circuit.id);
+    const metcon = its.filter(i => i.section === "accessory");
+    assert.equal(metcon.length, 4);
+    metcon.forEach(i => assert.deepEqual([i.sets, i.rep_low, i.rep_high, i.rest_sec], [4, 12, 15, 30], i.exercise_key));
+    const fin = item(its, "finisher");
+    assert.ok(fin && fin.protocol.startsWith("hiit_"), "interval finisher");
+    assert.ok(MACHINES.includes(fin.exercise_key));
+  });
+  it("the long steady day skips the machine warm-up and runs 45 minutes, 35 on a deload", () => {
+    const { db, exByKey, settings } = fresh({ split: "cardio", train_days: firstDays(5) });
+    const wks = planWeeks(db, settings, exByKey, 4);
+    const long1 = itemsOf(db, sessionsOf(db, wks[0].id).find(x => x.kind === "cardio_long").id);
+    assert.ok(!long1.some(i => i.slot_key === "wu_cardio"));
+    assert.equal(item(long1, "long").minutes, 45);
+    const long4 = itemsOf(db, sessionsOf(db, wks[3].id).find(x => x.kind === "cardio_long").id);
+    assert.equal(item(long4, "long").minutes, 35);
+  });
+  it("conditioning and Zone 2 build exactly as before through the shared cardio builder", () => {
+    const { db, exByKey, settings } = fresh({ train_days: firstDays(6) });
+    const wk = planWeeks(db, settings, exByKey, 1)[0];
+    const cond = itemsOf(db, kindOf(db, wk.id, "conditioning").id), z2 = itemsOf(db, kindOf(db, wk.id, "zone2").id);
+    assert.deepEqual(cond.map(i => i.slot_key), ["wu_cardio", "cond", "circ1", "circ2", "circ3", "mobility"]);
+    assert.equal(cond[cond.length - 1].minutes, 10);
+    assert.deepEqual(z2.map(i => i.slot_key), ["zone2", "cooldown"]);
+    assert.notEqual(item(z2, "zone2").exercise_key, item(cond, "wu_cardio").exercise_key, "Zone 2 avoids the conditioning machine");
+  });
+});
+
 describe("entry modes", () => {
   /* What the Workout screen collects for every exercise in the library. The table is the audit:
      a new exercise must be added here, and a wrong flag in exercises.json fails the test. */
@@ -800,10 +884,12 @@ describe("entry modes", () => {
     // bodyweight: reps, with optional added weight
     push_up: "bodyweight_reps", inverted_row: "bodyweight_reps", pull_up: "bodyweight_reps",
     nordic_curl: "reps", glute_bridge: "reps", dead_bug: "reps", hanging_knee_raise: "reps", ab_wheel: "reps", bicycle_crunch: "reps", russian_twist: "reps",
+    burpee: "reps", jump_squat: "reps", dumbbell_thruster: "weight_reps hand", dumbbell_swing: "weight_reps",
     single_leg_calf_raise: "reps side", bird_dog: "reps side",
     assisted_pull_up: "assisted", assisted_dip: "assisted",
     // holds: seconds with a hold timer, a button per side for one-side holds, weight too for carries
     wall_sit: "time hold", plank: "time hold", mountain_climber: "time hold", hollow_hold: "time hold", side_plank: "time hold side",
+    high_knees: "time hold", skater_jump: "time hold",
     farmers_carry: "weight_time hold hand",
     // machines and routines
     treadmill: "cardio", bike: "cardio", rower: "cardio",

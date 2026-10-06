@@ -19,6 +19,7 @@ from effort import round_load, set_load, e1rm, bodyweight_on
 from nutrition import to_date
 
 LIFTING_KINDS = ("upper_a", "lower_a", "upper_b", "lower_b")
+CARDIO_MACHINES = ("treadmill", "bike", "rower")
 ADHERENCE_KINDS = LIFTING_KINDS + ("conditioning",)
 STALE_DAYS = 28
 
@@ -67,6 +68,19 @@ def validate_seed(prog, exercises_by_key):
         has_interval = "work_sec" in proto
         if has_minutes == has_interval:
             problems.append(f"protocol {proto['id']}: needs minutes or work_sec/rest_sec/rounds, not both")
+    for kind, sess in prog.get("sessions", {}).items():
+        for slot in sess.get("slots", []):
+            group = slot.get("protocol_group")
+            if not group:
+                continue
+            for m in CARDIO_MACHINES:
+                if not any(p.get("group") == group and p.get("machine") in (m, "any") for p in prog.get("protocols", [])):
+                    problems.append(f"{kind}/{slot['key']}: no {group} protocol for the {m}")
+    for name, split in prog.get("splits", {}).items():
+        for template in split.get("templates", {}).values():
+            for kind in template:
+                if kind not in prog.get("sessions", {}):
+                    problems.append(f"split {name}: session {kind} is not defined")
     return problems
 
 
@@ -230,11 +244,19 @@ def build_lifting_items(conn, kind, block_no, week_seed, is_deload, prev_picks, 
     return items
 
 
-def build_conditioning_items(conn, block_no, week_seed, is_deload, prev_picks, prev_machine, ts, prog, ex_by_key):
-    sess = prog["sessions"]["conditioning"]
+def build_cardio_items(conn, kind, block_no, week_seed, is_deload, prev_picks, used_machines, ts, prog, ex_by_key):
+    """Any session built around the machines: conditioning, Zone 2, the HIIT days and the cardio-first days.
+
+    The day's machine rotates week to week and avoids the machines already used
+    this week. Protocol slots pick a protocol for that machine, never the same
+    one twice in a session; exercise slots pick a circuit move.
+    """
+    sess = prog["sessions"][kind]
     protos = protocols_by_id(prog)
     kit = ts["cardio_kit"]
-    machine = pick(kit, week_seed, "conditioning:machine", prev_machine)
+    prev_machine = next((p.get("exercise") for p in prev_picks.values() if p.get("exercise") in kit), None)
+    free = [m for m in kit if m not in (used_machines or [])]
+    machine = pick(free or kit, week_seed, f"{kind}:machine", prev_machine)
     items = []
     ordn = 0
 
@@ -247,21 +269,29 @@ def build_conditioning_items(conn, block_no, week_seed, is_deload, prev_picks, p
         base.update(kw)
         items.append(base)
 
-    wu = prog.get("warmup_cardio") or {"key": "wu_cardio", "protocol": "warm_easy_5"}
-    add(section="warmup", slot_key=wu["key"], exercise_key=machine, protocol=wu["protocol"],
-        minutes=protocol_minutes(protos.get(wu["protocol"], {"minutes": 5})))
+    if sess.get("warmup_cardio", True) is not False:
+        wu = prog.get("warmup_cardio") or {"key": "wu_cardio", "protocol": "warm_easy_5"}
+        add(section="warmup", slot_key=wu["key"], exercise_key=machine, protocol=wu["protocol"],
+            minutes=protocol_minutes(protos.get(wu["protocol"], {"minutes": 5})))
+    if sess.get("warmup"):
+        add(section="warmup", slot_key="wu_dynamic", exercise_key=sess["warmup"], minutes=2.0)
+    chosen = []
     for slot in sess["slots"]:
         if slot.get("protocol_group"):
-            pool = [p["id"] for p in prog["protocols"] if p.get("group") == slot["protocol_group"] and p.get("machine") in (machine, "any")]
+            group = [p for p in prog["protocols"] if p.get("group") == slot["protocol_group"]]
+            fit = [p for p in group if p.get("machine") in (machine, "any")] or group
+            fresh = [p for p in fit if p["id"] not in chosen] or fit
             prev = (prev_picks.get(slot["key"]) or {}).get("protocol")
-            pid = pick(pool, week_seed, f"conditioning:{slot['key']}", prev)
+            pid = pick([p["id"] for p in fresh], week_seed, f"{kind}:{slot['key']}", prev)
             proto = protos[pid]
-            add(section=slot["section"], slot_key=slot["key"], exercise_key=machine, protocol=pid,
+            chosen.append(pid)
+            on = proto.get("machine") if proto.get("machine") and proto.get("machine") != "any" else machine
+            add(section=slot["section"], slot_key=slot["key"], exercise_key=on, protocol=pid,
                 minutes=protocol_minutes(proto, minimum=is_deload), rounds=protocol_rounds(proto, minimum=is_deload))
         else:
             pool = _active_pool(slot["pool"], ex_by_key)
             prev = (prev_picks.get(slot["key"]) or {}).get("exercise")
-            key = pick(pool, week_seed, f"conditioning:{slot['key']}", prev)
+            key = pick(pool, week_seed, f"{kind}:{slot['key']}", prev)
             ex = ex_by_key[key]
             scheme = _scheme(prog, ts, slot.get("scheme") or "circuit")
             lo, hi = scheme["rep_low"], scheme["rep_high"]
@@ -271,24 +301,22 @@ def build_conditioning_items(conn, block_no, week_seed, is_deload, prev_picks, p
             if is_deload:
                 sets = max(1, sets + int(prog["deload"].get("set_delta", -1)))
             add(section=slot["section"], slot_key=slot["key"], exercise_key=key, sets=sets, rep_low=lo, rep_high=hi,
-                rest_sec=prog["rest_sec"].get("circuit", 30))
+                rest_sec=prog["rest_sec"].get(slot.get("scheme") or "circuit", 30))
     if sess.get("cooldown"):
-        add(section="cooldown", slot_key="mobility", exercise_key=sess["cooldown"], minutes=10.0)
+        add(section="cooldown", slot_key=sess.get("cooldown_slot") or "cooldown", exercise_key=sess["cooldown"],
+            minutes=float(sess.get("cooldown_minutes") or 3))
     return items, machine
 
 
+def build_conditioning_items(conn, block_no, week_seed, is_deload, prev_picks, prev_machine, ts, prog, ex_by_key):
+    picks = dict(prev_picks)
+    if prev_machine and "wu_cardio" not in picks:
+        picks["wu_cardio"] = {"exercise": prev_machine, "protocol": None}
+    return build_cardio_items(conn, "conditioning", block_no, week_seed, is_deload, picks, [], ts, prog, ex_by_key)
+
+
 def build_zone2_items(week_seed, conditioning_machine, is_deload, ts, prog):
-    protos = protocols_by_id(prog)
-    kit = [m for m in ts["cardio_kit"] if m != conditioning_machine] or ts["cardio_kit"]
-    machine = pick(kit, week_seed, "zone2:machine")
-    proto = protos.get("zone2_steady") or next(p for p in prog["protocols"] if p.get("group") == "zone2")
-    items = [{"ord": 1, "section": "main", "slot_key": "zone2", "exercise_key": machine, "sets": None, "rep_low": None,
-              "rep_high": None, "rest_sec": None, "minutes": protocol_minutes(proto, minimum=is_deload),
-              "protocol": proto["id"], "rounds": None, "optional": 0, "note": None}]
-    cooldown = prog["sessions"].get("zone2", {}).get("cooldown")
-    if cooldown:
-        items.append({"ord": 2, "section": "cooldown", "slot_key": "cooldown", "exercise_key": cooldown, "sets": None, "rep_low": None,
-                      "rep_high": None, "rest_sec": None, "minutes": 3.0, "protocol": None, "rounds": None, "optional": 0, "note": None})
+    items, _machine = build_cardio_items(None, "zone2", 1, week_seed, is_deload, {}, [conditioning_machine] if conditioning_machine else [], ts, prog, {})
     return items
 
 
@@ -359,20 +387,23 @@ def build_session_items(conn, session, week, block, ts, prog, ex_by_key, week_co
         for i in items:
             if i["section"] == "finisher":
                 week_context["last_finisher"] = i["protocol"]
-    elif kind == "conditioning":
-        prev_machine = (prev_picks.get("wu_cardio") or {}).get("exercise")
-        items, machine = build_conditioning_items(conn, block["block_no"], week["seed"], bool(week["is_deload"]),
-                                                  prev_picks, prev_machine, ts, prog, ex_by_key)
-        week_context["conditioning_machine"] = machine
-    elif kind == "zone2":
-        items = build_zone2_items(week["seed"], week_context.get("conditioning_machine"), bool(week["is_deload"]), ts, prog)
+    elif is_cardio_session(kind, prog):
+        items, machine = build_cardio_items(conn, kind, block["block_no"], week["seed"], bool(week["is_deload"]),
+                                            prev_picks, week_context.get("machines_used", []), ts, prog, ex_by_key)
+        week_context.setdefault("machines_used", []).append(machine)
     else:
         return
     insert_items(conn, session["id"], items, ex_by_key)
 
 
+def is_cardio_session(kind, prog):
+    """Built around the machines: conditioning, Zone 2, the HIIT days and the cardio-first days."""
+    sess = prog.get("sessions", {}).get(kind)
+    return bool(sess) and (bool(sess.get("cardio")) or kind in ("conditioning", "zone2"))
+
+
 def is_lifting(kind, prog):
-    return kind in prog.get("sessions", {}) and kind not in ("conditioning", "zone2")
+    return kind in prog.get("sessions", {}) and not is_cardio_session(kind, prog)
 
 
 def counts_for_adherence(kind):
@@ -500,9 +531,10 @@ def rebuild_week(conn, week_id, settings, prog, ex_by_key, from_date=None):
             for it in conn.execute("SELECT slot_key, protocol, exercise_id FROM plan_items WHERE session_id = ?", (row["id"],)):
                 if it["slot_key"] == "finisher":
                     ctx["last_finisher"] = it["protocol"]
-                if row["kind"] == "conditioning" and it["slot_key"] == "wu_cardio":
+                if is_cardio_session(row["kind"], prog) and it["exercise_id"]:
                     ex = conn.execute("SELECT key FROM exercises WHERE id = ?", (it["exercise_id"],)).fetchone()
-                    ctx["conditioning_machine"] = ex["key"] if ex else None
+                    if ex and ex["key"] in CARDIO_MACHINES and ex["key"] not in ctx.setdefault("machines_used", []):
+                        ctx["machines_used"].append(ex["key"])
             continue
         kind = kinds.get(wd, "rest")
         status = "void" if (d < programme_start and kind != "rest") else ("planned" if d >= date.today() or row is None else (row["status"] if row["status"] != "void" else "planned"))

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "exercises": [
     {
       "key": "barbell_bench_press",
@@ -2931,6 +2931,201 @@
         "title": "5 MIN FULL BODY STRETCH & COOL DOWN",
         "channel": "MadFit",
         "length": "7:21"
+      }
+    },
+    {
+      "key": "burpee",
+      "name": "Burpee",
+      "pattern": "horizontal_push",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "chest",
+        "shoulders",
+        "core"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Squat down and put your hands on the floor.",
+        "Jump or step the feet back to a plank, then back in.",
+        "Stand or jump up tall, arms overhead."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "From standing, squat down and put your hands on the floor in front of your feet. Jump or step your feet back into a plank, keeping your body straight, then jump or step them back in and stand up tall, with a small jump and your arms overhead if you want more. Beginners step rather than jump and leave out the push-up. The usual mistake is letting the hips sag in the plank, so brace your middle before the feet go back.",
+      "video": {
+        "id": "qLBImHhCXSw",
+        "title": "How To Do A Burpee | The Right Way | Well+Good",
+        "channel": "Well+Good",
+        "length": "3:24"
+      }
+    },
+    {
+      "key": "jump_squat",
+      "name": "Jump squat",
+      "pattern": "squat",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "glutes",
+        "calves"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Sit into a half squat with your chest up.",
+        "Jump straight up, driving through the whole foot.",
+        "Land softly on the balls of your feet and sink straight into the next one."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "Stand with your feet just outside shoulder width. Sit into a half squat with your chest up and your arms back, then jump straight up as high as you can, swinging the arms forward. Land softly on the balls of your feet with your knees bent and go straight into the next squat. Keep the knees tracking over the toes on every landing; if they cave in, slow down or stop the set.",
+      "video": {
+        "id": "tZSYZdtbONc",
+        "title": "How to do a Squat Jump | Proper Form & Technique | NASM",
+        "channel": "National Academy of Sports Medicine (NASM)",
+        "length": "0:18"
+      }
+    },
+    {
+      "key": "high_knees",
+      "name": "High knees",
+      "pattern": "core",
+      "primary_muscle": "core",
+      "secondary_muscles": [
+        "quads",
+        "calves"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Run on the spot, driving each knee to hip height.",
+        "Stay on the balls of your feet with a tall chest.",
+        "Pump the arms and keep the rhythm quick."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "Stand tall and run on the spot, driving each knee up to hip height while the opposite arm swings forward, as if sprinting. Stay on the balls of your feet, keep your chest up and your middle braced, and keep the rhythm quick and light. Leaning back is the common fault, so keep your torso upright and let the knees do the work. Timed, so hold the pace for the whole set.",
+      "video": {
+        "id": "D0GwAezTvtg",
+        "title": "How to do proper HIGH KNEES",
+        "channel": "Jenny Schatzle",
+        "length": "1:39"
+      }
+    },
+    {
+      "key": "skater_jump",
+      "name": "Skater jump",
+      "pattern": "core",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "quads",
+        "calves"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "Push off one leg and land softly on the other.",
+        "Swing the free leg behind you like a speed skater.",
+        "Stay low and keep the landing knee over the toes."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 1,
+      "bodyweight_fraction": 0,
+      "increment_kg": null,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "Stand on one leg with the knee slightly bent. Push sideways off that leg, swing your arms, and land softly on the other foot with the free leg sweeping behind you like a speed skater, then push straight back the other way. Stay low throughout and let the landing knee bend to absorb the jump, keeping it over your toes rather than caving inward. Timed, so keep hopping side to side for the whole set.",
+      "video": {
+        "id": "AMFCdEFDkjg",
+        "title": "How to Perform: Skater Jumps | GoTherex",
+        "channel": "Strong for Life",
+        "length": "1:33"
+      }
+    },
+    {
+      "key": "dumbbell_thruster",
+      "name": "Dumbbell thruster",
+      "pattern": "squat",
+      "primary_muscle": "quads",
+      "secondary_muscles": [
+        "shoulders",
+        "glutes",
+        "triceps"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Dumbbells at the shoulders, elbows forward.",
+        "Squat to parallel, then drive up and press in one movement.",
+        "Lock out overhead, bring them back to the shoulders and go again."
+      ],
+      "unilateral": 0,
+      "per_hand": 1,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 1,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "Hold a dumbbell at each shoulder with your elbows pointing forward and your feet just outside shoulder width. Squat until your thighs are about parallel, then drive up hard and use that momentum to press the dumbbells straight overhead in one flowing movement. Lower them back to the shoulders as you sink into the next squat. Keep your heels down and your ribs tucked at the top; leaning back to finish the press means the weight is too heavy.",
+      "video": {
+        "id": "0RJXwEZmcCg",
+        "title": "Dumbbell Thruster (Squat and Press) | Exercise Tutorial",
+        "channel": "Lift With Michelle - Exercise Form Tutorials",
+        "length": "1:05"
+      }
+    },
+    {
+      "key": "dumbbell_swing",
+      "name": "Dumbbell swing",
+      "pattern": "hinge",
+      "primary_muscle": "glutes",
+      "secondary_muscles": [
+        "hamstrings",
+        "back",
+        "shoulders"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "Hold one dumbbell by the end with both hands.",
+        "Hinge at the hips and swing it back between your legs.",
+        "Snap the hips forward; the arms just guide it to chest height."
+      ],
+      "unilateral": 0,
+      "per_hand": 0,
+      "timed": 0,
+      "bodyweight_fraction": 0,
+      "increment_kg": 2.5,
+      "min_load_kg": null,
+      "variation_of": null,
+      "carry": null,
+      "mets": null,
+      "how_to": "Hold one dumbbell vertically by its top end with both hands and stand with your feet a little wider than your shoulders. Hinge at the hips with a flat back so the dumbbell swings back between your legs, then snap your hips forward and squeeze your glutes to float it up to chest height. Let it fall back into the next swing. Your arms are only ropes; the power comes from the hips, not the shoulders, and your back stays flat at the bottom every time.",
+      "video": {
+        "id": "Y30kFfgW-bY",
+        "title": "How To: Dumbbell Swing",
+        "channel": "Live Lean TV Daily Exercises",
+        "length": "0:43"
       }
     }
   ]
