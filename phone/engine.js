@@ -352,14 +352,16 @@ const Engine = (() => {
   const LIFTING_KINDS = ["upper_a", "lower_a", "upper_b", "lower_b"];
   const ADHERENCE_KINDS = LIFTING_KINDS.concat(["conditioning"]);
   const STALE_DAYS = 28;
-  const TRAIN_DEFAULTS = { train_days: [1, 2, 3, 4, 5], session_minutes: 60, experience: "beginner", cardio_kit: ["treadmill", "bike", "rower"], main1_swap_every_blocks: 2, programme_start: null, split: "upper_lower" };
+  const TRAIN_DEFAULTS = { train_days: [1, 2, 3, 4, 5], session_minutes: 60, experience: "beginner", cardio_kit: ["treadmill", "bike", "rower"], main1_swap_every_blocks: 2, programme_start: null, split: "upper_lower", sessions_per_day: 1 };
+  const sessionsPerDay = ts => Math.min(3, Math.max(1, +ts.sessions_per_day || 1));
+  const bySeq = (a, b) => ((a.seq || 1) - (b.seq || 1)) || (a.id - b.id);
   /* A cardio session is built around the machines: conditioning, Zone 2, the HIIT days and the cardio-first days. */
   const isCardioSession = (kind, prog) => { const sess = (prog.sessions || {})[kind]; return !!sess && (!!sess.cardio || kind === "conditioning" || kind === "zone2"); };
   const isLifting = (kind, prog) => !!(prog.sessions || {})[kind] && !isCardioSession(kind, prog);
   const CARDIO_MACHINES = ["treadmill", "bike", "rower"];
   const countsForAdherence = kind => kind !== "rest" && kind !== "zone2";
   function templateFor(ts, prog) {
-    const n = ts.train_days.length;
+    const n = ts.train_days.length * sessionsPerDay(ts);
     const split = (prog.splits || {})[ts.split || "upper_lower"];
     if (split && split.templates && Object.keys(split.templates).length) {
       const keys = Object.keys(split.templates).map(Number).sort((a, b) => a - b);
@@ -538,7 +540,17 @@ const Engine = (() => {
     } else return;
     insertItems(db, session.id, items, exByKey);
   }
-  function weekKinds(ts, prog) { const t = templateFor(ts, prog); const k = {}; ts.train_days.slice(0, t.length).forEach((wd, i) => { k[wd] = t[i]; }); return k; }
+  /* The week's sessions dealt onto the training days: one each, or up to sessions_per_day each (a morning and an
+     evening visit), the earlier days taking the extra one when the template does not divide evenly. */
+  function weekKinds(ts, prog) {
+    const t = templateFor(ts, prog), days = ts.train_days || [], k = {};
+    if (!days.length) return k;
+    const total = Math.min(t.length, days.length * sessionsPerDay(ts));
+    const base = Math.floor(total / days.length), extra = total % days.length;
+    let i = 0;
+    days.forEach((wd, di) => { const count = base + (di < extra ? 1 : 0); k[wd] = t.slice(i, i + count); i += count; });
+    return k;
+  }
   function titles(prog) { const t = Object.fromEntries(Object.entries(prog.sessions).map(([k, v]) => [k, v.title || k])); t.rest = "Rest"; return t; }
 
   function createWeek(db, block, weekNo, start, settings, prog, exByKey, prevWeekId) {
@@ -549,10 +561,13 @@ const Engine = (() => {
     const kinds = weekKinds(ts, prog), names = titles(prog);
     const ctx = { prev_week_id: prevWeekId };
     for (let wd = 1; wd <= 7; wd++) {
-      const kind = kinds[wd] || "rest", d = addDays(start, wd - 1);
-      const status = d < programmeStart && kind !== "rest" ? "void" : "planned";
-      const s = db.insert("plan_sessions", { week_id: week.id, day_offset: wd - 1, date: d, kind, title: names[kind] || kind, status, moved_from: null, note: null });
-      buildSessionItems(db, s, week, block, ts, prog, exByKey, ctx);
+      const d = addDays(start, wd - 1);
+      const list = kinds[wd] && kinds[wd].length ? kinds[wd] : ["rest"];
+      list.forEach((kind, idx) => {
+        const status = d < programmeStart && kind !== "rest" ? "void" : "planned";
+        const s = db.insert("plan_sessions", { week_id: week.id, day_offset: wd - 1, seq: idx + 1, date: d, kind, title: names[kind] || kind, status, moved_from: null, note: null });
+        buildSessionItems(db, s, week, block, ts, prog, exByKey, ctx);
+      });
     }
     return week;
   }
@@ -587,24 +602,30 @@ const Engine = (() => {
     const ts = trainSettings(settings), kinds = weekKinds(ts, prog), names = titles(prog);
     const live = liveSessionIds(db, weekId), programmeStart = settings.programme_start || week.start_date;
     const ctx = { prev_week_id: prev ? prev.id : null };
+    const dropItems = sid => db.all("plan_items").filter(i => i.session_id === sid).forEach(i => db.remove("plan_items", i.id));
     for (let wd = 1; wd <= 7; wd++) {
       const d = addDays(week.start_date, wd - 1);
-      const row = db.all("plan_sessions").find(s => s.week_id === weekId && s.day_offset === wd - 1);
-      const untouched = !row || (!live.has(row.id) && ["planned", "void", "skipped"].includes(row.status) && (!fromDate || d >= fromDate));
-      if (row && !untouched) {
-        db.all("plan_items").filter(i => i.session_id === row.id).forEach(it => {
+      const rows = db.all("plan_sessions").filter(s => s.week_id === weekId && s.day_offset === wd - 1).sort(bySeq);
+      const untouched = rows.every(row => !live.has(row.id) && ["planned", "void", "skipped"].includes(row.status) && (!fromDate || d >= fromDate));
+      if (rows.length && !untouched) {
+        // a day with a workout on it, or already in the past, keeps every one of its sessions; remember them so later days rotate correctly
+        rows.forEach(row => db.all("plan_items").filter(i => i.session_id === row.id).forEach(it => {
           if (it.slot_key === "finisher") ctx.last_finisher = it.protocol;
           if (isCardioSession(row.kind, prog)) { const ex = exOf(db, it.exercise_id); if (ex && CARDIO_MACHINES.includes(ex.key) && !(ctx.machines_used || []).includes(ex.key)) ctx.machines_used = (ctx.machines_used || []).concat([ex.key]); }
-        });
+        }));
         continue;
       }
-      const kind = kinds[wd] || "rest";
-      let status = d < programmeStart && kind !== "rest" ? "void" : "planned";
-      if (row && row.status === "skipped" && d < today) status = "skipped";
-      let sid;
-      if (row) { db.all("plan_items").filter(i => i.session_id === row.id).forEach(i => db.remove("plan_items", i.id)); db.update("plan_sessions", row.id, { kind, title: names[kind] || kind, status, note: null }); sid = row.id; }
-      else sid = db.insert("plan_sessions", { week_id: weekId, day_offset: wd - 1, date: d, kind, title: names[kind] || kind, status, moved_from: null, note: null }).id;
-      buildSessionItems(db, { id: sid, kind, date: d }, week, block, ts, prog, exByKey, ctx);
+      const list = kinds[wd] && kinds[wd].length ? kinds[wd] : ["rest"];
+      list.forEach((kind, idx) => {
+        const row = rows[idx] || null;
+        let status = d < programmeStart && kind !== "rest" ? "void" : "planned";
+        if (row && row.status === "skipped" && d < today) status = "skipped";
+        let sid;
+        if (row) { dropItems(row.id); db.update("plan_sessions", row.id, { kind, title: names[kind] || kind, status, note: null, seq: idx + 1 }); sid = row.id; }
+        else sid = db.insert("plan_sessions", { week_id: weekId, day_offset: wd - 1, seq: idx + 1, date: d, kind, title: names[kind] || kind, status, moved_from: null, note: null }).id;
+        buildSessionItems(db, { id: sid, kind, date: d }, week, block, ts, prog, exByKey, ctx);
+      });
+      rows.slice(list.length).forEach(row => { dropItems(row.id); db.remove("plan_sessions", row.id); });
     }
   }
   function shuffleWeek(db, weekId, settings, prog, exByKey, today) {
@@ -648,13 +669,26 @@ const Engine = (() => {
     if (!["planned", "skipped", "void"].includes(s.status)) throw new PlanError("That session is already done.", 409);
     if (Math.abs(daysBetween(today, s.date)) > 14) throw new PlanError("Only sessions within two weeks can be moved.", 400);
     if (s.date === today) return;
-    const t = db.all("plan_sessions").find(x => x.date === today); if (!t) throw new PlanError("Today is not in the plan yet.", 409);
-    if (db.all("workouts").some(w => w.session_id === t.id)) throw new PlanError("You have already started today's session.", 409);
+    const todays = db.all("plan_sessions").filter(x => x.date === today).sort(bySeq);
+    if (!todays.length) throw new PlanError("Today is not in the plan yet.", 409);
+    const live = new Set(db.all("workouts").filter(w => w.session_id).map(w => w.session_id));
+    const t = todays[0];
     // Rows are live objects, so copy the source's place before the first update overwrites it.
     const from = { date: s.date, day_offset: s.day_offset, week_id: s.week_id };
-    const to = { day_offset: t.day_offset, week_id: t.week_id, status: t.status };
-    db.update("plan_sessions", s.id, { date: today, day_offset: to.day_offset, week_id: to.week_id, moved_from: from.date, status: "planned" });
-    db.update("plan_sessions", t.id, { date: from.date, day_offset: from.day_offset, week_id: from.week_id, moved_from: today, status: to.status === "void" ? "void" : "planned" });
+    const catchUp = todays.some(x => live.has(x.id)) || (s.date < today && t.kind !== "rest" && t.status !== "void");
+    if (catchUp) {
+      // Today's session is under way or done, or a missed session is being made up: it becomes an extra session today
+      // and the day it came from is left as a rest day, so the week keeps its shape.
+      const seq = Math.max(...todays.map(x => x.seq || 1)) + 1;
+      db.update("plan_sessions", s.id, { date: today, day_offset: t.day_offset, week_id: t.week_id, moved_from: from.date, status: "planned", seq });
+      if (!db.all("plan_sessions").some(x => x.date === from.date)) db.insert("plan_sessions", { week_id: from.week_id, day_offset: from.day_offset, seq: 1, date: from.date, kind: "rest", title: "Rest", status: "planned", moved_from: today, note: "moved" });
+      sweepMissed(db, today);
+      return;
+    }
+    // Otherwise the two sessions exchange dates: today's goes where the moved one was.
+    const to = { day_offset: t.day_offset, week_id: t.week_id, status: t.status, seq: t.seq || 1 };
+    db.update("plan_sessions", s.id, { date: today, day_offset: to.day_offset, week_id: to.week_id, moved_from: from.date, status: "planned", seq: to.seq });
+    db.update("plan_sessions", t.id, { date: from.date, day_offset: from.day_offset, week_id: from.week_id, moved_from: today, status: to.status === "void" ? "void" : "planned", seq: s.seq || 1 });
     sweepMissed(db, today);
   }
   function markRest(db, sessionId) {
@@ -795,7 +829,7 @@ const Engine = (() => {
     const week = weekForDate(db, d); if (!week) return null;
     const block = db.get("blocks", week.block_id);
     const bw = bodyweightOn(db, today, settings);
-    const sessions = db.all("plan_sessions").filter(s => s.week_id === week.id).sort((a, b) => a.date.localeCompare(b.date)).map(s => sessionView(db, s, today, settings, prog, exByKey, bw));
+    const sessions = db.all("plan_sessions").filter(s => s.week_id === week.id).sort((a, b) => a.date.localeCompare(b.date) || bySeq(a, b)).map(s => sessionView(db, s, today, settings, prog, exByKey, bw));
     const planned = sessions.filter(s => countsForAdherence(s.kind) && s.status !== "void");
     const ts = trainSettings(settings), splitDef = (prog.splits || {})[ts.split] || null;
     return { week: Object.assign({}, week, { block_no: block.block_no, block_seed: block.seed }), sessions, split: ts.split, split_name: splitDef ? splitDef.name : "Upper / Lower", weeks_in_block: db.all("plan_weeks").filter(w => w.block_id === week.block_id).length, adherence: { done: planned.filter(s => s.status === "done").length, planned: planned.length } };
@@ -818,7 +852,7 @@ const Engine = (() => {
     roundLoad, setLoad, setVolume, e1rm, hardRatio, liftingMet, cardioMet, kcal, liftMinutes, effortScore, cardioEffort,
     isCardioEx, isBarbellEx, barWeight, entryMode, migrateCardioSets,
     bodyLogs, bodyweightOn, recomputeWorkout, historyForExercise, bestsForExercise, prsForWorkout, weeklyMuscleSets, weeklyE1rm, strengthIndex,
-    validateSeed, protocolsById, protocolMinutes, trainSettings, templateFor, isLifting, isCardioSession, buildCardioItems, pick, estMinutes, sessionMinutes, trimToBudget,
+    validateSeed, protocolsById, protocolMinutes, trainSettings, templateFor, weekKinds, sessionsPerDay, isLifting, isCardioSession, buildCardioItems, pick, estMinutes, sessionMinutes, trimToBudget,
     createBlock, ensurePlanThrough, sweepMissed, rebuildWeek, shuffleWeek, regenerateFrom, swapItem, moveSession, markRest,
     progression, targetFor, targetText, freezeTargets, weekForDate, sessionView, weekView, adherenceByWeek,
   };

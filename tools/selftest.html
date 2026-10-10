@@ -8,7 +8,7 @@
 "use strict";
 let fails = 0;
 const out = document.getElementById("out");
-const log = (ok, msg, detail) => { const d = document.createElement("div"); d.textContent = (ok ? "ok   " : "FAIL ") + msg + (ok ? "" : "  " + JSON.stringify(detail).slice(0, 300)); if (!ok) { d.className = "f"; fails++; } out.appendChild(d); };
+const log = (ok, msg, detail) => { const d = document.createElement("div"); d.textContent = (ok ? "ok   " : "FAIL ") + msg + (ok ? "" : "  " + JSON.stringify(detail === undefined ? null : detail).slice(0, 300)); if (!ok) { d.className = "f"; fails++; } out.appendChild(d); };
 const api = (m, p, b) => LocalApi.call(m, p, b);
 const iso = d => Engine.isoOf(d);
 const today = iso(new Date());
@@ -115,6 +115,25 @@ const today = iso(new Date());
       log(cardioDay.items.some(i => i.section === "main" && i.protocol && i.protocol_text) && !cardioDay.items.some(i => i.section === "main" && i.sets), split + " main block is a timed protocol, not sets", cardioDay.items.map(i => [i.slot_key, i.protocol, i.sets]));
     }
     s = await api("PUT", "/api/settings", { split: "upper_lower" });
+    // a second session on the same day: the finished workout stays and the moved session joins today
+    const wkM = await api("GET", "/api/plan/week");
+    const other = wkM.sessions.find(x => x.kind !== "rest" && x.date !== today && x.status !== "done");
+    await api("POST", "/api/plan/move", { session_id: other.id });
+    const wkM2 = await api("GET", "/api/plan/week");
+    const todayList = wkM2.sessions.filter(x => x.date === today);
+    log(todayList.length === 2 && todayList.some(x => x.id === other.id) && todayList.some(x => x.status === "done"), "a session pulled into a day that already has a workout joins it", todayList.map(x => [x.kind, x.status, x.seq]));
+    log(wkM2.sessions.some(x => x.date === other.date && x.kind === "rest" && x.note === "moved"), "the day it came from becomes a rest day", wkM2.sessions.filter(x => x.date === other.date).map(x => [x.kind, x.note]));
+    const stM = await api("GET", "/api/state");
+    log((stM.sessions_today || []).length === 2 && stM.strip.filter(x => x.date === today).length === 1 && stM.strip.find(x => x.date === today).count === 2, "state lists both sessions and one strip entry for the day", { today: (stM.sessions_today || []).length, strip: stM.strip.filter(x => x.date === today) });
+    const w2x = await api("POST", "/api/workouts", { session_id: other.id });
+    const stM2 = await api("GET", "/api/state");
+    log(!!w2x.client_id && stM2.in_progress && stM2.in_progress.session_id === other.id && stM2.week.sessions.filter(x => x.date === today).length === 2, "the second session starts today without moving anything", { cid: w2x.client_id, in_progress: stM2.in_progress, today: stM2.week.sessions.filter(x => x.date === today).map(x => [x.id, x.kind, x.status]) });
+    await api("PUT", "/api/workouts/" + w2x.client_id, { ended_at: Engine.nowIso() });
+    s = await api("PUT", "/api/settings", { sessions_per_day: 2, train_days: [1, 3, 5] });
+    const wkT = await api("GET", "/api/plan/week?date=" + Engine.addDays(today, 7));
+    const perDay = {}; wkT.sessions.filter(x => x.kind !== "rest").forEach(x => { perDay[x.date] = (perDay[x.date] || 0) + 1; });
+    log(Object.keys(perDay).length === 3 && Object.values(perDay).every(n => n === 2), "two sessions a day over three training days", perDay);
+    s = await api("PUT", "/api/settings", { sessions_per_day: 1, train_days: [1, 2, 3, 4, 5] });
     const exMain = (await api("GET", "/api/exercises")).find(x => x.id === main1.exercise_id);
     if (exMain && ["barbell", "trap_bar"].includes(exMain.equipment)) {
       const pick = sets => sets.find(x => x.exercise_id === main1.exercise_id && !x.is_warmup).weight_kg;
@@ -139,12 +158,13 @@ const today = iso(new Date());
     await api("PUT", "/api/workouts/" + w2.client_id, { deleted: 1 }).catch(() => api("POST", "/api/sync", { ops: [{ type: "workout", client_id: w2.client_id, payload: { deleted: 1 } }] }));
     const onl = await api("GET", "/api/foods/online?q=");
     log(Array.isArray(onl.hits) && onl.hits.length === 0, "empty online search returns no hits", onl);
+    const nW = (await api("GET", "/api/history?from=2000-01-01")).workouts.length;
     const bk = await api("GET", "/api/backup.json");
-    log(bk.collections && bk.collections.workouts.length === 1, "backup has the workout");
+    log(bk.collections && bk.collections.workouts.length === nW && nW >= 2, "backup has every workout", { nW, inBackup: bk.collections && bk.collections.workouts.length });
     await api("POST", "/api/wipe");
     log((await api("GET", "/api/history?from=2000-01-01")).workouts.length === 0, "wipe clears");
     await api("POST", "/api/restore", bk);
-    log((await api("GET", "/api/history?from=2000-01-01")).workouts.length === 1, "restore brings it back");
+    log((await api("GET", "/api/history?from=2000-01-01")).workouts.length === nW, "restore brings them back");
     log((await api("GET", "/api/state")).targets.complete === true, "settings survived restore");
   } catch (e) { log(false, "exception " + e.message, e.stack); }
   const d = document.createElement("div"); d.id = "done"; d.textContent = "SELFTEST DONE fails=" + fails; out.appendChild(d);

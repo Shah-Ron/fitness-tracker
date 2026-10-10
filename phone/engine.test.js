@@ -690,7 +690,7 @@ describe("programme", () => {
       assert.deepEqual(sessionsOf(db, weeks(db)[0].id).map(s => s.status), ["skipped", "planned", "skipped", "planned", "planned", "planned", "planned"]);
     });
 
-    it("move exchanges dates, sets moved_from on both, and refuses when today has a workout (409)", () => {
+    it("move exchanges dates and sets moved_from on both; once today has a workout, a moved session joins the day instead", () => {
       const { db } = block();
       const fri = sessionOn(db, day(1)), thu = sessionOn(db, TODAY);
       const friOffset = fri.day_offset, thuOffset = thu.day_offset;
@@ -699,9 +699,15 @@ describe("programme", () => {
       assert.deepEqual([friAfter.date, friAfter.moved_from, friAfter.status], [TODAY, day(1), "planned"]);
       assert.deepEqual([thuAfter.date, thuAfter.moved_from], [day(1), TODAY]);
       assert.deepEqual([friAfter.day_offset, thuAfter.day_offset], [thuOffset, friOffset]);
-      // today's session has a live workout: refuse
+      // today's session has a live workout: the next one pulled in becomes a second session today
       addWorkout(db, TODAY, fri.id, false);
-      assert.equal(errorCode(() => E.moveSession(db, sessionOn(db, day(4)).id, TODAY)), 409);
+      const mon2 = sessionOn(db, day(4));
+      E.moveSession(db, mon2.id, TODAY);
+      const todays = db.all("plan_sessions").filter(x => x.date === TODAY).sort((a, b) => a.seq - b.seq);
+      assert.deepEqual(todays.map(x => x.id), [fri.id, mon2.id]);
+      assert.deepEqual(todays.map(x => x.seq), [1, 2]);
+      const left = db.all("plan_sessions").filter(x => x.date === day(4));
+      assert.deepEqual(left.map(x => [x.kind, x.note, x.moved_from]), [["rest", "moved", TODAY]]);
     });
 
     it("move rejects a session beyond 14 days (400) and a done one (409)", () => {
@@ -852,6 +858,71 @@ describe("HIIT and cardio-first splits", () => {
     assert.equal(cond[cond.length - 1].minutes, 10);
     assert.deepEqual(z2.map(i => i.slot_key), ["zone2", "cooldown"]);
     assert.notEqual(item(z2, "zone2").exercise_key, item(cond, "wu_cardio").exercise_key, "Zone 2 avoids the conditioning machine");
+  });
+});
+
+describe("more than one session a day", () => {
+  const block = over => { const f = fresh(Object.assign({ programme_start: MONDAY }, over)); makeBlock(f.db, f.settings, f.exByKey); return f; };
+  const onDate = (db, d) => db.all("plan_sessions").filter(x => x.date === d).sort((a, b) => a.seq - b.seq);
+
+  it("sessions_per_day 2 over three days deals the six-session template two a day, in order", () => {
+    const ts = { train_days: [1, 3, 5], sessions_per_day: 2, split: "upper_lower" };
+    assert.deepEqual(E.weekKinds(ts, PROG), { 1: ["upper_a", "lower_a"], 3: ["conditioning", "upper_b"], 5: ["lower_b", "zone2"] });
+    assert.deepEqual(E.weekKinds({ train_days: [1, 2, 3, 4, 5], sessions_per_day: 2, split: "upper_lower" }, PROG), { 1: ["upper_a", "lower_a"], 2: ["conditioning"], 3: ["upper_b"], 4: ["lower_b"], 5: ["zone2"] });
+    assert.deepEqual(E.weekKinds({ train_days: [1, 2, 3, 4, 5] }, PROG), { 1: ["upper_a"], 2: ["lower_a"], 3: ["conditioning"], 4: ["upper_b"], 5: ["lower_b"] });
+    assert.equal(E.sessionsPerDay({ sessions_per_day: 7 }), 3);
+    assert.equal(E.sessionsPerDay({}), 1);
+  });
+  it("a block with two sessions a day has two rows on each training day, numbered, and rest days elsewhere", () => {
+    const { db } = block({ train_days: [1, 3, 5], sessions_per_day: 2 });
+    const wk = weeks(db)[0];
+    const mon = onDate(db, MONDAY), tue = onDate(db, monday(1));
+    assert.deepEqual(mon.map(x => [x.kind, x.seq]), [["upper_a", 1], ["lower_a", 2]]);
+    assert.deepEqual(tue.map(x => x.kind), ["rest"]);
+    assert.equal(sessionsOf(db, wk.id).filter(x => x.kind !== "rest").length, 6);
+    assert.equal(sessionsOf(db, wk.id).length, 10);
+    mon.forEach(x => assert.ok(itemsOf(db, x.id).length > 3, "both sessions have items"));
+    const view = E.weekView(db, MONDAY, MONDAY, settingsFor({ train_days: [1, 3, 5], sessions_per_day: 2, programme_start: MONDAY }), PROG, Object.fromEntries(db.all("exercises").map(e => [e.key, e])));
+    assert.deepEqual(view.sessions.slice(0, 2).map(x => x.seq), [1, 2]);
+    assert.equal(view.adherence.planned, 5, "zone 2 does not count, the other five do");
+  });
+  it("a missed session pulled into a day that already has a planned session joins it; the missed day becomes rest", () => {
+    const { db } = block();
+    const yesterday = sessionOn(db, day(-1));
+    E.sweepMissed(db, TODAY);
+    assert.equal(db.get("plan_sessions", yesterday.id).status, "skipped");
+    const todayBefore = sessionOn(db, TODAY);
+    E.moveSession(db, yesterday.id, TODAY);
+    const todays = onDate(db, TODAY);
+    assert.deepEqual(todays.map(x => x.id), [todayBefore.id, yesterday.id]);
+    assert.equal(db.get("plan_sessions", yesterday.id).status, "planned");
+    assert.deepEqual(onDate(db, day(-1)).map(x => x.kind), ["rest"]);
+  });
+  it("a future session pulled forward still exchanges dates when today has not been started", () => {
+    const { db } = block();
+    const tomorrow = sessionOn(db, day(1)), todayBefore = sessionOn(db, TODAY);
+    E.moveSession(db, tomorrow.id, TODAY);
+    assert.deepEqual(onDate(db, TODAY).map(x => x.id), [tomorrow.id]);
+    assert.deepEqual(onDate(db, day(1)).map(x => x.id), [todayBefore.id]);
+  });
+  it("rebuilding a week keeps a day that has a workout together with its extra session, and trims a day back to the layout", () => {
+    const { db, settings, exByKey } = block();
+    const wk = weeks(db)[0];
+    const t0 = sessionOn(db, TODAY);
+    addWorkout(db, TODAY, t0.id);
+    E.moveSession(db, sessionOn(db, day(1)).id, TODAY);
+    assert.equal(onDate(db, TODAY).length, 2);
+    E.rebuildWeek(db, wk.id, settings, PROG, exByKey, TODAY, TODAY);
+    assert.equal(onDate(db, TODAY).length, 2, "the done day and its extra session survive a rebuild");
+    assert.deepEqual(onDate(db, day(1)).map(x => x.kind), [E.weekKinds(E.trainSettings(settings), PROG)[E.D(day(1)).getDay() || 7][0]], "tomorrow gets its layout session back");
+    // a day with two untouched sessions goes back to one when the layout says one
+    const two = block({ train_days: [1, 3, 5], sessions_per_day: 2 });
+    const wk2 = weeks(two.db)[0];
+    assert.equal(onDate(two.db, monday(4)).length, 2);
+    two.settings.sessions_per_day = 1; two.db.setSetting("sessions_per_day", 1);
+    E.rebuildWeek(two.db, wk2.id, two.settings, PROG, two.exByKey, null, MONDAY);
+    assert.equal(onDate(two.db, monday(4)).length, 1);
+    assert.equal(sessionsOf(two.db, wk2.id).length, 7);
   });
 });
 

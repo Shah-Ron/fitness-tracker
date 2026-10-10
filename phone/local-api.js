@@ -195,15 +195,25 @@ const LocalApi = (() => {
     const tg = E.targets(s, wb.trend, d, exerciseKcalOn(d), fd.totals.kcal);
     const daily = db.all("daily_logs").find(x => x.date === d) || { water_ml: null, sleep_h: null, steps: null };
     const week = E.weekView(db, d, d, s, PROG, EX_BY_KEY);
-    let sessionToday = null; const strip = [];
-    if (week) week.sessions.forEach(x => { strip.push({ id: x.id, date: x.date, kind: x.kind, title: x.title, status: x.status, workout: x.workout }); if (x.date === d) sessionToday = x; });
+    let sessionToday = null; const sessionsToday = [], strip = [];
+    if (week) {
+      // one strip entry per day, even when a day holds two sessions
+      const byDate = new Map();
+      week.sessions.forEach(x => { if (!byDate.has(x.date)) byDate.set(x.date, []); byDate.get(x.date).push(x); if (x.date === d) sessionsToday.push(x); });
+      byDate.forEach((list, date) => {
+        const real = list.filter(x => x.kind !== "rest"), use = real.length ? real : list;
+        const status = use.every(x => x.status === "done") ? "done" : use.some(x => x.status === "planned") ? "planned" : use[0].status;
+        strip.push({ id: use[0].id, date, kind: use[0].kind, title: use.map(x => x.title).join(" + "), status, workout: use[0].workout, count: real.length });
+      });
+      sessionToday = sessionsToday.find(x => x.status !== "done" && x.kind !== "rest") || sessionsToday[0] || null;
+    }
     const inProgress = db.all("workouts").filter(w => !w.ended_at).sort((a, b) => String(b.started_at).localeCompare(String(a.started_at)))[0] || null;
     const last = db.all("workouts").filter(w => w.ended_at).sort((a, b) => b.date.localeCompare(a.date) || String(b.ended_at).localeCompare(String(a.ended_at)))[0];
     const adh = E.adherenceByWeek(db);
     let streak = 0;
     for (let i = adh.length - 1; i >= 0; i--) { const wk = adh[i]; if (wk.week > d) continue; if (wk.planned && wk.done / wk.planned >= 0.8) streak++; else if (wk.week <= E.addDays(d, -7)) break; }
     return { app: "fitness-tracker", version: VERSION, build: VERSION, today: d, settings: s, splits: splitsPublic(), profile_complete: E.profileComplete(s), targets: tg, weight: wb, food: fd,
-      daily: { water_ml: daily.water_ml, sleep_h: daily.sleep_h, steps: daily.steps }, session_today: sessionToday, week, strip,
+      daily: { water_ml: daily.water_ml, sleep_h: daily.sleep_h, steps: daily.steps }, session_today: sessionToday, sessions_today: sessionsToday, week, strip,
       in_progress: inProgress ? { client_id: inProgress.client_id, session_id: inProgress.session_id, date: inProgress.date, started_at: inProgress.started_at } : null,
       recent_prs: last ? E.prsForWorkout(db, last.client_id, s) : [], weeks_streak: streak, phone: null, exercises: db.all("exercises").map(exPublic) };
   }
@@ -211,7 +221,7 @@ const LocalApi = (() => {
     const s = settings(), d = today();
     planReady(E.addDays(d, 6));
     const bw = E.bodyweightOn(db, d, s);
-    const sessions = db.all("plan_sessions").filter(x => x.date >= d && x.date <= E.addDays(d, 6)).sort((a, b) => a.date.localeCompare(b.date)).map(x => E.sessionView(db, x, d, s, PROG, EX_BY_KEY, bw));
+    const sessions = db.all("plan_sessions").filter(x => x.date >= d && x.date <= E.addDays(d, 6)).sort((a, b) => a.date.localeCompare(b.date) || ((a.seq || 1) - (b.seq || 1)) || (a.id - b.id)).map(x => E.sessionView(db, x, d, s, PROG, EX_BY_KEY, bw));
     const bests = {};
     sessions.forEach(x => x.items.forEach(it => { if (it.exercise_id && !bests[it.exercise_id]) { const ex = db.get("exercises", it.exercise_id); if (ex && ex.pattern !== "mobility" && !ex.pattern.startsWith("cardio")) bests[String(it.exercise_id)] = E.bestsForExercise(db, it.exercise_id, ex, bw); } }));
     const ip = db.all("workouts").filter(w => !w.ended_at).sort((a, b) => String(b.started_at).localeCompare(String(a.started_at)))[0];
@@ -445,8 +455,8 @@ const LocalApi = (() => {
   }
 
   /* ---------------------------------------------------- settings, exercises */
-  const SETTING_KEYS = Object.keys(E.NUTRITION_DEFAULTS).concat(Object.keys(E.TRAIN_DEFAULTS), ["split", "stay_running", "keep_awake", "auto_update_check", "barbell_entry", "barbell_converted_at", "usda_api_key", "theme", "contact_email", "display_name", "rest_default_sec"]);
-  const TRAINING_KEYS = ["train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split"];
+  const SETTING_KEYS = Object.keys(E.NUTRITION_DEFAULTS).concat(Object.keys(E.TRAIN_DEFAULTS), ["split", "sessions_per_day", "stay_running", "keep_awake", "auto_update_check", "barbell_entry", "barbell_converted_at", "usda_api_key", "theme", "contact_email", "display_name", "rest_default_sec"]);
+  const TRAINING_KEYS = ["train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split", "sessions_per_day"];
   function updateSettings(patch) {
     if (!patch || typeof patch !== "object") throw new BadRequest("Send an object of settings");
     const s = settings();
@@ -468,6 +478,7 @@ const LocalApi = (() => {
       else if (k === "main1_swap_every_blocks") v = int(v, k, 1, 6);
       else if (k === "stay_running" || k === "keep_awake" || k === "auto_update_check") v = !!v;
       else if (k === "barbell_entry") v = choice(v, "barbell entry", ["total", "per_side"]);
+      else if (k === "sessions_per_day") v = int(v, "sessions a day", 1, 3);
       else if (k === "barbell_converted_at") v = dateV(v, k, true);
       else if (k === "usda_api_key") v = text(v, k, 80);
       else if (["theme", "contact_email", "display_name"].includes(k)) v = text(v, k, 120);

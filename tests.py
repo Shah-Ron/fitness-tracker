@@ -830,11 +830,31 @@ class ProgrammeTests(unittest.TestCase):
         self.assertEqual((fri_after["date"], fri_after["moved_from"], fri_after["status"]), (ISO(TODAY), ISO(TODAY + timedelta(days=1)), "planned"))
         self.assertEqual((thu_after["date"], thu_after["moved_from"]), (ISO(TODAY + timedelta(days=1)), ISO(TODAY)))
         self.assertEqual((fri_after["day_offset"], thu_after["day_offset"]), (thu["day_offset"], fri["day_offset"]))
-        # today's session has a live workout: refuse
+        # today's session has a live workout: the next one pulled in becomes a second session today
         add_workout(conn, TODAY, fri["id"], ended=False)
-        with self.assertRaises(PlanError) as cm:
-            programme.move_session(conn, session_on(conn, TODAY + timedelta(days=4))["id"], TODAY)
-        self.assertEqual(cm.exception.code, 409)
+        mon2 = session_on(conn, TODAY + timedelta(days=4))
+        programme.move_session(conn, mon2["id"], TODAY)
+        todays = conn.execute("SELECT id, seq FROM plan_sessions WHERE date = ? ORDER BY seq", (ISO(TODAY),)).fetchall()
+        self.assertEqual([(r["id"], r["seq"]) for r in todays], [(fri["id"], 1), (mon2["id"], 2)])
+        left = conn.execute("SELECT kind, note, moved_from FROM plan_sessions WHERE date = ?", (ISO(TODAY + timedelta(days=4)),)).fetchall()
+        self.assertEqual([tuple(r) for r in left], [("rest", "moved", ISO(TODAY))])
+
+    def test_two_sessions_a_day(self):
+        ts = {"train_days": [1, 3, 5], "sessions_per_day": 2, "split": "upper_lower"}
+        self.assertEqual(programme.week_kinds(ts, ft.PROG), {1: ["upper_a", "lower_a"], 3: ["conditioning", "upper_b"], 5: ["lower_b", "zone2"]})
+        self.assertEqual(programme.week_kinds({"train_days": [1, 2, 3, 4, 5]}, ft.PROG), {1: ["upper_a"], 2: ["lower_a"], 3: ["conditioning"], 4: ["upper_b"], 5: ["lower_b"]})
+        conn = fresh_conn()
+        s = ft.get_settings(conn)
+        s.update({"train_days": [1, 3, 5], "sessions_per_day": 2, "programme_start": ISO(MONDAY)})
+        programme.create_block(conn, MONDAY, s, ft.PROG, ft.EX_BY_KEY)
+        mon = conn.execute("SELECT kind, seq FROM plan_sessions WHERE date = ? ORDER BY seq", (ISO(MONDAY),)).fetchall()
+        self.assertEqual([tuple(r) for r in mon], [("upper_a", 1), ("lower_a", 2)])
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM plan_sessions WHERE date = ? AND kind = 'rest'", (ISO(MONDAY + timedelta(days=1)),)).fetchone()[0], 1)
+        wk = weeks(conn)[0]
+        self.assertEqual(len([x for x in sessions(conn, wk["id"]) if x["kind"] != "rest"]), 6)
+        view = programme.week_view(conn, MONDAY, MONDAY, s, ft.PROG, ft.EX_BY_ID, ft.EX_BY_KEY)
+        self.assertEqual([x["seq"] for x in view["sessions"][:2]], [1, 2])
+        self.assertEqual(view["adherence"]["planned"], 5)
 
     def test_move_rejects_far_and_done(self):
         conn, s = self._block()

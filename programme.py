@@ -25,6 +25,7 @@ STALE_DAYS = 28
 
 TRAIN_DEFAULTS = {
     "train_days": [1, 2, 3, 4, 5],
+    "sessions_per_day": 1,
     "session_minutes": 60,
     "experience": "beginner",
     "cardio_kit": ["treadmill", "bike", "rower"],
@@ -412,7 +413,7 @@ def counts_for_adherence(kind):
 
 def template_for(ts, prog):
     """The weekly template for the chosen split and number of training days."""
-    n = len(ts["train_days"])
+    n = len(ts["train_days"]) * sessions_per_day(ts)
     split = prog.get("splits", {}).get(ts.get("split") or "upper_lower")
     if split and split.get("templates"):
         keys = sorted(int(k) for k in split["templates"])
@@ -421,12 +422,25 @@ def template_for(ts, prog):
     return prog["template_6"] if n >= 6 else prog["template_5"]
 
 
+def sessions_per_day(ts):
+    return min(3, max(1, int(ts.get("sessions_per_day") or 1)))
+
+
 def week_kinds(ts, prog):
+    """The week's sessions dealt onto the training days: one each, or up to sessions_per_day each,
+    the earlier days taking the extra one when the template does not divide evenly."""
     days = ts["train_days"]
     template = template_for(ts, prog)
     kinds = {}
-    for i, wd in enumerate(days[:len(template)]):
-        kinds[wd] = template[i]
+    if not days:
+        return kinds
+    total = min(len(template), len(days) * sessions_per_day(ts))
+    base, extra = divmod(total, len(days))
+    i = 0
+    for di, wd in enumerate(days):
+        count = base + (1 if di < extra else 0)
+        kinds[wd] = template[i:i + count]
+        i += count
     return kinds
 
 
@@ -450,13 +464,13 @@ def create_week(conn, block, week_no, start, settings, prog, ex_by_key, prev_wee
     ctx = {"prev_week_id": prev_week_id}
     # conditioning before zone2 within the week so zone2 can avoid its machine
     for wd in range(1, 8):
-        kind = kinds.get(wd, "rest")
         d = start + timedelta(days=wd - 1)
-        status = "void" if (d < programme_start and kind != "rest") else "planned"
-        cur = conn.execute("""INSERT INTO plan_sessions (week_id, day_offset, date, kind, title, status, moved_from, note)
-                              VALUES (?,?,?,?,?,?,NULL,NULL)""", (week["id"], wd - 1, d.isoformat(), kind, names.get(kind, kind), status))
-        session = {"id": cur.lastrowid, "kind": kind, "date": d.isoformat()}
-        build_session_items(conn, session, week, block, ts, prog, ex_by_key, ctx)
+        for idx, kind in enumerate(kinds.get(wd) or ["rest"]):
+            status = "void" if (d < programme_start and kind != "rest") else "planned"
+            cur = conn.execute("""INSERT INTO plan_sessions (week_id, day_offset, seq, date, kind, title, status, moved_from, note)
+                                  VALUES (?,?,?,?,?,?,?,NULL,NULL)""", (week["id"], wd - 1, idx + 1, d.isoformat(), kind, names.get(kind, kind), status))
+            session = {"id": cur.lastrowid, "kind": kind, "date": d.isoformat()}
+            build_session_items(conn, session, week, block, ts, prog, ex_by_key, ctx)
     return week
 
 
@@ -523,31 +537,38 @@ def rebuild_week(conn, week_id, settings, prog, ex_by_key, from_date=None):
     ctx = {"prev_week_id": prev["id"] if prev else None}
     for wd in range(1, 8):
         d = start + timedelta(days=wd - 1)
-        row = conn.execute("SELECT * FROM plan_sessions WHERE week_id = ? AND day_offset = ?", (week_id, wd - 1)).fetchone()
-        untouched = row is None or (row["id"] not in live and row["status"] in ("planned", "void", "skipped")
-                                    and (from_date is None or d >= to_date(from_date)))
-        if row and not untouched:
-            # keep it, but remember its finisher and machine so later days rotate correctly
-            for it in conn.execute("SELECT slot_key, protocol, exercise_id FROM plan_items WHERE session_id = ?", (row["id"],)):
-                if it["slot_key"] == "finisher":
-                    ctx["last_finisher"] = it["protocol"]
-                if is_cardio_session(row["kind"], prog) and it["exercise_id"]:
-                    ex = conn.execute("SELECT key FROM exercises WHERE id = ?", (it["exercise_id"],)).fetchone()
-                    if ex and ex["key"] in CARDIO_MACHINES and ex["key"] not in ctx.setdefault("machines_used", []):
-                        ctx["machines_used"].append(ex["key"])
+        rows = conn.execute("SELECT * FROM plan_sessions WHERE week_id = ? AND day_offset = ? ORDER BY seq, id", (week_id, wd - 1)).fetchall()
+        untouched = all(r["id"] not in live and r["status"] in ("planned", "void", "skipped")
+                        and (from_date is None or d >= to_date(from_date)) for r in rows)
+        if rows and not untouched:
+            # a day with a workout on it, or already in the past, keeps every one of its sessions;
+            # remember their finisher and machine so later days rotate correctly
+            for row in rows:
+                for it in conn.execute("SELECT slot_key, protocol, exercise_id FROM plan_items WHERE session_id = ?", (row["id"],)):
+                    if it["slot_key"] == "finisher":
+                        ctx["last_finisher"] = it["protocol"]
+                    if is_cardio_session(row["kind"], prog) and it["exercise_id"]:
+                        ex = conn.execute("SELECT key FROM exercises WHERE id = ?", (it["exercise_id"],)).fetchone()
+                        if ex and ex["key"] in CARDIO_MACHINES and ex["key"] not in ctx.setdefault("machines_used", []):
+                            ctx["machines_used"].append(ex["key"])
             continue
-        kind = kinds.get(wd, "rest")
-        status = "void" if (d < programme_start and kind != "rest") else ("planned" if d >= date.today() or row is None else (row["status"] if row["status"] != "void" else "planned"))
-        if row:
+        wanted = kinds.get(wd) or ["rest"]
+        for idx, kind in enumerate(wanted):
+            row = rows[idx] if idx < len(rows) else None
+            status = "void" if (d < programme_start and kind != "rest") else ("planned" if d >= date.today() or row is None else (row["status"] if row["status"] != "void" else "planned"))
+            if row:
+                conn.execute("DELETE FROM plan_items WHERE session_id = ?", (row["id"],))
+                conn.execute("UPDATE plan_sessions SET kind = ?, title = ?, status = ?, note = NULL, seq = ? WHERE id = ?",
+                             (kind, names.get(kind, kind), status if row["status"] != "skipped" or d >= date.today() else "skipped", idx + 1, row["id"]))
+                sid = row["id"]
+            else:
+                cur = conn.execute("""INSERT INTO plan_sessions (week_id, day_offset, seq, date, kind, title, status, moved_from, note)
+                                      VALUES (?,?,?,?,?,?,?,NULL,NULL)""", (week_id, wd - 1, idx + 1, d.isoformat(), kind, names.get(kind, kind), status))
+                sid = cur.lastrowid
+            build_session_items(conn, {"id": sid, "kind": kind, "date": d.isoformat()}, week, block, ts, prog, ex_by_key, ctx)
+        for row in rows[len(wanted):]:
             conn.execute("DELETE FROM plan_items WHERE session_id = ?", (row["id"],))
-            conn.execute("UPDATE plan_sessions SET kind = ?, title = ?, status = ?, note = NULL WHERE id = ?",
-                         (kind, names.get(kind, kind), status if row["status"] != "skipped" or d >= date.today() else "skipped", row["id"]))
-            sid = row["id"]
-        else:
-            cur = conn.execute("""INSERT INTO plan_sessions (week_id, day_offset, date, kind, title, status, moved_from, note)
-                                  VALUES (?,?,?,?,?,?,NULL,NULL)""", (week_id, wd - 1, d.isoformat(), kind, names.get(kind, kind), status))
-            sid = cur.lastrowid
-        build_session_items(conn, {"id": sid, "kind": kind, "date": d.isoformat()}, week, block, ts, prog, ex_by_key, ctx)
+            conn.execute("DELETE FROM plan_sessions WHERE id = ?", (row["id"],))
 
 
 def shuffle_week(conn, week_id, settings, prog, ex_by_key):
@@ -626,17 +647,29 @@ def move_session(conn, session_id, today):
         raise PlanError("Only sessions within two weeks can be moved.", 400)
     if s["date"] == today.isoformat():
         return
-    t = conn.execute("SELECT * FROM plan_sessions WHERE date = ?", (today.isoformat(),)).fetchone()
-    if t is None:
+    todays = conn.execute("SELECT * FROM plan_sessions WHERE date = ? ORDER BY seq, id", (today.isoformat(),)).fetchall()
+    if not todays:
         raise PlanError("Today is not in the plan yet.", 409)
-    live = conn.execute("SELECT COUNT(*) FROM workouts WHERE session_id = ? AND deleted = 0", (t["id"],)).fetchone()[0]
-    if live:
-        raise PlanError("You have already started today's session.", 409)
-    conn.execute("UPDATE plan_sessions SET date = ?, day_offset = ?, week_id = ?, moved_from = ?, status = 'planned' WHERE id = ?",
-                 (today.isoformat(), t["day_offset"], t["week_id"], s["date"], s["id"]))
+    live = {r["session_id"] for r in conn.execute("SELECT session_id FROM workouts WHERE deleted = 0 AND session_id IS NOT NULL")}
+    t = todays[0]
+    catch_up = any(x["id"] in live for x in todays) or (s["date"] < today.isoformat() and t["kind"] != "rest" and t["status"] != "void")
+    if catch_up:
+        # Today's session is under way or done, or a missed session is being made up: it becomes an extra session
+        # today and the day it came from is left as a rest day, so the week keeps its shape.
+        seq = max((x["seq"] or 1) for x in todays) + 1
+        conn.execute("UPDATE plan_sessions SET date = ?, day_offset = ?, week_id = ?, moved_from = ?, status = 'planned', seq = ? WHERE id = ?",
+                     (today.isoformat(), t["day_offset"], t["week_id"], s["date"], seq, s["id"]))
+        if not conn.execute("SELECT 1 FROM plan_sessions WHERE date = ?", (s["date"],)).fetchone():
+            conn.execute("""INSERT INTO plan_sessions (week_id, day_offset, seq, date, kind, title, status, moved_from, note)
+                            VALUES (?, ?, 1, ?, 'rest', 'Rest', 'planned', ?, 'moved')""", (s["week_id"], s["day_offset"], s["date"], today.isoformat()))
+        sweep_missed(conn, today)
+        return
+    # Otherwise the two sessions exchange dates: today's goes where the moved one was.
+    conn.execute("UPDATE plan_sessions SET date = ?, day_offset = ?, week_id = ?, moved_from = ?, status = 'planned', seq = ? WHERE id = ?",
+                 (today.isoformat(), t["day_offset"], t["week_id"], s["date"], t["seq"] or 1, s["id"]))
     old = to_date(s["date"])
-    conn.execute("UPDATE plan_sessions SET date = ?, day_offset = ?, week_id = ?, moved_from = ?, status = CASE WHEN status = 'void' THEN 'void' ELSE 'planned' END WHERE id = ?",
-                 (old.isoformat(), s["day_offset"], s["week_id"], today.isoformat(), t["id"]))
+    conn.execute("UPDATE plan_sessions SET date = ?, day_offset = ?, week_id = ?, moved_from = ?, seq = ?, status = CASE WHEN status = 'void' THEN 'void' ELSE 'planned' END WHERE id = ?",
+                 (old.isoformat(), s["day_offset"], s["week_id"], today.isoformat(), s["seq"] or 1, t["id"]))
     sweep_missed(conn, today)
 
 
@@ -886,7 +919,7 @@ def week_view(conn, d, today, settings, prog, ex_map, ex_by_key):
         return None
     bw = bodyweight_on(conn, today, settings)
     sessions = [session_view(conn, s, today, settings, prog, ex_map, ex_by_key, bw)
-                for s in conn.execute("SELECT * FROM plan_sessions WHERE week_id = ? ORDER BY date", (week["id"],)).fetchall()]
+                for s in conn.execute("SELECT * FROM plan_sessions WHERE week_id = ? ORDER BY date, seq, id", (week["id"],)).fetchall()]
     planned = [s for s in sessions if counts_for_adherence(s["kind"]) and s["status"] != "void"]
     done = [s for s in planned if s["status"] == "done"]
     weeks_in_block = conn.execute("SELECT COUNT(*) FROM plan_weeks WHERE block_id = ?", (week["block_id"],)).fetchone()[0]

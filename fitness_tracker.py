@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS plan_weeks (
 
 CREATE TABLE IF NOT EXISTS plan_sessions (
   id INTEGER PRIMARY KEY, week_id INTEGER NOT NULL REFERENCES plan_weeks(id), day_offset INTEGER NOT NULL,
-  date TEXT NOT NULL, kind TEXT NOT NULL, title TEXT, status TEXT NOT NULL DEFAULT 'planned',
+  seq INTEGER NOT NULL DEFAULT 1, date TEXT NOT NULL, kind TEXT NOT NULL, title TEXT, status TEXT NOT NULL DEFAULT 'planned',
   moved_from TEXT, note TEXT);
 
 CREATE TABLE IF NOT EXISTS plan_items (
@@ -254,12 +254,13 @@ SETTING_DEFAULTS.update({
     "rest_default_sec": 90,
     "barbell_entry": "total",
     "auto_update_check": True,
+    "sessions_per_day": 1,
     "barbell_converted_at": None,
     "usda_api_key": None,
     "seed_version": 0,
 })
 HIDDEN_SETTINGS = {"pair_key"}
-TRAINING_KEYS = {"train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split"}
+TRAINING_KEYS = {"train_days", "session_minutes", "experience", "cardio_kit", "main1_swap_every_blocks", "split", "sessions_per_day"}
 GOAL_KEYS = {"target_weight_kg", "target_date"}
 SEED_VERSION = 5
 
@@ -309,6 +310,7 @@ def init_db():
         conn.execute("PRAGMA synchronous = NORMAL")
         conn.executescript(SCHEMA)
         ensure_column(conn, "cardio_logs", "speed_kmh", "REAL")
+        ensure_column(conn, "plan_sessions", "seq", "INTEGER NOT NULL DEFAULT 1")
         have = {r["key"] for r in conn.execute("SELECT key FROM settings")}
         for k, v in SETTING_DEFAULTS.items():
             if k not in have:
@@ -931,13 +933,21 @@ def build_state(conn, settings, loopback):
     daily = conn.execute("SELECT water_ml, sleep_h, steps FROM daily_logs WHERE date = ? AND deleted = 0", (d.isoformat(),)).fetchone()
     week = programme.week_view(conn, d, d, settings, PROG, EX_BY_ID, EX_BY_KEY)
     session_today = None
+    sessions_today = []
     strip = []
     if week:
+        # one strip entry per day, even when a day holds two sessions
+        by_date = {}
         for s in week["sessions"]:
-            strip.append({"id": s["id"], "date": s["date"], "kind": s["kind"], "title": s["title"], "status": s["status"],
-                          "workout": s.get("workout")})
+            by_date.setdefault(s["date"], []).append(s)
             if s["date"] == d.isoformat():
-                session_today = s
+                sessions_today.append(s)
+        for date_s, lst in by_date.items():
+            real = [x for x in lst if x["kind"] != "rest"] or lst
+            status = "done" if all(x["status"] == "done" for x in real) else "planned" if any(x["status"] == "planned" for x in real) else real[0]["status"]
+            strip.append({"id": real[0]["id"], "date": date_s, "kind": real[0]["kind"], "title": " + ".join(x["title"] for x in real),
+                          "status": status, "workout": real[0].get("workout"), "count": len([x for x in lst if x["kind"] != "rest"])})
+        session_today = next((x for x in sessions_today if x["status"] != "done" and x["kind"] != "rest"), sessions_today[0] if sessions_today else None)
     in_progress = conn.execute("SELECT client_id, session_id, date, started_at FROM workouts WHERE deleted = 0 AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1").fetchone()
     last = conn.execute("SELECT client_id FROM workouts WHERE deleted = 0 AND ended_at IS NOT NULL ORDER BY date DESC, ended_at DESC LIMIT 1").fetchone()
     prs = effort.prs_for_workout(conn, last["client_id"], settings) if last else []
@@ -957,7 +967,7 @@ def build_state(conn, settings, loopback):
         "splits": [{"key": k, "name": v.get("name", k), "description": v.get("description", ""), "days": sorted(int(d) for d in v.get("templates", {}))} for k, v in PROG.get("splits", {}).items()],
         "targets": tg, "weight": wb, "food": fd,
         "daily": dict(daily) if daily else {"water_ml": None, "sleep_h": None, "steps": None},
-        "session_today": session_today, "week": week, "strip": strip,
+        "session_today": session_today, "sessions_today": sessions_today, "week": week, "strip": strip,
         "in_progress": dict(in_progress) if in_progress else None,
         "recent_prs": prs, "weeks_streak": streak, "open_workouts": queue_pending,
         "phone": phone_summary() if loopback else None,
@@ -972,7 +982,7 @@ def today_payload(conn, settings):
     bw = effort.bodyweight_on(conn, d, settings)
     sessions = []
     ex_ids = set()
-    for s in conn.execute("SELECT * FROM plan_sessions WHERE date >= ? AND date <= ? ORDER BY date",
+    for s in conn.execute("SELECT * FROM plan_sessions WHERE date >= ? AND date <= ? ORDER BY date, seq, id",
                           (d.isoformat(), (d + timedelta(days=6)).isoformat())).fetchall():
         view = programme.session_view(conn, s, d, settings, PROG, EX_BY_ID, EX_BY_KEY, bw)
         sessions.append(view)
@@ -1270,6 +1280,8 @@ def update_settings(conn, settings, patch):
             v = v_choice(v, "split", tuple(PROG.get("splits", {"upper_lower": 1}).keys()))
         elif k == "barbell_entry":
             v = v_choice(v, "barbell entry", ("total", "per_side"))
+        elif k == "sessions_per_day":
+            v = v_int(v, "sessions a day", 1, 3)
         elif k == "barbell_converted_at":
             v = v_date(v, k, allow_none=True)
         elif k == "usda_api_key":

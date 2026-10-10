@@ -274,6 +274,18 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .stepper input { border: 0; border-radius: 0; text-align: center; font-family: var(--display); font-weight: 600; font-size: 17px; min-height: 100%; padding: 4px 2px; min-width: 0; }
 .stepper input:focus { outline: none; }
 .stepper .u { font-size: 11px; color: var(--muted); text-align: center; }
+/* Weight stepper as a dumbbell: a plate at each end carrying − and +, the handle carrying the number. The plates grow with the load. */
+.stepper.dumbbell { border: 0; background: none; overflow: visible; grid-template-columns: 48px 1fr 48px; align-items: center; min-height: 0; --grow: 1; }
+.stepper.dumbbell > button { min-height: 0; height: calc(46px * var(--grow)); max-height: 78px; width: 100%; border-radius: 9px; background: var(--ink); color: var(--plane); font-size: 22px; font-weight: 600; line-height: 1; box-shadow: inset 0 0 0 3px var(--plane), inset 0 0 0 5px var(--ink-2); transition: height .2s ease; }
+.stepper.dumbbell > div { min-height: 44px; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(180deg, var(--panel-2), var(--panel) 55%, var(--panel-2)); border-top: 2px solid var(--axis); border-bottom: 2px solid var(--axis); }
+.stepper.dumbbell input { background: transparent; }
+/* Reps stepper as a tally: round counters that grow with the count, and a row of ticks filling towards the target. */
+.stepper.reps { border: 0; background: none; overflow: visible; grid-template-columns: 56px 1fr 56px; align-items: center; min-height: 0; --grow: 1; --fill: 0%; }
+.stepper.reps > button { box-sizing: border-box; width: calc(36px * var(--grow)); height: calc(36px * var(--grow)); max-width: 56px; max-height: 56px; justify-self: center; border-radius: 50%; background: var(--accent-tint); color: var(--accent-ink); border: 2px solid var(--accent); font-size: 20px; font-weight: 600; line-height: 1; min-height: 0; transition: width .2s ease, height .2s ease; }
+.stepper.reps > div { min-height: 44px; display: flex; flex-direction: column; justify-content: center; border: 1px solid var(--axis); border-radius: 12px; background: var(--panel); }
+.stepper.reps .tally { height: 5px; margin: 3px 8px 5px; border-radius: 3px; background: repeating-linear-gradient(90deg, var(--grid) 0 6px, transparent 6px 9px); position: relative; overflow: hidden; }
+.stepper.reps .tally::before { content: ""; position: absolute; inset: 0; width: var(--fill); background: var(--accent); border-radius: 3px; transition: width .2s ease; }
+.sep { border: 0; border-top: 1px dashed var(--grid); margin: 6px 0; }
 .rpe { display: flex; gap: 4px; grid-column: 1 / -1; align-items: center; }
 .rpe span { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 4px; }
 .rpe button { flex: 1; min-height: 36px; padding: 0; border-radius: 10px; font-family: var(--display); font-weight: 600; font-size: 14px; }
@@ -799,7 +811,7 @@ function weekStrip(strip) {
   return `<div class="strip">${strip.map(s => {
     const dot = s.status === "done" ? "done" : s.kind === "rest" ? "rest" : s.status;
     return `<button class="day${s.date === today ? " today" : ""}" data-sess="${s.id}" title="${esc(s.title)}">
-      <span class="d">${wdShort(s.date)}</span><span class="dot ${dot}"></span><span class="k">${esc(KIND_SHORT[s.kind] || s.title)}</span></button>`;
+      <span class="d">${wdShort(s.date)}</span><span class="dot ${dot}"></span><span class="k">${esc(KIND_SHORT[s.kind] || s.title)}${s.count > 1 ? ` +${s.count - 1}` : ""}</span></button>`;
   }).join("")}</div>`;
 }
 
@@ -839,7 +851,7 @@ function renderToday() {
       </div>
       <div>
         ${S.strip ? weekStrip(S.strip) : ""}
-        ${sessionCard(S.session_today)}
+        ${todaySessionCards()}
         <div class="quick">
           <button data-q="weight">Log weight</button>
           <button data-q="water">Water +250 ml${S.daily.water_ml ? ` <span class="pill">${n0(S.daily.water_ml)} ml</span>` : ""}</button>
@@ -860,13 +872,20 @@ function renderToday() {
   const hide = $("#iosHintHide", root); if (hide) hide.addEventListener("click", () => { ls.set("ft-ios-hint-hidden", true); renderToday(); });
   wireToday(root);
 }
-function sessionCard(s) {
+function todaySessionCards() {
+  const list = S.sessions_today && S.sessions_today.length ? S.sessions_today : (S.session_today ? [S.session_today] : []);
+  const real = list.filter(x => x.kind !== "rest");
+  const show = real.length ? real : list.slice(0, 1);
+  return show.map((x, i) => sessionCard(x, show.length > 1 ? i + 1 : 0, show.length)).join("");
+}
+function sessionCard(s, n, total) {
   if (!s) return "";
-  if (W && W.session_id === s.id) return `<div class="session-card"><h3>${esc(s.title)} in progress</h3><p class="muted small">Started ${W.started_at.slice(11, 16)}.</p><div class="quick"><button class="primary big" data-go="workout">Continue</button></div></div>`;
+  const pre = n ? `<span class="tiny muted">Session ${n} of ${total}</span><br>` : "";
+  if (W && W.session_id === s.id) return `<div class="session-card"><h3>${pre}${esc(s.title)} in progress</h3><p class="muted small">Started ${W.started_at.slice(11, 16)}.</p><div class="quick"><button class="primary big" data-go="workout">Continue</button></div></div>`;
   if (s.kind === "rest") return `<div class="session-card"><h3>Rest day</h3><p class="muted small">Recovery counts. If you feel like moving, take an easy walk.</p><div class="quick"><button data-go="plan">See the week</button></div></div>`;
   const names = s.items.filter(i => ["main", "accessory", "core"].includes(i.section)).slice(0, 4).map(i => i.exercise ? i.exercise.name : "").filter(Boolean);
   const fin = s.items.find(i => i.section === "finisher");
-  return `<div class="session-card"><div class="between"><h3>${esc(s.title)}${s.is_deload ? ' <span class="pill">deload</span>' : ""}</h3><span class="muted small">about ${n0(s.est_minutes)} min</span></div>
+  return `<div class="session-card"><div class="between"><h3>${pre}${esc(s.title)}${s.is_deload ? ' <span class="pill">deload</span>' : ""}</h3><span class="muted small">about ${n0(s.est_minutes)} min</span></div>
     <ul>${names.map(n => `<li>${esc(n)}</li>`).join("")}${fin ? `<li class="muted">${esc(fin.exercise ? fin.exercise.name : "Cardio")} finisher, ${n0(fin.minutes)} min</li>` : ""}</ul>
     <div class="quick">${s.status === "done" ? `<span class="pill good">Done</span>` : `<button class="primary big" data-start="${s.id}">Start</button>`}<button data-go="plan">Plan</button></div></div>`;
 }
@@ -964,9 +983,9 @@ function renderWorkout() {
     }
     const sessions = (T && T.sessions) || (S && S.week ? S.week.sessions : []);
     const today = todayIso();
-    const todays = sessions.find(s => s.date === today);
+    const todays = sessions.filter(s => s.date === today && s.kind !== "rest");
     root.innerHTML = `<div class="card"><h2>Ready to train?</h2>
-      <p class="hint">${todays && todays.kind !== "rest" ? `Today is <b>${esc(todays.title)}</b>, about ${n0(todays.est_minutes)} minutes.` : "Today is a rest day in the plan. You can still pull a session forward."}${ONLINE ? "" : " You are offline; the plan below was saved on this device."}</p>
+      <p class="hint">${todays.length ? `Today is <b>${todays.map(t => esc(t.title)).join(" and ")}</b>, about ${n0(todays.reduce((a, t) => a + (t.est_minutes || 0), 0))} minutes${todays.length > 1 ? ` in ${todays.length} visits` : ""}.` : "Today is a rest day in the plan. You can still pull a session forward."}${ONLINE ? "" : " You are offline; the plan below was saved on this device."}</p>
       ${sessions.filter(s => s.kind !== "rest").map(s => `<div class="pickcard"><div><b>${esc(s.title)}</b> <span class="muted small">${fmtDay(s.date)}${s.date === today ? ", today" : ""}${s.is_deload ? ", deload" : ""}</span>
           <div class="muted small">${s.items.filter(i => ["main", "accessory"].includes(i.section)).slice(0, 3).map(i => i.exercise ? esc(i.exercise.name) : "").filter(Boolean).join(", ")}</div></div>
           ${s.status === "done" ? `<span class="pill good">Done</span>` : `<button class="${s.date === today ? "primary" : ""}" data-start="${s.id}">${s.date === today ? "Start" : "Do it today"}</button>`}</div>`).join("") || `<div class="empty">No sessions loaded. Open the app on home wifi once.</div>`}
@@ -1091,18 +1110,28 @@ function setEntryRow(it, ex, n, defW, defR, mode) {
   const optional = mode.weight === "optional";
   const shownW = defW === "" || defW == null || (optional && !defW) ? "" : (side ? perSide(ex, +defW) : defW);
   const label = ex.equipment === "assisted" ? "assist kg" : optional ? "added kg" : side ? sideLabel(bar, shownW) : mode.perHand ? "kg each" : "kg";
+  const totalW = shownW === "" ? 0 : side ? bar + 2 * (+shownW || 0) : +shownW || 0;
   const weightBox = !mode.weight
     ? `<div class="stepper" style="visibility:hidden" aria-hidden="true"><button type="button" tabindex="-1">−</button><div><input type="number" class="w" value="" disabled><div class="u"></div></div><button type="button" tabindex="-1">+</button></div>`
-    : `<div class="stepper"><button data-step="w" data-d="-${stepW}">−</button><div><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="${optional ? "+kg" : "kg"}"><div class="u">${label}</div></div><button data-step="w" data-d="${stepW}">+</button></div>`;
-  const stepR = mode.time ? 5 : 1;
+    : `<div class="stepper dumbbell" style="--grow:${growW(totalW)}" title="Weight"><button data-step="w" data-d="-${stepW}" aria-label="Less weight">−</button><div><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="${optional ? "+kg" : "kg"}"><div class="u">${label}</div></div><button data-step="w" data-d="${stepW}" aria-label="More weight">+</button></div>`;
+  const stepR = mode.time ? 5 : 1, top = it.rep_high || 0;
   return `<div class="set entry" data-entry="${it.id}">
     <span class="n">${n}</span>
     ${weightBox}
-    <div class="stepper"><button data-step="r" data-d="-${stepR}">−</button><div><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${mode.time ? "s" : "reps"}"><div class="u">${mode.time ? "seconds" : "reps"}${mode.perSide ? " each side" : ""}</div></div><button data-step="r" data-d="${stepR}">+</button></div>
+    <div class="stepper reps" data-top="${top}" style="--grow:${growR(defR)};--fill:${top ? Math.min(100, (+defR || 0) / top * 100) : 0}%" title="${mode.time ? "Seconds" : "Reps"}"><button data-step="r" data-d="-${stepR}" aria-label="Fewer">−</button><div><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${mode.time ? "s" : "reps"}"><div class="u">${mode.time ? "seconds" : "reps"}${mode.perSide ? " each side" : ""}</div><div class="tally"></div></div><button data-step="r" data-d="${stepR}" aria-label="More">+</button></div>
     <button class="primary logbtn" data-log="${it.id}" aria-label="Log set">✓</button>
     ${mode.timer === "hold" ? holdRow(it, mode) : ""}
     <div class="rpe"><span>RPE</span>${[6, 7, 8, 9, 10].map(v => `<button type="button" data-rpe="${v}">${v}</button>`).join("")}<button type="button" data-rpehalf title="add a half">½</button></div>
   </div>`;
+}
+/* The steppers grow with what is in them: plates swell with the load, rep counters with the count, and the tally fills towards the target. */
+const growW = w => Math.round((1 + Math.min(Math.max(+w || 0, 0), 150) / 150 * 0.7) * 100) / 100;
+const growR = r => Math.round((1 + Math.min(Math.max(+r || 0, 0), 20) / 20 * 0.5) * 100) / 100;
+function styleStepper(st) {
+  if (!st) return;
+  const inp = $("input", st); if (!inp) return;
+  if (st.classList.contains("dumbbell")) { const v = +inp.value || 0; st.style.setProperty("--grow", growW(inp.dataset.side ? +inp.dataset.side + 2 * v : v)); }
+  else if (st.classList.contains("reps")) { const r = +inp.value || 0, top = +st.dataset.top || 0; st.style.setProperty("--grow", growR(r)); st.style.setProperty("--fill", (top ? Math.min(100, r / top * 100) : 0) + "%"); }
 }
 /* Hold timer for planks and carries: tap to start, tap to stop, the seconds land in the box. One-side moves get a button per side. */
 const HOLD = { key: null, side: null, start: null, timer: null, beeped: false, done: {} };
@@ -1132,7 +1161,7 @@ function tickHold() {
   const el = document.getElementById("hold-" + HOLD.key);
   if (el) el.textContent = `${secs} s`;
   const row = el && el.closest(".set"), inp = row && $("input.r", row);
-  if (inp) inp.value = secs;
+  if (inp) { inp.value = secs; styleStepper(inp.closest(".stepper")); }
   const it = W && W.items.find(i => String(i.id) === HOLD.key);
   if (it && it.rep_high && secs >= it.rep_high && !HOLD.beeped) { HOLD.beeped = true; haptic("double"); beep(); }
 }
@@ -1155,8 +1184,10 @@ function wireWorkout(root) {
     const d = parseFloat(b.dataset.d);
     inp.value = Math.max(0, Math.round(((parseFloat(inp.value) || 0) + d) * 100) / 100);
     if (inp.dataset.side) inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value);
+    styleStepper(b.closest(".stepper"));
   }));
   $$("input.w[data-side]", root).forEach(inp => inp.addEventListener("input", () => { inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value); }));
+  $$(".stepper input", root).forEach(inp => inp.addEventListener("input", () => styleStepper(inp.closest(".stepper"))));
   $$("[data-rpe]", root).forEach(b => b.addEventListener("click", () => {
     const wrap = b.closest(".rpe");
     const on = b.classList.contains("on");
@@ -1483,7 +1514,7 @@ async function renderPlan() {
       ${UI.planDate.slice(0, 10) !== today && !(w.start_date <= today && addDays(w.start_date, 6) >= today) ? `<button id="wkToday">This week</button>` : ""}
       <button id="wkShuffle" title="Different accessories and finishers for the sessions you have not started">Shuffle week</button>
     </div>
-    <div class="plan-grid">${wk.sessions.map(s => planDay(s, today)).join("")}</div>
+    <div class="plan-grid">${(() => { const g = new Map(); wk.sessions.forEach(x => { if (!g.has(x.date)) g.set(x.date, []); g.get(x.date).push(x); }); return [...g.entries()].map(([d, list]) => planDay(d, list, today)).join(""); })()}</div>
     <p class="hint mt2">Main lifts stay for the block so you can build on them. Accessories and finishers rotate each week. Week 4 is lighter on purpose.${w.week_no === 4 ? " Next block, the main lifts change." : ""}</p>`;
   $("#wkPrev").addEventListener("click", () => { UI.planDate = addDays(w.start_date, -7); renderPlan(); });
   $("#wkNext").addEventListener("click", () => { UI.planDate = addDays(w.start_date, 7); renderPlan(); });
@@ -1495,21 +1526,25 @@ async function renderPlan() {
   $$("[data-pswap]", root).forEach(b => b.addEventListener("click", async () => { try { const r = await api("POST", "/api/plan/swap", { item_id: +b.dataset.pswap }); toast("Swapped to " + r.exercise.name); await renderPlan(); load(true); } catch (e) { toast(e.message); } }));
   $$("[data-view]", root).forEach(b => b.addEventListener("click", () => showWorkoutDetail(b.dataset.view)));
 }
-function planDay(s, today) {
+function planDay(date, list, today) {
+  const isToday = date === today;
+  return `<div class="pday${isToday ? " today" : ""}${list.every(x => x.kind === "rest") ? " rest" : ""}"><div class="dh"><b>${wdShort(date)} ${D(date).getDate()}</b>${isToday ? `<span class="pill accent">today</span>` : ""}</div>
+    ${list.map((x, i) => planSession(x, today, i, list.length)).join("")}</div>`;
+}
+function planSession(s, today, i, total) {
   const isToday = s.date === today;
-  const pill = s.status === "done" ? `<span class="pill good">done</span>` : s.status === "skipped" ? `<span class="pill crit">${s.note === "rest" ? "rested" : "missed"}</span>` : s.status === "void" ? `<span class="pill">before start</span>` : s.kind === "rest" ? "" : isToday ? `<span class="pill accent">today</span>` : "";
-  const items = s.items.filter(i => ["main", "accessory", "core"].includes(i.section) && i.sets);
-  const fin = s.items.find(i => i.section === "finisher");
+  const pill = s.status === "done" ? `<span class="pill good">done</span>` : s.status === "skipped" ? `<span class="pill crit">${s.note === "rest" ? "rested" : "missed"}</span>` : s.status === "void" ? `<span class="pill">before start</span>` : "";
+  const items = s.items.filter(x => ["main", "accessory", "core"].includes(x.section) && x.sets);
+  const fin = s.items.find(x => x.section === "finisher");
   const canEdit = s.status === "planned" && !(s.workout && s.workout.started_at) && s.date >= today;
-  const list = s.kind === "rest" ? `<p class="muted small">Recovery day.</p>` : `<ul>${items.map(i => `<li><span>${esc(i.exercise ? i.exercise.name : "")}${i.optional ? ' <span class="tiny muted">(if time)</span>' : ""}</span><span class="s">${i.sets} x ${i.rep_low}-${i.rep_high}${i.target && i.target.weight ? " · " + fmtLoad(i.exercise, i.target.weight) : ""}${canEdit ? ` <button class="ghost" data-pswap="${i.id}" title="Swap for another">⇄</button>` : ""}</span></li>`).join("")}
+  const list = s.kind === "rest" ? `<p class="muted small">${s.note === "moved" ? "Session moved to another day." : "Recovery day."}</p>` : `<ul>${items.map(x => `<li><span>${esc(x.exercise ? x.exercise.name : "")}${x.optional ? ' <span class="tiny muted">(if time)</span>' : ""}</span><span class="s">${x.sets} x ${x.rep_low}-${x.rep_high}${x.target && x.target.weight ? " · " + fmtLoad(x.exercise, x.target.weight) : ""}${canEdit ? ` <button class="ghost" data-pswap="${x.id}" title="Swap for another">⇄</button>` : ""}</span></li>`).join("")}
     ${fin ? `<li><span class="muted">${esc(fin.exercise ? fin.exercise.name : "Cardio")} finisher</span><span class="s">${n0(fin.minutes)} min</span></li>` : ""}
-    ${s.items.filter(i => i.section === "main" && i.protocol).map(i => `<li><span>${esc(i.exercise ? i.exercise.name : "")}: ${esc(i.protocol_text || "")}</span><span class="s">${n0(i.minutes)} min</span></li>`).join("")}</ul>`;
+    ${s.items.filter(x => x.section === "main" && x.protocol).map(x => `<li><span>${esc(x.exercise ? x.exercise.name : "")}: ${esc(x.protocol_text || "")}</span><span class="s">${n0(x.minutes)} min</span></li>`).join("")}</ul>`;
   const acts = s.kind === "rest" ? "" : s.status === "done" && s.workout ? `<button data-view="${s.workout.client_id}">View</button>` :
     isToday && s.status !== "done" ? `<button class="primary" data-start="${s.id}">${W && W.session_id === s.id ? "Continue" : "Start"}</button>` :
     ["planned", "skipped", "void"].includes(s.status) && s.date !== today ? `<button data-move="${s.id}">Do today</button>${s.status === "planned" && s.date > today ? `<button class="ghost" data-rest="${s.id}">Rest</button>` : ""}` : "";
-  return `<div class="pday${isToday ? " today" : ""}${s.kind === "rest" ? " rest" : ""}"><div class="dh"><b>${wdShort(s.date)} ${D(s.date).getDate()}</b>${pill}</div>
-    <h3>${esc(s.title)}${s.moved_from ? ` <span class="tiny muted">moved</span>` : ""}</h3>${list}
-    ${s.kind !== "rest" ? `<div class="tiny muted">about ${n0(s.est_minutes)} min</div>` : ""}<div class="acts">${acts}</div></div>`;
+  return `${i ? `<hr class="sep">` : ""}<h3>${total > 1 ? `<span class="tiny muted">${i + 1}.</span> ` : ""}${esc(s.title)}${s.moved_from ? ` <span class="tiny muted">moved</span>` : ""} ${pill}</h3>${list}
+    ${s.kind !== "rest" ? `<div class="tiny muted">about ${n0(s.est_minutes)} min</div>` : ""}<div class="acts">${acts}</div>`;
 }
 async function showWorkoutDetail(cid) {
   try {
@@ -1944,6 +1979,8 @@ function renderSettings() {
       <div class="cap">Training split</div><div class="chips mb" id="s-split">${(S.splits || []).map(sp => `<button type="button" class="chip${(st.split || "upper_lower") === sp.key ? " on" : ""}" data-split="${sp.key}" title="${esc(sp.description || "")}">${esc(sp.name)}</button>`).join("")}</div>
       ${(() => { const sp = (S.splits || []).find(x => x.key === (st.split || "upper_lower")); return sp ? `<p class="hint">${esc(sp.description || "")}${sp.days && sp.days.length ? ` Works with ${sp.days.join(", ")} training days.` : ""}</p>` : ""; })()}
       <div class="cap">Days you can train</div><div class="chips mb" id="s-days">${WEEKDAYS.map((d, i) => `<button type="button" class="chip${days.includes(i + 1) ? " on" : ""}" data-day="${i + 1}">${d}</button>`).join("")}</div>
+      <div class="cap">Sessions a day</div><div class="chips mb" id="s-spd">${[1, 2, 3].map(n => `<button type="button" class="chip${(+st.sessions_per_day || 1) === n ? " on" : ""}" data-spd="${n}">${n}</button>`).join("")}</div>
+      <p class="hint">One is usual. Two or three spreads the week's sessions over your training days, for a morning and an evening visit. Whatever you set, a missed session can always be pulled into today on top of what is already there.</p>
       <div class="f-row">${field("session_minutes", "Minutes per session", "number", 'inputmode="numeric" step="5" min="30" max="120"')}${field("rest_default_sec", "Default rest (seconds)", "number", 'inputmode="numeric" step="15"')}
       <label class="field narrow"><span>Experience</span><select id="s-experience"><option value="beginner"${st.experience === "beginner" ? " selected" : ""}>Beginner</option></select></label></div>
       <div class="cap">Cardio machines you will use</div><div class="chips" id="s-kit">${[["treadmill", "Treadmill"], ["bike", "Bike"], ["rower", "Rower"]].map(([k, l]) => `<button type="button" class="chip${kit.includes(k) ? " on" : ""}" data-kit="${k}">${l}</button>`).join("")}</div>
@@ -1974,6 +2011,7 @@ function renderSettings() {
     if (next.length < 3) { toast("Keep at least three training days"); return; }
     saveSettings({ train_days: next }, "Plan rebuilt from today");
   }));
+  $$("#s-spd .chip", root).forEach(b => b.addEventListener("click", () => saveSettings({ sessions_per_day: +b.dataset.spd }, "Plan rebuilt from today")));
   $$("#s-bar .chip", root).forEach(b => b.addEventListener("click", () => saveSettings({ barbell_entry: b.dataset.bar })));
   const cv = $("#s-convertBar", root);
   if (cv) cv.addEventListener("click", async () => {
