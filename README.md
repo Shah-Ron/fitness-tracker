@@ -59,6 +59,7 @@ Every one of these is an estimate, for steering rather than medical decisions. T
 | `tools\build_phone.py` | Merges the food lists and stamps the service worker. Run it after changing anything in `data\` or `phone\` |
 | `tools\build_food_db.py` | Rebuilds the USDA list from the public FoodData Central release |
 | `tools\ui_sweep.js` | Renders the Workout card for every exercise in headless Edge and checks it asks for the right things |
+| `tools\screenshot.js` | Screenshots any screen of the phone page in headless Edge at phone size, to check how it looks |
 | `tools\selftest.html` | Runs the whole engine end to end in a browser. It wipes that browser's data, so never open it on a phone you use |
 | `phone\engine.test.js`, `tests.py` | Unit tests: `node --test phone/engine.test.js` and `python -m unittest tests` |
 | `fitness_tracker.py`, `programme.py`, `effort.py`, `nutrition.py`, `app.html` | The original laptop edition: a Python server with a SQLite file and a phone link over home wifi. It still works, holds its own separate data, and is no longer the main way to use this. See `PLAN.md` |
