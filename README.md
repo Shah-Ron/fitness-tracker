@@ -26,7 +26,9 @@ Both come from this repository. GitHub builds the app file and publishes the web
 
 **Progress** charts estimated one-rep max on the main lifts, the strength index against your first block, sets per muscle each week, effort per session, your weight trend against the pace line, calories eaten against burned, and how many planned sessions you did.
 
-**History** lists workouts and food days with CSV exports. **Settings** holds your profile and goal, the split and training days, the exercise library, your own foods and meals, and backups.
+**History** lists workouts and food days with CSV exports. **Settings** holds your profile and goal, the split and training days, and the look: light, dark or the same as the device, and a colour of your own from seven swatches or a picker. The colour runs through the buttons, tabs, chips and the week's dots in both themes; the charts keep their own. The exercise library, your foods and meals, the online search key, backups and updates stay folded until you open them.
+
+On a phone the bar at the bottom holds Today, Workout, Food and Plan, and More opens Progress, History and Settings. On a wider screen the same sections are tabs across the top.
 
 ## Updates
 

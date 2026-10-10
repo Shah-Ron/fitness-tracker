@@ -157,16 +157,16 @@ async function exportCsv(what) {
 }''')
 
 # ---- settings: phone, data and server cards become one Backups card
-js = cut(js, '    <div class="card" id="phoneCard">', '''      <div class="row"><label class="switch"><input type="checkbox" id="s-stay" ${st.stay_running ? "checked" : ""}><span class="slider"></span><span>Keep running in the background</span></label><span class="spacer"></span><button class="danger" id="s-stop">Stop the server</button></div></div>`;''',
-         '''    <div class="card"><h2>Backups</h2><p class="hint">Everything lives on this ${IS_ANDROID_APP ? "phone" : "device"}. If it is lost or replaced, so is your data, so export a backup now and then and keep it somewhere safe. A backup restores onto any device running this app.</p>
+js = cut(js, '    ${fold("phone", "Phone", "", ', '''<button class="danger" id="s-stop">Stop the server</button></div>`)}`;''',
+         '''    ${fold("backups", "Backups", "", `<p class="hint">Everything lives on this ${IS_ANDROID_APP ? "phone" : "device"}. If it is lost or replaced, so is your data, so export a backup now and then and keep it somewhere safe. A backup restores onto any device running this app.</p>
       <div class="row"><button class="primary" id="bkExport">Export a backup</button><label class="btn" for="restoreFile">Restore a backup</label><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
       <div class="row mt"><button id="csvSets">Sets CSV</button><button id="csvFood">Food CSV</button><button id="csvBody">Body CSV</button></div>
       <div class="row mt"><button class="danger" id="bkWipe">Start fresh</button><span class="muted small">Removes everything on this device. Export first.</span></div>
-      <p class="hint mt" id="bkInfo"></p></div>
-    <div class="card"><h2>Updates</h2><p class="hint">New versions are published on GitHub. The app checks by itself when it opens, at most every six hours, and shows a banner when there is one. ${IS_ANDROID_APP ? "Updating downloads the new package and opens the installer; your data stays." : "Updating reloads the app into the newest build."}</p>
+      <p class="hint mt" id="bkInfo"></p>`)}
+    ${fold("updates", "Updates", updateState().newer ? "one waiting" : "", `<p class="hint">New versions are published on GitHub. The app checks by itself when it opens, at most every six hours, and shows a banner when there is one. ${IS_ANDROID_APP ? "Updating downloads the new package and opens the installer; your data stays." : "Updating reloads the app into the newest build."}</p>
       <div class="row"><label class="switch"><input type="checkbox" id="s-autoupdate" ${st.auto_update_check === false ? "" : "checked"}><span class="slider"></span><span>Check for updates automatically</span></label></div>
       <div class="row mt"><button id="upCheck">Check now</button><span class="muted small" id="upInfo"></span></div>
-      <p class="hint mt" id="upLast">${lastCheckedText()}</p></div>`;''', keep_end=False)
+      <p class="hint mt" id="upLast">${lastCheckedText()}</p>`)}`;''', keep_end=False)
 js = rep(js, '''  $("#s-stay").addEventListener("change", e => saveSettings({ stay_running: e.target.checked }));
   $("#s-stop").addEventListener("click", async () => { if (!confirm("Stop the server? The phone will not be able to sync until you start it again.")) return; try { await api("POST", "/api/stop"); $("main").innerHTML = `<div class="card"><h2>Stopped</h2><p class="hint">Fitness Tracker has stopped. Double-click the .exe to start it again.</p></div>`; } catch (e) { toast(e.message); } });
   $("#restoreFile").addEventListener("change", async e => {

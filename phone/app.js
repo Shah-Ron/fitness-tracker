@@ -30,6 +30,7 @@ const ls = {
 const SLOT_NAMES = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner", snack: "Snacks" };
 const SLOTS = ["breakfast", "lunch", "dinner", "snack"];
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const KIND_STRIP = { upper_a: "Up A", upper_b: "Up B", lower_a: "Lo A", lower_b: "Lo B", full_a: "Full A", full_b: "Full B", full_c: "Full C", full_d: "Full D", push_a: "Push A", push_b: "Push B", pull_a: "Pull A", pull_b: "Pull B", legs_a: "Legs A", legs_b: "Legs B", shoulders: "Delts", shoulders_arms: "Delts", conditioning: "Cond", zone2: "Zone 2", hiit_machine: "HIIT", hiit_circuit: "Circuit", hiit_mixed: "Mixed", cardio_intervals: "Interval", cardio_tempo: "Tempo", cardio_long: "Long" };
 const KIND_SHORT = { upper_a: "Upper A", lower_a: "Lower A", upper_b: "Upper B", lower_b: "Lower B", conditioning: "Conditioning", zone2: "Zone 2", rest: "Rest" };
 
 /* ---------------------------------------------------------- state */
@@ -37,7 +38,7 @@ let S = null;        // /api/state
 let T = null;        // /api/today, cached for the gym
 let FOODS = null;    // /api/foods/list rows
 let ONLINE = true;
-const UI = { tab: ls.get("ft-tab", "today"), foodDate: todayIso(), planDate: todayIso(), progressDays: 90, histRange: 90, histQ: "", exQ: "", foodQ: "" };
+const UI = { tab: ls.get("ft-tab", "today"), foodDate: todayIso(), planDate: todayIso(), progressDays: 90, histRange: 90, histQ: "", exQ: "", foodQ: "", folds: new Set() };
 let W = ls.get("ft-live");       // the workout in progress, mirrored on every tap
 const REST = { end: 0, total: 0, timer: null, finished: false };
 const IS_ANDROID_APP = !!(window.Android && window.Android.saveFile);
@@ -126,7 +127,7 @@ function renderAll() {
   if (UI.tab === "progress") renderProgress();
   if (UI.tab === "history") renderHistory();
   if (UI.tab === "settings") renderSettings();
-  $("#footBuild").textContent = S ? `Version ${S.version}, build ${S.build}${ONLINE ? "" : ", offline"}` : "";
+  $("#footBuild").textContent = S ? `Version ${S.version}${S.build && S.build !== S.version ? ", build " + S.build : ""}${ONLINE ? "" : ", offline"}` : "";
 }
 
 /* ---------------------------------------------------------- tabs, theme, sheets, toast, tooltip */
@@ -134,7 +135,7 @@ function switchTab(name) {
   UI.tab = name;
   $$(".tile").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
   $$("[data-panel]").forEach(p => { p.hidden = p.dataset.panel !== name; });
-  $$("#bottombar button").forEach(b => { const on = b.dataset.go === name; b.classList.toggle("on", on); if (on && b.scrollIntoView) b.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); });
+  $$("#bottombar button").forEach(b => b.classList.toggle("on", b.dataset.go === name || (b.dataset.more || "").split(" ").includes(name)));
   ls.set("ft-tab", name);
   hideTip();
   closeSheet();
@@ -154,11 +155,53 @@ document.addEventListener("click", e => {
   if (go) switchTab(go.dataset.go);
 });
 $("#brand").addEventListener("click", e => { e.preventDefault(); switchTab("today"); });
+$("#moreBtn").addEventListener("click", () => openSheet($("#moreTpl").innerHTML));
 
-const themeToggle = $("#themeToggle");
-function applyTheme(t) { document.documentElement.setAttribute("data-theme", t); themeToggle.checked = t === "dark"; ls.set("ft-theme", t); }
-themeToggle.addEventListener("change", () => { applyTheme(themeToggle.checked ? "dark" : "light"); if (S) renderAll(); });
-{ const saved = ls.get("ft-theme"); if (saved) applyTheme(saved); else themeToggle.checked = matchMedia("(prefers-color-scheme: dark)").matches; }
+/* Look: light, dark or follow the device, and an accent colour of your own. Both are kept on this device like a
+   browser preference and applied before the first screen draws. The colour you pick sets the hue; the app settles
+   the lightness so buttons stay readable in both themes. */
+const ACCENTS = [["", "#3E6B48", "Green"], ["#3B64A8", "#3B64A8", "Blue"], ["#2B7C76", "#2B7C76", "Teal"], ["#6B51B5", "#6B51B5", "Violet"], ["#B2466E", "#B2466E", "Rose"], ["#B5651D", "#B5651D", "Amber"], ["#4B5661", "#4B5661", "Graphite"]];
+const SYSTEM_DARK = matchMedia("(prefers-color-scheme: dark)");
+const isDark = () => { const t = ls.get("ft-theme"); return t ? t === "dark" : SYSTEM_DARK.matches; };
+const hexRgb = h => { const m = /^#?([0-9a-f]{6})$/i.exec(String(h || "").trim()); if (!m) return null; const n = parseInt(m[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const rgbHex = rgb => "#" + rgb.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
+function rgbHsl([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min, s = l > .5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+function hslRgb(h, s, l) { const f = n => { const k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))); }; return [f(0), f(8), f(4)]; }
+const luminance = rgb => { const c = x => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }; return .2126 * c(rgb[0]) + .7152 * c(rgb[1]) + .0722 * c(rgb[2]); };
+const contrast = (a, b) => (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+function accentPalette(hex, dark) {
+  let [h, s, l] = rgbHsl(hexRgb(hex));
+  s = Math.min(s, .8);
+  l = dark ? Math.min(Math.max(l, .58), .74) : Math.min(Math.max(l, .26), .42);
+  const onAccent = dark ? hslRgb(h, Math.min(s, .35), .09) : [255, 255, 255];
+  let rgb = hslRgb(h, s, l);
+  for (let i = 0; i < 20 && contrast(luminance(rgb), luminance(onAccent)) < 4.2; i++) { l += dark ? .02 : -.02; rgb = hslRgb(h, s, l); }
+  const ink = hslRgb(h, s, dark ? Math.min(l + .1, .86) : Math.max(l - .05, .18));
+  return { accent: rgbHex(rgb), ink: rgbHex(ink), tint: `rgba(${rgb.map(Math.round).join(",")},${dark ? ".16" : ".12"})`, on: rgbHex(onAccent) };
+}
+function applyAccent(hex) {
+  const st = document.documentElement.style, dark = isDark();
+  if (!hexRgb(hex)) ["--accent", "--accent-ink", "--accent-tint", "--on-accent"].forEach(k => st.removeProperty(k));
+  else { const p = accentPalette(hex, dark); st.setProperty("--accent", p.accent); st.setProperty("--accent-ink", p.ink); st.setProperty("--accent-tint", p.tint); st.setProperty("--on-accent", p.on); }
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.content = dark ? getComputedStyle(document.documentElement).getPropertyValue("--plane").trim() : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+}
+function applyTheme(t) {
+  if (!t || t === "system") { document.documentElement.removeAttribute("data-theme"); ls.del("ft-theme"); }
+  else { document.documentElement.setAttribute("data-theme", t); ls.set("ft-theme", t); }
+  applyAccent(ls.get("ft-accent"));
+  $("#themeBtn").classList.toggle("dark", isDark());
+}
+$("#themeBtn").addEventListener("click", () => { applyTheme(isDark() ? "light" : "dark"); if (S) renderAll(); });
+SYSTEM_DARK.addEventListener("change", () => { applyTheme(ls.get("ft-theme") || "system"); if (S) renderAll(); });
+applyTheme(ls.get("ft-theme") || "system");
 
 let toastTimer = null;
 function toast(msg, undo, ms) {
@@ -236,9 +279,9 @@ const prText = p => { const ex = p.exercise_id ? exById(p.exercise_id) : null; r
 function targetLine(it) {
   const t = it.target; if (!t) return "";
   const scheme = it.sets ? `${it.sets} x ${it.rep_low}-${it.rep_high}${it.exercise && it.exercise.timed ? " s" : ""}` : "";
-  const last = t.last && t.last.sets && t.last.sets.length ? `Last (${fmtShort(t.last.date)}): ${summariseSets(t.last.sets, it.exercise)}` : "First time";
+  const last = t.last && t.last.sets && t.last.sets.length ? `Last (${fmtShort(t.last.date)}): ${summariseSets(t.last.sets, it.exercise)}. ` : "";
   const tgt = t.weight != null ? `Target: ${scheme} at <b>${fmtLoad(it.exercise, t.weight)}</b>${it.exercise && it.exercise.per_hand ? " each" : ""}` : `Target: ${scheme}`;
-  return `${last}. ${tgt}<span class="why">${esc(t.text || "")}</span>`;
+  return `${last}${tgt}<span class="why">${esc(t.text || "")}</span>`;
 }
 function summariseSets(sets, ex) {
   const timed = ex && ex.timed;
@@ -256,7 +299,7 @@ function weekStrip(strip) {
   return `<div class="strip">${strip.map(s => {
     const dot = s.status === "done" ? "done" : s.kind === "rest" ? "rest" : s.status;
     return `<button class="day${s.date === today ? " today" : ""}" data-sess="${s.id}" title="${esc(s.title)}">
-      <span class="d">${wdShort(s.date)}</span><span class="dot ${dot}"></span><span class="k">${esc(KIND_SHORT[s.kind] || s.title)}${s.count > 1 ? ` +${s.count - 1}` : ""}</span></button>`;
+      <span class="d">${wdShort(s.date)}</span><span class="dot ${dot}"></span><span class="k">${esc(KIND_STRIP[s.kind] || KIND_SHORT[s.kind] || s.title)}${s.count > 1 ? ` +${s.count - 1}` : ""}</span></button>`;
   }).join("")}</div>`;
 }
 
@@ -275,7 +318,7 @@ function renderToday() {
   } else {
     const leftCls = tg.left < 0 ? " crit" : "";
     const modeText = tg.mode === "maintaining" ? "Holding steady at your target." :
-      `${tg.mode === "losing" ? "Losing" : "Gaining"} about <b>${n1(Math.abs(tg.weekly_pace || 0))} kg a week</b> towards ${kg(st.target_weight_kg)} by ${fmtDate(st.target_date)}`;
+      `${tg.mode === "losing" ? "Losing" : "Gaining"} about <b>${n1(Math.abs(tg.weekly_pace || 0))} kg a week</b> towards ${kg(st.target_weight_kg)} by ${fmtDate(st.target_date)}.`;
     const days = tg.days_left;
     const capNote = tg.capped ? `<div class="callout warn">At ${n0(Math.abs(tg.deficit))} kcal a day you would reach ${kg(st.target_weight_kg)} on <strong>${fmtDate(tg.eta)}</strong>.${tg.target_passed ? " The target date has passed. Set a new one in Settings." : " The target date is too soon to be safe."}</div>` : "";
     const floorNote = tg.floored ? `<div class="callout">Held at the ${n0(tg.floor)} kcal floor. Eating less than this is not a good idea.</div>` : "";
@@ -289,29 +332,29 @@ function renderToday() {
         <div class="countdown">
           <div><div class="tiny muted">Days to go</div><div class="v num">${days != null ? Math.max(0, days) : "-"}</div></div>
           <div><div class="tiny muted">Weight</div><div class="v num">${wb.trend ? kg(wb.trend) : "log it"}</div></div>
-          <div><div class="tiny muted">Pace</div><div class="v"><span class="pill ${wb.verdict.code === "on_pace" || wb.verdict.code === "ahead" ? "good" : wb.verdict.code === "behind" ? "warn" : ""}">${esc(wb.verdict.text)}</span></div></div>
+          ${["on_pace", "ahead", "behind"].includes(wb.verdict.code) ? `<div><div class="tiny muted">Pace</div><div class="v"><span class="pill ${wb.verdict.code === "behind" ? "warn" : "good"}">${esc(wb.verdict.text)}</span></div></div>` : ""}
         </div>
-        <p class="sub" style="margin-top:10px">${modeText}</p>
+        <p class="sub" style="margin-top:10px">${modeText}${["on_pace", "ahead", "behind"].includes(wb.verdict.code) ? "" : ` ${esc(wb.verdict.text)}.`}</p>
         ${capNote}${floorNote}
       </div>
       <div>
         ${S.strip ? weekStrip(S.strip) : ""}
         ${todaySessionCards()}
-        <div class="quick">
-          <button data-q="weight">Log weight</button>
-          <button data-q="water">Water +250 ml${S.daily.water_ml ? ` <span class="pill">${n0(S.daily.water_ml)} ml</span>` : ""}</button>
-          <button data-q="sleep">Sleep${S.daily.sleep_h ? ` <span class="pill">${n1(S.daily.sleep_h)} h</span>` : ""}</button>
-          <button data-q="steps">Steps${S.daily.steps ? ` <span class="pill">${n0(S.daily.steps)}</span>` : ""}</button>
+        <div class="quick quick4">
+          <button data-q="weight" title="Log your weight">Weight${wb.latest && wb.latest.date === today ? ` <span class="pill">${kg(wb.latest.weight_kg)}</span>` : ""}</button>
+          <button data-q="water" title="Adds 250 ml">Water${S.daily.water_ml ? ` <span class="pill">${n0(S.daily.water_ml)} ml</span>` : ""}</button>
+          <button data-q="sleep" title="Last night's sleep">Sleep${S.daily.sleep_h ? ` <span class="pill">${n1(S.daily.sleep_h)} h</span>` : ""}</button>
+          <button data-q="steps" title="Steps today">Steps${S.daily.steps ? ` <span class="pill">${n0(S.daily.steps)}</span>` : ""}</button>
         </div>
       </div>
     </div>`;
   }
   const prs = S.recent_prs && S.recent_prs.length ? `<div class="card"><h2>Personal bests from your last session</h2><ul class="prs">${S.recent_prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(prText(p))}</li>`).join("")}</ul></div>` : "";
   const adh = S.week ? S.week.adherence : null;
-  const stats = `<div class="grid g3">
-    <div class="stat"><div class="l">This week</div><div class="v num">${adh ? `${adh.done} / ${adh.planned}` : "-"}</div><div class="f">sessions done${S.week && S.week.week.is_deload ? ", deload week" : ""}</div></div>
-    <div class="stat"><div class="l">Weeks on track</div><div class="v num">${S.weeks_streak}</div><div class="f">weeks with 4 of 5 sessions or more</div></div>
-    <div class="stat"><div class="l">Block</div><div class="v num">${S.week ? `${S.week.week.block_no}, week ${S.week.week.week_no}` : "-"}</div><div class="f">${S.week && S.week.week.week_no === 3 ? "deload next week" : S.week && S.week.week.is_deload ? "lighter on purpose" : "building"}</div></div>
+  const stats = `<div class="card stats">
+    <div><span class="l">This week</span><b class="num">${adh ? `${adh.done} / ${adh.planned}` : "-"}</b><span class="f">sessions done</span></div>
+    <div><span class="l">On track</span><b class="num">${S.weeks_streak}</b><span class="f">${S.weeks_streak === 1 ? "week" : "weeks"} in a row</span></div>
+    <div><span class="l">Block ${S.week ? S.week.week.block_no : "-"}</span><b class="num">${S.week ? `Week ${S.week.week.week_no}` : "-"}</b><span class="f">${S.week && S.week.week.week_no === 3 ? "deload next" : S.week && S.week.week.is_deload ? "deload, lighter" : "building"}</span></div>
   </div>`;
   root.innerHTML = iosHint() + hero + stats + prs;
   const hide = $("#iosHintHide", root); if (hide) hide.addEventListener("click", () => { ls.set("ft-ios-hint-hidden", true); renderToday(); });
@@ -1403,6 +1446,9 @@ function renderSettings() {
   const field = (k, label, type, extra = "") => `<label class="field"><span>${label}</span><input type="${type}" id="s-${k}" value="${st[k] ?? ""}" ${extra}></label>`;
   const days = st.train_days || [];
   const kit = st.cardio_kit || [];
+  const fold = (key, title, sub, body) => `<details class="card fold"${UI.folds.has(key) ? " open" : ""} data-fold="${key}"><summary><h2>${title}</h2>${sub ? `<span class="muted small">${sub}</span>` : ""}</summary><div class="fold-body">${body}</div></details>`;
+  const accent = ls.get("ft-accent") || "", theme = ls.get("ft-theme") || "system";
+  const custom = accent && !ACCENTS.some(a => a[0] === accent);
   root.innerHTML = `
     <div class="card"><h2>You</h2><p class="hint">Used for the calorie maths only. Nothing leaves this device.</p>
       <div class="f-row"><label class="field narrow"><span>Sex</span><select id="s-sex"><option value="m"${st.sex === "m" ? " selected" : ""}>Male</option><option value="f"${st.sex === "f" ? " selected" : ""}>Female</option></select></label>
@@ -1410,36 +1456,43 @@ function renderSettings() {
     <div class="card"><h2>Your goal</h2><p class="hint">${tg && tg.complete ? `Right now that means about <b>${n0(tg.budget)} kcal</b> a day with <b>${n0(tg.protein)} g protein</b>, ${tg.mode === "losing" ? "losing" : tg.mode === "gaining" ? "gaining" : "holding at"} ${tg.mode === "maintaining" ? "your target" : n1(Math.abs(tg.weekly_pace || 0)) + " kg a week"}.` : "Set a target weight and date and the app works out the daily numbers."}</p>
       <div class="f-row">${field("target_weight_kg", "Target weight (kg)", "number", 'inputmode="decimal" step="0.1"')}${field("target_date", "Target date", "date")}
       <label class="field narrow"><span>Daily life activity</span><select id="s-neat_factor">${[[1.2, "Mostly sitting"], [1.3, "Light, some walking"], [1.4, "On my feet a lot"]].map(([v, l]) => `<option value="${v}"${+st.neat_factor === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div>
+      <details class="sub"${UI.folds.has("goal") ? " open" : ""} data-fold="goal"><summary>Fine tuning</summary><div class="fold-body">
       <div class="f-row">${field("deficit_cap", "Biggest daily deficit (kcal)", "number", 'inputmode="numeric" step="50"')}${field("protein_g_per_kg", "Protein (g per kg)", "number", 'inputmode="decimal" step="0.1"')}${field("fat_g_per_kg", "Fat (g per kg)", "number", 'inputmode="decimal" step="0.1"')}${field("kcal_floor", "Calorie floor, blank for default", "number", 'inputmode="numeric" step="50"')}</div>
-      ${st.goal_start_date ? `<p class="hint">Pace line runs from ${kg(st.goal_start_weight)} on ${fmtDate(st.goal_start_date)}. Changing the target starts a new line from today.</p>` : ""}</div>
+      ${st.goal_start_date ? `<p class="hint">Pace line runs from ${kg(st.goal_start_weight)} on ${fmtDate(st.goal_start_date)}. Changing the target starts a new line from today.</p>` : ""}</div></details></div>
     <div class="card"><h2>Training</h2><p class="hint">Changes rebuild the sessions you have not started yet, from today. Sessions already done stay as they were. Pick a split that suits how many days you train.</p>
       <div class="cap">Training split</div><div class="chips mb" id="s-split">${(S.splits || []).map(sp => `<button type="button" class="chip${(st.split || "upper_lower") === sp.key ? " on" : ""}" data-split="${sp.key}" title="${esc(sp.description || "")}">${esc(sp.name)}</button>`).join("")}</div>
       ${(() => { const sp = (S.splits || []).find(x => x.key === (st.split || "upper_lower")); return sp ? `<p class="hint">${esc(sp.description || "")}${sp.days && sp.days.length ? ` Works with ${sp.days.join(", ")} training days.` : ""}</p>` : ""; })()}
       <div class="cap">Days you can train</div><div class="chips mb" id="s-days">${WEEKDAYS.map((d, i) => `<button type="button" class="chip${days.includes(i + 1) ? " on" : ""}" data-day="${i + 1}">${d}</button>`).join("")}</div>
       <div class="cap">Sessions a day</div><div class="chips mb" id="s-spd">${[1, 2, 3].map(n => `<button type="button" class="chip${(+st.sessions_per_day || 1) === n ? " on" : ""}" data-spd="${n}">${n}</button>`).join("")}</div>
-      <p class="hint">One is usual. Two or three spreads the week's sessions over your training days, for a morning and an evening visit. Whatever you set, a missed session can always be pulled into today on top of what is already there.</p>
-      <div class="f-row">${field("session_minutes", "Minutes per session", "number", 'inputmode="numeric" step="5" min="30" max="120"')}${field("rest_default_sec", "Default rest (seconds)", "number", 'inputmode="numeric" step="15"')}
-      <label class="field narrow"><span>Experience</span><select id="s-experience"><option value="beginner"${st.experience === "beginner" ? " selected" : ""}>Beginner</option></select></label></div>
-      <div class="cap">Cardio machines you will use</div><div class="chips" id="s-kit">${[["treadmill", "Treadmill"], ["bike", "Bike"], ["rower", "Rower"]].map(([k, l]) => `<button type="button" class="chip${kit.includes(k) ? " on" : ""}" data-kit="${k}">${l}</button>`).join("")}</div>
-      <div class="cap mt">Barbell weights</div><div class="chips mb" id="s-bar">${[["total", "Total on the bar"], ["per_side", "Plates each side"]].map(([k, l]) => `<button type="button" class="chip${(st.barbell_entry || "total") === k ? " on" : ""}" data-bar="${k}">${l}</button>`).join("")}</div>
+      <p class="hint">Two or three spreads the week over your training days, for a morning and an evening visit. A missed session can always be pulled into today as well.</p>
+      <div class="cap">Cardio machines you will use</div><div class="chips mb" id="s-kit">${[["treadmill", "Treadmill"], ["bike", "Bike"], ["rower", "Rower"]].map(([k, l]) => `<button type="button" class="chip${kit.includes(k) ? " on" : ""}" data-kit="${k}">${l}</button>`).join("")}</div>
+      <div class="cap">Barbell weights</div><div class="chips mb" id="s-bar">${[["total", "Total on the bar"], ["per_side", "Plates each side"]].map(([k, l]) => `<button type="button" class="chip${(st.barbell_entry || "total") === k ? " on" : ""}" data-bar="${k}">${l}</button>`).join("")}</div>
       <p class="hint">${(st.barbell_entry || "total") === "per_side" ? "You type the plates on one side and the app adds the bar: 20 kg, or 10 kg for an EZ bar. Targets and history show both figures." : "You type the whole weight including the bar. Switch to plates each side if that is how you think at the rack."}
         ${typeof LocalApi !== "undefined" ? (st.barbell_converted_at ? ` Stored barbell weights were converted to totals on ${fmtDate(st.barbell_converted_at)}.` : ` If you have been logging plates per side until now, <button class="link" id="s-convertBar">convert what is stored</button> so your history and targets line up.`) : ""}</p>
-      <div class="row mt"><label class="switch"><input type="checkbox" id="s-awake" ${st.keep_awake !== false ? "checked" : ""}><span class="slider"></span><span>Keep the screen on during a workout</span></label></div>
-      <div class="row mt"><button id="s-regen" class="ghost">Rebuild the plan from today</button></div></div>
-    <div class="card exlib"><h2>Exercise library</h2><p class="hint">Switch off anything your gym does not have and the plan stops picking it. Edit the cues to suit you, or add your own exercise.</p>
-      <div class="row mb"><input type="search" id="exQ" placeholder="Search exercises" value="${esc(UI.exQ)}" style="max-width:260px"><button id="exAdd">Add an exercise</button></div><div id="exList"></div></div>
-    <div class="card"><h2>Foods and meals</h2><p class="hint">Foods you added or accepted from an online search. Hide anything wrong; the bundled list stays.</p><div id="myFoods"></div><div id="myMeals" class="mt"></div></div>
-    <div class="card"><h2>Online food sources</h2><p class="hint">Search online asks two free services. Open Food Facts needs no key. USDA FoodData Central shares one demo key between everyone, which runs out after a few searches an hour. A personal key is free, takes a minute and allows a thousand searches an hour. <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">Get a USDA key</a>, then paste it here.</p>
-      <div class="f-row"><label class="field grow"><span>USDA API key, blank for the shared demo key</span><input type="text" id="s-usda_api_key" value="${esc(st.usda_api_key || "")}" autocomplete="off" spellcheck="false" placeholder="DEMO_KEY"></label></div></div>
-    <div class="card"><h2>Backups</h2><p class="hint">Everything lives on this ${IS_ANDROID_APP ? "phone" : "device"}. If it is lost or replaced, so is your data, so export a backup now and then and keep it somewhere safe. A backup restores onto any device running this app.</p>
+      <details class="sub"${UI.folds.has("training") ? " open" : ""} data-fold="training"><summary>More</summary><div class="fold-body">
+      <div class="f-row">${field("session_minutes", "Minutes per session", "number", 'inputmode="numeric" step="5" min="30" max="120"')}${field("rest_default_sec", "Default rest (seconds)", "number", 'inputmode="numeric" step="15"')}
+      <label class="field narrow"><span>Experience</span><select id="s-experience"><option value="beginner"${st.experience === "beginner" ? " selected" : ""}>Beginner</option></select></label></div>
+      <div class="row"><label class="switch"><input type="checkbox" id="s-awake" ${st.keep_awake !== false ? "checked" : ""}><span class="slider"></span><span>Keep the screen on during a workout</span></label></div>
+      <div class="row mt"><button id="s-regen" class="ghost">Rebuild the plan from today</button></div></div></details></div>
+    <div class="card"><h2>Look</h2>
+      <div class="cap">Theme</div><div class="chips mb" id="s-theme">${[["system", "Same as the device"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) => `<button type="button" class="chip${theme === k ? " on" : ""}" data-theme="${k}">${l}</button>`).join("")}</div>
+      <div class="cap">Colour</div><div class="swatches" id="s-accent">${ACCENTS.map(([k, hex, name]) => `<button type="button" class="swatch${accent === k ? " on" : ""}" data-accent="${k}" style="--sw:${hex}" title="${name}" aria-label="${name}"></button>`).join("")}
+        <label class="swatch custom${custom ? " on" : ""}" title="Pick your own" style="--sw:${custom ? accent : "transparent"}"><input type="color" id="s-accentPick" value="${custom ? accent : "#3E6B48"}" aria-label="Pick your own colour"></label></div>
+      <p class="hint mt">Remembered on this device. Buttons, tabs and the week's dots take the colour you pick; the charts keep their own.</p></div>
+    ${fold("exlib", "Exercise library", `${(S.exercises || []).filter(e => e.active !== false && e.active !== 0).length} on`, `<p class="hint">Switch off anything your gym does not have and the plan stops picking it. Edit the cues to suit you, or add your own exercise.</p>
+      <div class="row mb"><input type="search" id="exQ" placeholder="Search exercises" value="${esc(UI.exQ)}" style="max-width:260px"><button id="exAdd">Add an exercise</button></div><div id="exList" class="exlib"></div>`)}
+    ${fold("foods", "Foods and meals", "", `<p class="hint">Foods you added or accepted from an online search. Hide anything wrong; the bundled list stays.</p><div id="myFoods"></div><div id="myMeals" class="mt"></div>`)}
+    ${fold("online", "Online food search", st.usda_api_key ? "own key" : "shared key", `<p class="hint">Search online asks two free services. Open Food Facts needs no key. USDA FoodData Central shares one demo key between everyone, which runs out after a few searches an hour. A personal key is free, takes a minute and allows a thousand searches an hour. <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">Get a USDA key</a>, then paste it here.</p>
+      <div class="f-row"><label class="field grow"><span>USDA API key, blank for the shared demo key</span><input type="text" id="s-usda_api_key" value="${esc(st.usda_api_key || "")}" autocomplete="off" spellcheck="false" placeholder="DEMO_KEY"></label></div>`)}
+    ${fold("backups", "Backups", "", `<p class="hint">Everything lives on this ${IS_ANDROID_APP ? "phone" : "device"}. If it is lost or replaced, so is your data, so export a backup now and then and keep it somewhere safe. A backup restores onto any device running this app.</p>
       <div class="row"><button class="primary" id="bkExport">Export a backup</button><label class="btn" for="restoreFile">Restore a backup</label><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
       <div class="row mt"><button id="csvSets">Sets CSV</button><button id="csvFood">Food CSV</button><button id="csvBody">Body CSV</button></div>
       <div class="row mt"><button class="danger" id="bkWipe">Start fresh</button><span class="muted small">Removes everything on this device. Export first.</span></div>
-      <p class="hint mt" id="bkInfo"></p></div>
-    <div class="card"><h2>Updates</h2><p class="hint">New versions are published on GitHub. The app checks by itself when it opens, at most every six hours, and shows a banner when there is one. ${IS_ANDROID_APP ? "Updating downloads the new package and opens the installer; your data stays." : "Updating reloads the app into the newest build."}</p>
+      <p class="hint mt" id="bkInfo"></p>`)}
+    ${fold("updates", "Updates", updateState().newer ? "one waiting" : "", `<p class="hint">New versions are published on GitHub. The app checks by itself when it opens, at most every six hours, and shows a banner when there is one. ${IS_ANDROID_APP ? "Updating downloads the new package and opens the installer; your data stays." : "Updating reloads the app into the newest build."}</p>
       <div class="row"><label class="switch"><input type="checkbox" id="s-autoupdate" ${st.auto_update_check === false ? "" : "checked"}><span class="slider"></span><span>Check for updates automatically</span></label></div>
       <div class="row mt"><button id="upCheck">Check now</button><span class="muted small" id="upInfo"></span></div>
-      <p class="hint mt" id="upLast">${lastCheckedText()}</p></div>`;
+      <p class="hint mt" id="upLast">${lastCheckedText()}</p>`)}`;
 
   const bind = (k, parse, msg) => { const el = $("#s-" + k, root); if (!el) return; el.addEventListener("change", () => { const v = el.value === "" ? null : (parse ? parse(el.value) : el.value); saveSettings({ [k]: v }, msg); }); };
   ["sex", "birth_date", "target_date", "experience", "usda_api_key"].forEach(k => bind(k));
@@ -1466,6 +1519,13 @@ function renderSettings() {
   }));
   $("#s-regen").addEventListener("click", async () => { try { await api("POST", "/api/plan/regenerate"); toast("Plan rebuilt from today"); load(true); } catch (e) { toast(e.message); } });
   $("#s-awake").addEventListener("change", e => { saveSettings({ keep_awake: e.target.checked }); keepAwake(e.target.checked && !!W); });
+  $$("details[data-fold]", root).forEach(d => d.addEventListener("toggle", () => { if (d.open) UI.folds.add(d.dataset.fold); else UI.folds.delete(d.dataset.fold); }));
+  $$("#s-theme .chip", root).forEach(b => b.addEventListener("click", () => { applyTheme(b.dataset.theme); renderAll(); }));
+  const setAccent = hex => { if (hex) ls.set("ft-accent", hex); else ls.del("ft-accent"); applyAccent(hex); renderSettings(); };
+  $$("#s-accent [data-accent]", root).forEach(b => b.addEventListener("click", () => setAccent(b.dataset.accent)));
+  const pick = $("#s-accentPick", root);
+  pick.addEventListener("input", () => applyAccent(pick.value));
+  pick.addEventListener("change", () => setAccent(pick.value));
   $("#bkExport").addEventListener("click", async () => { try { const data = await api("GET", "/api/backup.json"); await downloadText(`fitness-backup-${todayIso()}.json`, "application/json", JSON.stringify(data)); } catch (e) { toast(e.message); } });
   $("#csvSets").addEventListener("click", () => exportCsv("sets"));
   $("#csvFood").addEventListener("click", () => exportCsv("food"));

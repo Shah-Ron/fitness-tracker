@@ -142,25 +142,31 @@ header.top { display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
 .switch input:checked + .slider { background: var(--accent); }
 .switch input:checked + .slider::before { transform: translateX(20px); }
 .switch svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.iconbtn { width: 38px; height: 38px; min-height: 0; padding: 0; border-radius: 50%; color: var(--ink-2); }
+.iconbtn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.iconbtn.dark .sun, .iconbtn:not(.dark) .moon { display: none; }
 
-nav.tiles { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; }
-.tile { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 999px; font-family: var(--display); font-weight: 600; font-size: 15px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); transition: transform .3s var(--ease), border-radius .3s var(--ease), box-shadow .3s ease, border-color .3s ease, background .3s ease, color .3s ease; }
-.tile:hover { transform: translateY(-3px); border-color: var(--accent); border-radius: 12px; box-shadow: var(--lift); }
-.tile[aria-selected="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); border-radius: 12px; }
+nav.tiles { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.tile { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px 12px; border: 0; border-radius: 8px 8px 0 0; font-family: var(--display); font-weight: 600; font-size: 15px; background: transparent; color: var(--muted); box-shadow: none; transition: color .15s ease, background .15s ease; }
+.tile:hover { color: var(--ink); background: var(--panel-2); }
+.tile[aria-selected="true"] { color: var(--accent-ink); box-shadow: inset 0 -2px 0 var(--accent); }
 .tile .badge { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--burn-tint); color: var(--burn-ink); font-variant-numeric: tabular-nums; }
-.tile[aria-selected="true"] .badge { background: rgba(255,255,255,.22); color: inherit; }
 
 .bottombar { display: none; }
 @media (max-width: 640px) {
   nav.tiles { display: none; }
   .wrap { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
-  .bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; background: var(--panel); border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 20px rgba(0,0,0,.06); -webkit-overflow-scrolling: touch; }
-  .bottombar::-webkit-scrollbar { display: none; }
-  .bottombar button { flex: 0 0 auto; min-width: 74px; scroll-snap-align: center; border: 0; background: transparent; min-height: 52px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 600; color: var(--muted); font-family: var(--display); padding: 4px 6px; }
+  .bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; background: var(--panel); border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
+  .bottombar button { flex: 1 1 0; min-width: 0; border: 0; background: transparent; min-height: 52px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 600; color: var(--muted); font-family: var(--display); padding: 4px 2px; }
   .bottombar button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .bottombar button.on { color: var(--accent-ink); background: var(--accent-tint); }
   header.top { margin-bottom: 14px; }
 }
+.more { display: grid; gap: 8px; }
+.more button { justify-content: flex-start; gap: 14px; min-height: 58px; text-align: left; border-radius: 14px; padding: 8px 16px; }
+.more button svg { width: 22px; height: 22px; flex: none; stroke: var(--accent-ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.more button span { display: flex; flex-direction: column; font-family: var(--display); font-weight: 600; font-size: 15px; }
+.more button small { color: var(--muted); font-family: var(--body); font-weight: 400; font-size: 12.5px; }
 
 /* ------------------------------------------------------------ surfaces */
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
@@ -194,7 +200,7 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; min-height: 38px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-size: 14px; cursor: pointer; transition: all .2s var(--ease); color: var(--ink); }
 .chip:hover { border-color: var(--accent); }
-.chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); border-radius: 10px; }
+.chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .chip.on.fuel { background: var(--fuel); border-color: var(--fuel); color: #fff; }
 .chip small { opacity: .75; font-size: 12px; }
 .lg-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--grid); border-radius: 8px; transition: background .15s; }
@@ -212,7 +218,7 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .set-row input, .set-row select { width: auto; min-width: 90px; }
 
 /* ------------------------------------------------------------ hero */
-.hero { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 24px 26px 20px; display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.3fr); gap: 26px; align-items: start; }
+.hero { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px 26px 20px; display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.3fr); gap: 26px; align-items: start; }
 @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } }
 .hero .kicker { color: var(--muted); font-size: 14px; font-weight: 600; }
 .hero .big { font-family: var(--display); font-size: 56px; font-weight: 600; line-height: 1; margin: 6px 0 4px; letter-spacing: -0.01em; }
@@ -240,11 +246,20 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 .quick button { border-radius: 999px; min-height: 40px; }
 .quick button.primary { border-radius: 14px; min-height: 46px; padding: 10px 22px; font-size: 15px; }
-.cta { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 360px; min-height: 52px; margin-top: 18px; padding: 12px 24px; border-radius: 14px; font-family: var(--display); font-weight: 600; font-size: 16px; background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); box-shadow: var(--lift); transition: transform .2s var(--ease), filter .2s ease; }
-.cta:hover { filter: brightness(1.06); transform: translateY(-2px); border-color: var(--accent); }
+@media (max-width: 640px) {
+  .quick4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .quick4 button { flex-direction: column; gap: 0; padding: 6px 4px; min-height: 50px; border-radius: 12px; }
+  .quick4 .pill { padding: 0; background: none; font-size: 11.5px; color: var(--muted); }
+}
+.cta { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 360px; min-height: 52px; margin-top: 18px; padding: 12px 24px; border-radius: 14px; font-family: var(--display); font-weight: 600; font-size: 16px; background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); transition: filter .2s ease; }
+.cta:hover { filter: brightness(1.06); border-color: var(--accent); }
 .cta svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.countdown { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; margin-top: 14px; }
-.countdown .v { font-family: var(--display); font-size: 24px; font-weight: 600; }
+.countdown { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; margin-top: 14px; }
+.countdown .v { font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1.2; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stats .l { display: block; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.stats b { display: block; font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1.2; margin-top: 2px; }
+.stats .f { display: block; font-size: 12px; color: var(--ink-2); }
 
 /* ------------------------------------------------------------ workout */
 .wk-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -414,15 +429,30 @@ footer.note { margin-top: 30px; color: var(--muted); font-size: 12.5px; text-ali
 .daynav { display: flex; align-items: center; gap: 8px; }
 .daynav h2 { margin: 0; font-size: 18px; min-width: 150px; text-align: center; }
 .exlib .lg-row { grid-template-columns: 1fr auto; }
+details.fold { padding: 0; }
+details.fold > summary { list-style: none; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 16px 20px; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary h2 { margin: 0; }
+details.fold > summary .muted { margin-left: auto; }
+details.fold > summary::after { content: ""; width: 8px; height: 8px; flex: none; margin-left: 10px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .2s ease; }
+details.fold[open] > summary::after { transform: rotate(-135deg); }
+details.fold > .fold-body { padding: 0 20px 18px; }
+@media (max-width: 640px) { details.fold > summary { padding: 14px 16px; } details.fold > .fold-body { padding: 0 16px 16px; } }
+details.sub { margin-top: 10px; }
+details.sub > summary { list-style: none; cursor: pointer; color: var(--accent-ink); font-weight: 600; font-size: 14px; padding: 6px 0; }
+details.sub > summary::-webkit-details-marker { display: none; }
+details.sub > summary::before { content: "+"; display: inline-block; width: 16px; }
+details.sub[open] > summary::before { content: "\2212"; }
+details.sub > .fold-body { padding-top: 8px; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.swatch { position: relative; width: 32px; height: 32px; min-height: 0; padding: 0; border-radius: 50%; border: 2px solid transparent; background: var(--sw); box-shadow: inset 0 0 0 2px var(--panel); cursor: pointer; transition: border-color .15s ease; }
+.swatch:hover { border-color: var(--axis); }
+.swatch.on { border-color: var(--ink); }
+.swatch.custom { background: conic-gradient(#e5484d, #f5a524, #7bc47f, #3b82f6, #a855f7, #e5484d); }
+.swatch.custom.on { background: var(--sw); }
+.swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; min-height: 0; }
 
 /* ------------------------------------------------------------ entrance and motion */
-@keyframes pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
-@keyframes slideIn { from { opacity: 0; transform: translateX(var(--from)); } to { opacity: 1; transform: none; } }
-@keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
-header.top { animation: pop .6s ease-out backwards; }
-.tile { animation: slideIn .7s var(--ease) backwards; animation-delay: calc(100ms + var(--i) * 60ms); }
-.tile:nth-child(odd) { --from: -40px; } .tile:nth-child(even) { --from: 40px; }
-main { animation: rise .7s var(--ease) .3s backwards; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (max-width: 640px) { .hero .big { font-size: 46px; } .hero { padding: 20px 18px 16px; } .card { padding: 16px; } }
 /* iPhone Safari zooms into any field smaller than 16px; keep fields at 16px on phones. */
@@ -438,22 +468,20 @@ main { animation: rise .7s var(--ease) .3s backwards; }
     </a>
     <span class="spacer"></span>
     <div id="notice"></div>
-    <label class="switch" title="Light or dark">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-      <input type="checkbox" id="themeToggle" aria-label="Dark mode">
-      <span class="slider"></span>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-    </label>
+    <button class="iconbtn" id="themeBtn" type="button" aria-label="Switch between light and dark" title="Light or dark">
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
   </header>
 
   <nav class="tiles" role="tablist" aria-label="Sections">
-    <button class="tile" role="tab" data-tab="today" style="--i:0" aria-selected="true">Today</button>
-    <button class="tile" role="tab" data-tab="workout" style="--i:1" aria-selected="false">Workout <span class="badge" id="navLive" hidden>live</span></button>
-    <button class="tile" role="tab" data-tab="plan" style="--i:2" aria-selected="false">Plan</button>
-    <button class="tile" role="tab" data-tab="food" style="--i:3" aria-selected="false">Food</button>
-    <button class="tile" role="tab" data-tab="progress" style="--i:4" aria-selected="false">Progress</button>
-    <button class="tile" role="tab" data-tab="history" style="--i:5" aria-selected="false">History</button>
-    <button class="tile" role="tab" data-tab="settings" style="--i:6" aria-selected="false">Settings</button>
+    <button class="tile" role="tab" data-tab="today" aria-selected="true">Today</button>
+    <button class="tile" role="tab" data-tab="workout" aria-selected="false">Workout <span class="badge" id="navLive" hidden>live</span></button>
+    <button class="tile" role="tab" data-tab="plan" aria-selected="false">Plan</button>
+    <button class="tile" role="tab" data-tab="food" aria-selected="false">Food</button>
+    <button class="tile" role="tab" data-tab="progress" aria-selected="false">Progress</button>
+    <button class="tile" role="tab" data-tab="history" aria-selected="false">History</button>
+    <button class="tile" role="tab" data-tab="settings" aria-selected="false">Settings</button>
   </nav>
 
   <main>
@@ -477,10 +505,13 @@ main { animation: rise .7s var(--ease) .3s backwards; }
   <button data-go="workout"><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg>Workout</button>
   <button data-go="food"><svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M17 3c-2 2-3 5-3 8h3v10"/></svg>Food</button>
   <button data-go="plan"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Plan</button>
-  <button data-go="progress"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Progress</button>
-  <button data-go="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>History</button>
-  <button data-go="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+  <button id="moreBtn" data-more="progress history settings"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>More</button>
 </nav>
+<template id="moreTpl"><div class="handle"></div><div class="more">
+  <button type="button" data-go="progress"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg><span>Progress<small>Strength, weight, effort and food charts</small></span></button>
+  <button type="button" data-go="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>History<small>Past workouts and food days</small></span></button>
+  <button type="button" data-go="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Settings<small>You, your goal, training, look and backups</small></span></button>
+</div></template>
 
 <div class="sheet-back" id="sheetBack" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="timerbar" id="timerbar" hidden></div>
