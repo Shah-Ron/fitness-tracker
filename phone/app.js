@@ -38,7 +38,7 @@ let S = null;        // /api/state
 let T = null;        // /api/today, cached for the gym
 let FOODS = null;    // /api/foods/list rows
 let ONLINE = true;
-const UI = { tab: ls.get("ft-tab", "today"), foodDate: todayIso(), planDate: todayIso(), progressDays: 90, histRange: 90, histQ: "", exQ: "", foodQ: "", folds: new Set() };
+const UI = { tab: ls.get("ft-tab", "today"), foodDate: todayIso(), planDate: todayIso(), progressDays: 90, histRange: 90, histQ: "", exQ: "", foodQ: "", folds: new Set(), exOpen: new Set(), noteStep: 0, lastSet: null };
 let W = ls.get("ft-live");       // the workout in progress, mirrored on every tap
 const REST = { end: 0, total: 0, timer: null, finished: false };
 const IS_ANDROID_APP = !!(window.Android && window.Android.saveFile);
@@ -97,10 +97,13 @@ function updateNotice() {
   let n = $("#updbar");
   if (!n) { const m = $("main"); if (!m) return; n = document.createElement("div"); n.id = "updbar"; m.prepend(n); }
   const st = updateState();
-  if (!st.newer || !st.latest || st.latest === st.dismissed || W) { n.innerHTML = ""; return; }
-  n.innerHTML = `<div class="upd"><span>Version ${esc(st.latest)} is ready${st.cur ? `. You have ${esc(st.cur)}` : ""}.</span><span class="spacer"></span><button class="primary" id="updNow">Update</button><button class="ghost" id="updLater">Later</button></div>`;
+  const snoozed = st.latest && st.latest === st.dismissed && (!st.dismissedAt || Date.now() - st.dismissedAt < SNOOZE_MS);
+  if (!st.newer || !st.latest || snoozed || W) { n.innerHTML = ""; return; }
+  const notes = (st.notes || []).slice(0, 6);
+  n.innerHTML = `<div class="upd"><span><b>Version ${esc(st.latest)}</b> is ready${st.cur ? `, you have ${esc(st.cur)}` : ""}${st.size ? ` (${esc(st.size)})` : ""}.</span><span class="acts"><button class="primary" id="updNow">Update</button><button class="ghost" id="updLater">Later</button></span>
+    ${notes.length ? `<details><summary>What is new${st.published ? ", " + esc(fmtShort(st.published)) : ""}</summary><ul>${notes.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>` : ""}<span class="state" id="updState" hidden></span></div>`;
   $("#updNow").addEventListener("click", () => applyUpdate(st));
-  $("#updLater").addEventListener("click", () => { ls.set("ft-update", Object.assign(updateState(), { dismissed: st.latest })); n.innerHTML = ""; });
+  $("#updLater").addEventListener("click", () => { ls.set("ft-update", Object.assign(updateState(), { dismissed: st.latest, dismissedAt: Date.now() })); n.innerHTML = ""; });
 }
 
 /* ---------------------------------------------------------- load */
@@ -117,7 +120,8 @@ async function load(quiet) {
   renderAll();
   updateNotice();
 }
-function saveW() { if (W) ls.set("ft-live", W); else ls.del("ft-live"); $("#navLive").hidden = !W; keepAwake(wantAwake()); }
+function saveW() { if (W) ls.set("ft-live", W); else ls.del("ft-live"); markLive(); keepAwake(wantAwake()); }
+function markLive() { $("#navLive").hidden = !W; const d = $("#bottombar .live"); if (d) d.hidden = !W; }
 
 function renderAll() {
   renderToday();
@@ -239,6 +243,7 @@ if ("serviceWorker" in navigator && !IS_ANDROID_APP && location.protocol.startsW
   navigator.serviceWorker.register("./sw.js").then(reg => {
     let hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (UPDATING) { location.reload(); return; }
       if (hadController) toast("Updated. Tap to reload", () => location.reload(), 12000);
       hadController = true;
     });
@@ -299,8 +304,153 @@ function weekStrip(strip) {
   return `<div class="strip">${strip.map(s => {
     const dot = s.status === "done" ? "done" : s.kind === "rest" ? "rest" : s.status;
     return `<button class="day${s.date === today ? " today" : ""}" data-sess="${s.id}" title="${esc(s.title)}">
-      <span class="d">${wdShort(s.date)}</span><span class="dot ${dot}"></span><span class="k">${esc(KIND_STRIP[s.kind] || KIND_SHORT[s.kind] || s.title)}${s.count > 1 ? ` +${s.count - 1}` : ""}</span></button>`;
+      <span class="d">${wdShort(s.date)}</span><span class="dot ${dot}">${dot === "done" ? "✓" : ""}</span><span class="k">${esc(KIND_STRIP[s.kind] || KIND_SHORT[s.kind] || s.title)}${s.count > 1 ? ` +${s.count - 1}` : ""}</span></button>`;
   }).join("")}</div>`;
+}
+
+/* A ring that fills with what you have used: calories eaten against the budget. The number inside is what is left. */
+function ringSvg(pct, cls, inner) {
+  const r = 44, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, +pct || 0));
+  return `<div class="ring${cls ? " " + cls : ""}" style="--circ:${c.toFixed(1)}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="${r}"/><circle class="arc" cx="50" cy="50" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - f)).toFixed(1)}"/></svg><div class="in">${inner}</div></div>`;
+}
+
+/* ---------------------------------------------------------- notes: quotes and tips */
+/* A quote and a tip for the day on Today, a tip while you rest, a line when a workout ends. They are picked by the
+   date, so a note stays up all day, and Another moves along the list. Settings, Look switches them off. Quotes with a
+   name are the ones whose source is sure; the rest are unattributed. */
+const QUOTES = [
+  ["The last three or four reps is what makes the muscle grow.", "Arnold Schwarzenegger"],
+  ["We are what we repeatedly do. Excellence, then, is not an act but a habit.", "Will Durant"],
+  ["A journey of a thousand miles begins with a single step.", "Laozi"],
+  ["Take care of your body. It's the only place you have to live.", "Jim Rohn"],
+  ["Motivation is what gets you started. Habit is what keeps you going.", "Jim Ryun"],
+  ["It is not the mountain we conquer but ourselves.", "Edmund Hillary"],
+  ["Nothing will work unless you do.", "Maya Angelou"],
+  ["What you do every day matters more than what you do once in a while.", "Gretchen Rubin"],
+  ["The best time to plant a tree was twenty years ago. The second best time is now.", "Proverb"],
+  ["Slow is smooth, and smooth is fast.", ""],
+  ["The only workout you regret is the one you skipped.", ""],
+  ["You do not have to feel ready. You have to show up.", ""],
+  ["Consistency beats intensity. Every single time.", ""],
+  ["Strong is built one unremarkable session at a time.", ""],
+  ["The plan works if you work the plan.", ""],
+  ["Progress hides in the weeks that feel like nothing is happening.", ""],
+  ["A bad session still counts. A missed one does not.", ""],
+  ["Lift for the person you will be in a year.", ""],
+  ["Small weights, added often, become big weights.", ""],
+  ["The scale measures one morning. The trend measures you.", ""],
+  ["Rest is part of the programme, not a break from it.", ""],
+  ["Technique first. Weight follows.", ""],
+  ["You are not behind. You are on your own line.", ""],
+  ["Eat for the training you want to do tomorrow.", ""],
+  ["Two reps in reserve today is a new record next month.", ""],
+  ["Discipline is just remembering what you want.", ""],
+  ["Half the battle is getting to the gym. Start there.", ""],
+  ["Nobody gets strong in a hurry. Everybody gets strong in a year.", ""],
+  ["Show up tired. Leave better.", ""],
+  ["Every set you log is a vote for the person you are becoming.", ""],
+  ["Water, sleep, protein, steps. The boring things work.", ""],
+  ["Do the next set. That is the whole secret.", ""],
+  ["A deload is a run-up, not a retreat.", ""],
+  ["Walk when you cannot run. Move when you cannot walk fast.", ""],
+  ["Comparison steals the win. Look at your own chart.", ""],
+  ["One good meal does not make you lean. One bad one does not undo you.", ""],
+  ["Patience is a training variable.", ""],
+  ["Your future self is quietly watching this session.", ""],
+];
+const TIPS = [
+  ["lift", "Warm up with two light sets of the first lift. The working sets feel better and your joints last longer."],
+  ["lift", "Leave one or two reps in reserve on most sets. Grinding every set adds fatigue faster than strength."],
+  ["lift", "Rest two to three minutes between heavy sets of squats, deadlifts and presses. Short rests cut the reps you can do."],
+  ["lift", "Change one thing at a time: add reps until you reach the top of the range, then add weight."],
+  ["lift", "Brace before every rep: breathe into your belly, tighten your trunk, then move."],
+  ["lift", "Control the lowering half of the rep. Two seconds down builds more muscle than dropping the weight."],
+  ["lift", "Use a full range of motion where your joints allow it. Deep and light beats shallow and heavy."],
+  ["lift", "Film a set now and then. What you feel and what you do are not always the same."],
+  ["lift", "If a lift hurts in a joint rather than a muscle, swap it. Pain is not a progression tool."],
+  ["lift", "Ten to twenty hard sets per muscle a week is the sweet spot for most people. More is not better."],
+  ["lift", "Log the set straight after you finish it. Memory rounds up."],
+  ["lift", "Keep the same lifts for the whole block. Changing exercises every week hides your progress."],
+  ["lift", "A plateau usually means more sleep or more food, not a new programme."],
+  ["lift", "Grip giving out on rows and deadlifts? Chalk or straps let your back do the work."],
+  ["lift", "Flat, firm shoes for squats and deadlifts. Running shoes are cushions that wobble."],
+  ["lift", "The deload week is lighter on purpose. Finish each set feeling you could have done more."],
+  ["lift", "Strength shows up in the one-rep max chart before it shows up in the mirror."],
+  ["lift", "When a machine is busy, swap the exercise rather than wait. Same muscle, same effort."],
+  ["lift", "Lunges and split squats fix the left-right gaps that two-legged lifts hide."],
+  ["lift", "Cardio after lifting, not before. Fresh legs lift more."],
+  ["food", "Aim for 25 to 40 g of protein in each meal. Spreading it over the day beats one big hit at dinner."],
+  ["food", "Protein first on the plate, then vegetables, then the rest. You eat less without trying."],
+  ["food", "Weigh a portion of rice or oats once. After that you know what a serving looks like."],
+  ["food", "Sauces, oils and dressings hide a lot of calories. Log them for a week and see."],
+  ["food", "Drink a glass of water before each meal. Thirst is easy to mistake for hunger."],
+  ["food", "Greek yoghurt, eggs, cottage cheese, dal, paneer and tinned tuna are cheap protein that keeps."],
+  ["food", "A high-protein breakfast cuts snacking all day. Eggs or yoghurt beat toast and jam."],
+  ["food", "Vegetables are volume. Fill half the plate and the calories take care of themselves."],
+  ["food", "Alcohol has 7 kcal a gram and pauses fat burning while it is cleared. Plan for it rather than pretend."],
+  ["food", "One meal over does not matter. The weekly average does."],
+  ["food", "A 500 kcal deficit a day is about half a kilo a week. Faster than that costs muscle."],
+  ["food", "Carbs before training, protein after. Simple, and it works."],
+  ["food", "Fibre keeps you full: oats, beans, lentils, fruit and vegetables. Aim for 25 to 30 g a day."],
+  ["food", "Milk is a recovery drink. Protein, carbs and fluid, and it costs a dollar."],
+  ["food", "Hungry at night? Eat more protein earlier in the day."],
+  ["food", "Takeaway night: pick the grilled option, halve the chips, keep the protein."],
+  ["food", "Coffee before a session is fine. Coffee after 2 pm costs you sleep."],
+  ["food", "Creatine monohydrate, 3 to 5 g a day, is the most studied supplement there is. Everything else is optional."],
+  ["food", "Log food before you eat it, not after. It changes what you choose."],
+  ["food", "A week at maintenance now and then makes a long diet easier to keep going."],
+  ["rest", "Seven to nine hours of sleep is where muscle is built. The gym only sends the order."],
+  ["rest", "A rest day is a training day for your tendons and nervous system."],
+  ["rest", "Walk on rest days. Steps cost nothing and speed up recovery."],
+  ["rest", "Soreness is not a sign of a good session. Progress on the log is."],
+  ["rest", "Stretch after training, not before. Cold muscles want movement, not length."],
+  ["rest", "Run down? Train lighter rather than not at all. Something beats nothing."],
+  ["rest", "Keep the same bedtime at the weekend. Your body clock does not know it is Saturday."],
+  ["rest", "Weigh yourself in the morning after the bathroom, before food. Same conditions every time."],
+  ["rest", "Measure your waist once a month. It tells you what the scale cannot."],
+  ["rest", "Two bad nights of sleep drop your strength more than a missed meal does."],
+  ["mind", "Pick the smallest version of the session you can face, then start. Momentum does the rest."],
+  ["mind", "Plan the next session before you leave this one. Decisions made tired are the ones that stick."],
+  ["mind", "Set the alarm, lay out the kit, put the bag by the door. Make the morning easy."],
+  ["mind", "Track weeks, not days. A week of sessions is the unit that matters."],
+  ["mind", "Train with a friend one day a week. It is the cheapest accountability there is."],
+  ["mind", "Celebrate the personal bests. They are the receipts for the work."],
+  ["mind", "Missed a session? Pull it into today from Plan. Do not wait for Monday."],
+  ["mind", "Keep the phone in the bag between sets. Rest is for resting."],
+];
+const FINISH_LINES = ["Every set logged is money in the bank.", "Done beats perfect. This was done.", "One more session than the version of you who stayed home.", "Consistency looks exactly like this.", "Nice work. Log the food and rest well.", "That is the plan working. Same again next time."];
+const dayHash = iso => { let h = 7; for (const c of String(iso)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const notesOn = () => ls.get("ft-notes") !== "off";
+const pickNote = (list, offset) => list[(dayHash(todayIso()) + (offset || 0)) % list.length];
+const tipsOf = (...kinds) => TIPS.filter(t => kinds.includes(t[0]));
+function noteCard() {
+  if (!notesOn()) return "";
+  const q = pickNote(QUOTES, UI.noteStep), t = pickNote(TIPS, UI.noteStep * 7);
+  return `<div class="card note"><div class="between"><span class="nk">Today's note</span><button class="ghost" type="button" data-note-next title="Another note">Another</button></div>
+    <p class="q">“${esc(q[0])}”</p>${q[1] ? `<span class="who">${esc(q[1])}</span>` : ""}
+    <p class="tip"><b>Tip.</b> ${esc(t[1])}</p></div>`;
+}
+function wireNote(root) {
+  $$("[data-note-next]", root).forEach(b => b.addEventListener("click", () => { UI.noteStep = (UI.noteStep || 0) + 1; const c = $(".note", root); if (c) { c.outerHTML = noteCard(); wireNote(root); } }));
+}
+function readyTip() { if (!notesOn()) return ""; const t = pickNote(tipsOf("lift", "mind"), 1); return `<p class="hint"><b class="t">Tip.</b> ${esc(t[1])}</p>`; }
+function finishLine(sum) {
+  if (Object.values(W.sets).flat().some(x => x.pr)) return "A personal best today. That is the work paying off.";
+  if (!sum.sets && !sum.cardioMin) return "Nothing logged this time. Showing up still counts.";
+  if (sum.rpes && sum.hard / sum.rpes >= .6) return "A hard one. Eat well and sleep, and the next one feels lighter.";
+  return pickNote(FINISH_LINES, sum.sets);
+}
+const effortLine = e => e == null ? "" : e >= 85 ? "Big effort. Protein and an early night." : e >= 65 ? "Solid session, right where it should be." : e >= 40 ? "A lighter one. Those count too." : "An easy day. Back at it next time.";
+function foodTip(totals, tg) {
+  if (!notesOn() || !tg) return "";
+  const h = new Date().getHours(), pLeft = tg.protein - totals.protein, kLeft = tg.budget - totals.kcal;
+  let t;
+  if (kLeft < -150) t = `Over by ${n0(-kLeft)} kcal. One day does not matter, the weekly average does. Tomorrow is a fresh budget.`;
+  else if (h >= 14 && pLeft > tg.protein * 0.45) t = `Protein is at ${n0(totals.protein)} of ${n0(tg.protein)} g. A protein-heavy dinner (chicken, fish, eggs, paneer, dal, Greek yoghurt) closes most of that gap.`;
+  else if (h >= 19 && pLeft <= tg.protein * 0.1 && kLeft >= 0) t = `Protein target met with ${n0(kLeft)} kcal to spare. A good day.`;
+  else if (!totals.kcal && h >= 12) t = "Nothing logged yet today. Add meals as you go rather than from memory tonight.";
+  else t = pickNote(tipsOf("food"))[1];
+  return `<p class="hint mt" style="margin-bottom:0"><b class="t">Tip.</b> ${esc(t)}</p>`;
 }
 
 /* ---------------------------------------------------------- Today */
@@ -309,6 +459,8 @@ function renderToday() {
   if (!S) { root.innerHTML = `<div class="card"><h2>Loading</h2></div>`; return; }
   const tg = S.targets, wb = S.weight, fd = S.food, st = S.settings;
   const today = todayIso();
+  const name = String(st.display_name || "").trim(), hour = new Date().getHours();
+  const greet = `<div class="greet"><h2>${hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}${name ? ", " + esc(name) : ""}</h2><span class="date">${fmtLong(today)}</span></div>`;
   let hero;
   if (!S.profile_complete) {
     hero = `<div class="hero"><div><div class="kicker">Welcome</div><div class="big">Let's set you up</div>
@@ -316,7 +468,7 @@ function renderToday() {
       <button class="cta" data-go="settings">Finish your profile <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
       <div>${S.strip ? weekStrip(S.strip) : ""}</div></div>`;
   } else {
-    const leftCls = tg.left < 0 ? " crit" : "";
+    const leftCls = tg.left < 0 ? " crit-ink" : "";
     const modeText = tg.mode === "maintaining" ? "Holding steady at your target." :
       `${tg.mode === "losing" ? "Losing" : "Gaining"} about <b>${n1(Math.abs(tg.weekly_pace || 0))} kg a week</b> towards ${kg(st.target_weight_kg)} by ${fmtDate(st.target_date)}.`;
     const days = tg.days_left;
@@ -325,9 +477,9 @@ function renderToday() {
     const macro = (label, have, want, cls) => `<div class="macro"><b>${label}</b><div class="meter ${cls}${have > want * 1.1 ? " over" : ""}"><span style="width:${Math.min(100, want ? have / want * 100 : 0)}%"></span></div><span class="num">${n0(have)} / ${n0(want)} g</span></div>`;
     hero = `<div class="hero">
       <div>
-        <div class="kicker">Left to eat today</div>
-        <div class="big num${leftCls}">${n0(tg.left)}<small>kcal</small></div>
-        <p class="sub"><span class="fuel-ink">${n0(tg.eaten)} eaten</span> of a ${n0(tg.budget)} budget${tg.exercise ? `, including <span class="burn-ink">${n0(tg.exercise)} burned</span> training` : ""}.</p>
+        <div class="ringrow">${ringSvg(tg.budget ? tg.eaten / tg.budget : 0, tg.left < 0 ? "over" : "", `<b class="num${leftCls}">${n0(tg.left)}</b><span>kcal left</span>`)}
+          <div class="sidekv"><div><b class="num fuel-ink">${n0(tg.eaten)}</b><span>eaten</span></div><div><b class="num">${n0(tg.budget)}</b><span>budget</span></div>${tg.exercise ? `<div><b class="num burn-ink">${n0(tg.exercise)}</b><span>burned</span></div>` : ""}</div>
+        </div>
         <div class="macros">${macro("Protein", fd.totals.protein, tg.protein, "fuel")}${macro("Carbs", fd.totals.carb, tg.carbs, "fuel")}${macro("Fat", fd.totals.fat, tg.fat, "fuel")}</div>
         <div class="countdown">
           <div><div class="tiny muted">Days to go</div><div class="v num">${days != null ? Math.max(0, days) : "-"}</div></div>
@@ -356,7 +508,7 @@ function renderToday() {
     <div><span class="l">On track</span><b class="num">${S.weeks_streak}</b><span class="f">${S.weeks_streak === 1 ? "week" : "weeks"} in a row</span></div>
     <div><span class="l">Block ${S.week ? S.week.week.block_no : "-"}</span><b class="num">${S.week ? `Week ${S.week.week.week_no}` : "-"}</b><span class="f">${S.week && S.week.week.week_no === 3 ? "deload next" : S.week && S.week.week.is_deload ? "deload, lighter" : "building"}</span></div>
   </div>`;
-  root.innerHTML = iosHint() + hero + stats + prs;
+  root.innerHTML = iosHint() + greet + hero + noteCard() + stats + prs;
   const hide = $("#iosHintHide", root); if (hide) hide.addEventListener("click", () => { ls.set("ft-ios-hint-hidden", true); renderToday(); });
   wireToday(root);
 }
@@ -381,12 +533,14 @@ function wireToday(root) {
   $$("[data-start]", root).forEach(b => b.addEventListener("click", () => startSession(+b.dataset.start)));
   $$("[data-sess]", root).forEach(b => b.addEventListener("click", () => { UI.planDate = (S.strip.find(s => s.id === +b.dataset.sess) || {}).date || todayIso(); switchTab("plan"); }));
   $$("[data-q]", root).forEach(b => b.addEventListener("click", () => quickLog(b.dataset.q)));
+  wireNote(root);
 }
 function quickLog(kind) {
   const d = todayIso();
   if (kind === "water") {
     const cur = (S.daily.water_ml || 0) + 250;
     mutate("daily", "daily-" + d, { date: d, water_ml: cur }, () => { S.daily.water_ml = cur; renderToday(); });
+    haptic("light");
     toast(`${n0(cur)} ml today`);
     return;
   }
@@ -445,7 +599,7 @@ function startFreestyle() {
 }
 function renderWorkout() {
   const root = $("#p-workout");
-  $("#navLive").hidden = !W;
+  markLive();
   if (!W) {
     // resume a workout started on another device
     if (S && S.in_progress && !W) {
@@ -474,6 +628,7 @@ function renderWorkout() {
     const todays = sessions.filter(s => s.date === today && s.kind !== "rest");
     root.innerHTML = `<div class="card"><h2>Ready to train?</h2>
       <p class="hint">${todays.length ? `Today is <b>${todays.map(t => esc(t.title)).join(" and ")}</b>, about ${n0(todays.reduce((a, t) => a + (t.est_minutes || 0), 0))} minutes${todays.length > 1 ? ` in ${todays.length} visits` : ""}.` : "Today is a rest day in the plan. You can still pull a session forward."}</p>
+      ${readyTip()}
       ${sessions.filter(s => s.kind !== "rest").map(s => `<div class="pickcard"><div><b>${esc(s.title)}</b> <span class="muted small">${fmtDay(s.date)}${s.date === today ? ", today" : ""}${s.is_deload ? ", deload" : ""}</span>
           <div class="muted small">${s.items.filter(i => ["main", "accessory"].includes(i.section)).slice(0, 3).map(i => i.exercise ? esc(i.exercise.name) : "").filter(Boolean).join(", ")}</div></div>
           ${s.status === "done" ? `<span class="pill good">Done</span>` : `<button class="${s.date === today ? "primary" : ""}" data-start="${s.id}">${s.date === today ? "Start" : "Do it today"}</button>`}</div>`).join("") || `<div class="empty">No sessions loaded. Open the app on home wifi once.</div>`}
@@ -487,6 +642,10 @@ function renderWorkout() {
   const names = { warmup: "Warm-up", main: "Main lifts", accessory: "Accessories", core: "Core", finisher: "Finisher", cooldown: "Cool-down" };
   let html = `<div class="wk-head"><h2>${esc(W.title)}${W.is_deload ? ' <span class="pill">deload</span>' : ""}</h2><span class="elapsed" id="elapsed">${mmss(elapsed)}</span><span class="spacer"></span>
     <button class="primary" id="finishBtn">Finish</button><button class="ghost" id="discardBtn" title="Discard this workout">Discard</button></div>`;
+  const prog = workoutProgress();
+  if (prog.planned) html += `<div class="wk-prog"><div class="meter"><span style="width:${Math.round(prog.done / prog.planned * 100)}%"></span></div><span class="num">${prog.done} of ${prog.planned} sets</span></div>`;
+  NEXT_ID = null;
+  sections.forEach(sec => W.items.filter(i => i.section === sec).forEach(it => { if (NEXT_ID == null && !itemComplete(it)) NEXT_ID = it.id; }));
   sections.forEach(sec => {
     const items = W.items.filter(i => i.section === sec);
     if (!items.length) return;
@@ -523,6 +682,26 @@ function wireVideos(root) {
   $$("a[data-external]", root).forEach(a => a.addEventListener("click", e => { e.preventDefault(); openExternal(a.href); }));
 }
 function loggedSets(it) { return W.sets[it.id] || []; }
+/* The first exercise still to do is marked on the screen; a session's progress is counted in working sets. */
+let NEXT_ID = null;
+function itemComplete(it) {
+  if (W.skipped[it.id]) return true;
+  const ex = it.exercise || exById(it.exercise_id) || {}, kind = entryMode(ex).kind;
+  if (kind === "cardio") return W.cardio.some(c => String(c.plan_item_id) === String(it.id));
+  if (kind === "routine") return false;
+  return loggedSets(it).filter(s => !s.is_warmup).length >= (it.sets || 3);
+}
+function workoutProgress() {
+  let planned = 0, done = 0;
+  W.items.forEach(it => {
+    const ex = it.exercise || exById(it.exercise_id) || {}, kind = entryMode(ex).kind;
+    if (kind === "cardio" || kind === "routine") return;
+    const n = it.sets || 3; planned += n;
+    done += W.skipped[it.id] ? n : Math.min(n, loggedSets(it).filter(s => !s.is_warmup).length);
+  });
+  Object.keys(W.sets).filter(k => k.startsWith("x")).forEach(k => { const n = W.sets[k].filter(s => !s.is_warmup).length; planned += Math.max(3, n); done += n; });
+  return { planned, done };
+}
 function renderItem(it) {
   const ex = it.exercise || exById(it.exercise_id) || { name: "Exercise", cues: [] };
   const mode = entryMode(ex);
@@ -530,10 +709,11 @@ function renderItem(it) {
   const skipped = W.skipped[it.id];
   const howOpen = HOWTO_OPEN.has(String(it.id));
   const hasHow = !!(ex.how_to || (ex.video && ex.video.id));
-  if (mode.kind === "cardio") return cardioCard(it, ex, skipped, howOpen);
+  const next = NEXT_ID != null && String(NEXT_ID) === String(it.id) ? " next" : "";
+  if (mode.kind === "cardio") return cardioCard(it, ex, skipped, howOpen, next);
   if (mode.kind === "routine") {
     const mins = it.minutes || 3;
-    return `<div class="ex${skipped ? " done" : ""}" data-item="${it.id}">
+    return `<div class="ex${skipped ? " done" : next}" data-item="${it.id}">
       <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${n0(mins)} min</span></h3>
       <ul class="cues">${(ex.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ul>
       ${howOpen ? howToBlock(ex, { cues: false }) : ""}</div>
@@ -548,8 +728,15 @@ function renderItem(it) {
     rows.push(warmRow(it, ex, 2, Math.max(barOf(ex), roundLoad(it.target.weight * 0.75, ex)), 4));
   }
   const working = done.filter(s => !s.is_warmup);
-  working.forEach(s => rows.push(`<div class="set logged" data-edit="${s.client_id}" data-item="${it.id}"><span class="n">${s.set_no}</span>
-    <span class="sum">${fmtSet(ex, mode, s.reps, s.weight)}<small>${s.rpe ? "RPE " + s.rpe : ""}</small></span><span class="tick">✓</span></div>`));
+  const complete = skipped || working.length >= planned;
+  const scheme = `${planned} x ${it.rep_low}-${it.rep_high}${mode.time ? " s" : ""}${mode.perSide ? " each side" : ""}${mode.perHand ? ", each hand" : ""}`;
+  if (complete && !UI.exOpen.has(String(it.id)) && !W.open[it.id]) {
+    // Finished: fold the card to one line so the rest of the session is easy to find. Tap to open it again.
+    return `<div class="ex done" data-item="${it.id}"><div class="ex-top" data-toggle="${it.id}" role="button" tabindex="0"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${scheme}</span></h3>
+      <div class="done-sum"><span class="tick">✓</span><span>${skipped ? "Skipped" : esc(summariseSets(working, ex))}</span>${working.some(x => x.pr) ? `<span class="pill pr">PR</span>` : ""}</div></div><span class="muted small">Open</span></div></div>`;
+  }
+  working.forEach(s => rows.push(`<div class="set logged${UI.lastSet === s.client_id ? " fresh" : ""}" data-edit="${s.client_id}" data-item="${it.id}"><span class="n">${s.set_no}</span>
+    <span class="sum">${fmtSet(ex, mode, s.reps, s.weight)}<small>${s.rpe ? "RPE " + s.rpe : ""}</small>${s.pr ? ` <span class="pill pr" title="${esc(s.pr)}">PR</span>` : ""}</span><span class="tick">✓</span></div>`));
   if (!skipped && (working.length < planned || W.open[it.id])) {
     const n = working.length + 1;
     const last = working[working.length - 1];
@@ -557,14 +744,14 @@ function renderItem(it) {
     const defR = last ? last.reps : it.rep_low;
     rows.push(setEntryRow(it, ex, n, defW, defR, mode));
   }
-  const scheme = `${planned} x ${it.rep_low}-${it.rep_high}${mode.time ? " s" : ""}${mode.perSide ? " each side" : ""}${mode.perHand ? ", each hand" : ""}`;
-  return `<div class="ex${working.length >= planned || skipped ? " done" : ""}" data-item="${it.id}">
+  return `<div class="ex${complete ? " done" : next}" data-item="${it.id}">
     <div class="ex-top"><div class="grow"><h3>${esc(ex.name)} <span class="scheme">${scheme}</span></h3>
       <div class="target">${targetLine(it)}</div>
       ${howOpen ? howToBlock(ex) : ""}</div></div>
     <div class="sets">${skipped ? `<div class="muted small">Skipped. <button class="link" data-unskip="${it.id}">Undo</button></div>` : rows.join("")}</div>
     <div class="tools"><button class="ghost" data-howto="${it.id}">${howOpen ? "Hide how-to" : "How to do it"}</button>
       ${!skipped && working.length >= planned ? `<button class="ghost" data-more="${it.id}">Add a set</button>` : ""}
+      ${complete ? `<button class="ghost" data-collapse="${it.id}">Fold up</button>` : ""}
       ${!it.adhoc && !working.length && !skipped ? `<button class="ghost" data-swap="${it.id}">Swap</button><button class="ghost" data-skip="${it.id}">Skip</button>` : ""}</div></div>`;
 }
 /* Treadmill, bike and rower anywhere in the session: a timer and a cardio log, never weight and reps. */
@@ -574,14 +761,14 @@ function cardioMinutes(it) {
   if (p && p.work_sec) return Math.round((it.rounds || 6) * (p.work_sec + (p.rest_sec || 0)) / 60);
   return 10;
 }
-function cardioCard(it, ex, skipped, howOpen) {
+function cardioCard(it, ex, skipped, howOpen, next) {
   const c = W.cardio.find(x => String(x.plan_item_id) === String(it.id));
   const mins = cardioMinutes(it);
   const label = it.section === "finisher" ? " finisher" : it.section === "warmup" ? " warm-up" : "";
   const timerBtn = it.protocol_detail && it.protocol_detail.work_sec ? `<button data-interval="${it.id}">Interval timer</button>` : `<button data-countdown="${it.id}">${n0(mins)} min timer</button>`;
   const head = `<h3>${esc(ex.name)}${label} <span class="scheme">${n0(mins)} min</span></h3><div class="target">${esc(it.protocol_text || "Steady pace.")}</div>${howOpen ? howToBlock(ex, { cues: false }) : ""}`;
-  if (it.section === "warmup") return `<div class="ex${skipped ? " done" : ""}" data-item="${it.id}"><div class="ex-top"><div class="grow">${head}</div><button class="${skipped ? "" : "good"}" data-tickwu="${it.id}">${skipped ? "Undo" : "Done"}</button></div><div class="tools">${timerBtn}</div></div>`;
-  return `<div class="ex${c || skipped ? " done" : ""}" data-item="${it.id}"><div class="ex-top"><div class="grow">${head}</div></div>
+  if (it.section === "warmup") return `<div class="ex${skipped ? " done" : next || ""}" data-item="${it.id}"><div class="ex-top"><div class="grow">${head}</div><button class="${skipped ? "" : "good"}" data-tickwu="${it.id}">${skipped ? "Undo" : "Done"}</button></div><div class="tools">${timerBtn}</div></div>`;
+  return `<div class="ex${c || skipped ? " done" : next || ""}" data-item="${it.id}"><div class="ex-top"><div class="grow">${head}</div></div>
     <div class="tools">${c ? `<span class="pill good">Logged ${esc(fmtCardio(c))}</span><button class="ghost" data-uncardio="${it.id}">Remove</button>` : skipped ? `<span class="pill">Skipped</span><button class="ghost" data-unskip="${it.id}">Undo</button>` :
       `${timerBtn}<button class="good" data-logcardio="${it.id}">Log it</button><button class="ghost" data-skip="${it.id}">Skip</button>`}</div></div>`;
 }
@@ -708,6 +895,8 @@ function wireWorkout(root) {
   $$("[data-howto]", root).forEach(b => b.addEventListener("click", () => { const k = b.dataset.howto; if (HOWTO_OPEN.has(k)) HOWTO_OPEN.delete(k); else HOWTO_OPEN.add(k); renderWorkout(); }));
   wireVideos(root);
   $$("[data-more]", root).forEach(b => b.addEventListener("click", () => { W.open[b.dataset.more] = true; saveW(); renderWorkout(); }));
+  $$("[data-toggle]", root).forEach(h => h.addEventListener("click", () => { UI.exOpen.add(h.dataset.toggle); renderWorkout(); }));
+  $$("[data-collapse]", root).forEach(b => b.addEventListener("click", () => { UI.exOpen.delete(b.dataset.collapse); delete W.open[b.dataset.collapse]; saveW(); renderWorkout(); }));
   $$("[data-skip]", root).forEach(b => b.addEventListener("click", () => { W.skipped[b.dataset.skip] = true; saveW(); renderWorkout(); }));
   $$("[data-unskip]", root).forEach(b => b.addEventListener("click", () => { delete W.skipped[b.dataset.unskip]; saveW(); renderWorkout(); }));
   $$("[data-tickwu]", root).forEach(b => b.addEventListener("click", () => { const k = b.dataset.tickwu; if (W.skipped[k]) delete W.skipped[k]; else W.skipped[k] = true; saveW(); renderWorkout(); }));
@@ -734,19 +923,41 @@ function strayItem(key) {
   const exId = +String(key).slice(1);
   return { id: key, section: "accessory", exercise_id: exId, exercise: exById(exId), sets: 3, rep_low: 8, rep_high: 12, rest_sec: 90, adhoc: true };
 }
+/* A set that beats your best on that exercise gets a PR flag the moment it is logged, from the bests that came with
+   today's plan. Later sets in the same workout have to beat the new mark. Mirrors Engine.prsForWorkout. */
+function prCheck(it, ex, reps, weight) {
+  const b = T && T.bests && T.bests[String(it.exercise_id)];
+  if (!b || !b.has_history || ex.timed || !(reps > 0)) return null;
+  const bw = (T && T.bodyweight) || (S && S.weight && S.weight.trend) || 80;
+  const load = ex.equipment === "assisted" ? Math.max(0, (ex.bodyweight_fraction || 0) * bw - (weight || 0)) : (weight || 0) + (ex.bodyweight_fraction || 0) * bw;
+  if (!(load > 0)) return null;
+  W.prs = W.prs || {};
+  const mine = W.prs[it.exercise_id] = W.prs[it.exercise_id] || { e1rm: b.best_e1rm, weight: b.best_weight, reps: Object.assign({}, b.reps_at_weight) };
+  const out = [];
+  const e = reps <= 12 && !ex.bodyweight_fraction ? Math.round(load * (1 + reps / 30) * 100) / 100 : null;
+  if (e && mine.e1rm && e > mine.e1rm) { out.push(`estimated 1RM ${n1(e)} kg, up from ${n1(mine.e1rm)}`); mine.e1rm = e; }
+  if (mine.weight && load > mine.weight) { out.push(`heaviest set yet at ${kg(load)}`); mine.weight = load; }
+  const k = String(Math.round(load * 100) / 100);
+  if (mine.reps[k] != null && reps > mine.reps[k]) { out.push(`${reps} reps at ${kg(load)}, previous best ${mine.reps[k]}`); mine.reps[k] = reps; }
+  return out.length ? out : null;
+}
 function logSet(it, reps, weight, rpe, is_warmup, quiet) {
   const key = it.id;
   const list = W.sets[key] = W.sets[key] || [];
   const set_no = list.filter(s => !s.is_warmup).length + (is_warmup ? 0 : 1) || 1;
   const cid = uid();
+  const ex = it.exercise || exById(it.exercise_id) || {};
   const rec = { client_id: cid, set_no: is_warmup ? list.filter(s => s.is_warmup).length + 1 : set_no, reps, weight, rpe, is_warmup, done_at: nowIso() };
+  const pr = is_warmup ? null : prCheck(it, ex, reps, weight);
+  if (pr) rec.pr = pr.join("; ");
   list.push(rec);
   W.local = true;
-  haptic("light");
+  UI.lastSet = cid;
+  haptic(pr ? "heavy" : "light");
   saveW();
   mutate("set", cid, { workout_client_id: W.client_id, plan_item_id: it.adhoc ? null : it.id, exercise_id: it.exercise_id, set_no: rec.set_no, reps, weight_kg: weight, rpe, is_warmup, done_at: rec.done_at });
   renderWorkout();
-  if (!quiet) startRest(it.rest_sec || (S && S.settings.rest_default_sec) || 90, (it.exercise || exById(it.exercise_id) || {}).name);
+  if (!quiet) startRest(it.rest_sec || (S && S.settings.rest_default_sec) || 90, ex.name, null, "rest", pr ? `New best on ${ex.name}: ${pr[0]}.` : null);
 }
 function editSet(itemKey, cid) {
   const it = W.items.find(i => String(i.id) === String(itemKey)) || strayItem(itemKey);
@@ -840,11 +1051,12 @@ function cancelRestAlarm() {
   if (!IS_ANDROID_APP || !window.Android.cancelRest) return;
   try { window.Android.cancelRest(); } catch (e) {}
 }
-function startRest(sec, label, endAt, kind) {
+function startRest(sec, label, endAt, kind, line) {
   REST.total = sec; REST.end = endAt || Date.now() + sec * 1000; REST.finished = false; REST.label = label || "Rest"; REST.kind = kind || "rest";
+  REST.line = line != null ? line : (notesOn() && REST.kind !== "timer" && sec >= 45 ? pickNote(tipsOf("lift", "rest", "mind"), (REST.n = (REST.n || 0) + 1) * 3)[1] : "");
   const bar = $("#timerbar"); bar.hidden = false;
   clearInterval(REST.timer);
-  ls.set("ft-rest", { end: REST.end, total: REST.total, label: REST.label, kind: REST.kind });   // survives leaving the app
+  ls.set("ft-rest", { end: REST.end, total: REST.total, label: REST.label, kind: REST.kind, line: REST.line });   // survives leaving the app
   if (REST.end > Date.now()) scheduleRestAlarm();
   const draw = () => {
     const left = Math.ceil((REST.end - Date.now()) / 1000);
@@ -854,15 +1066,18 @@ function startRest(sec, label, endAt, kind) {
       haptic("double");
       beep();
       bar.innerHTML = `<span class="t">${REST.kind === "timer" ? "Time" : "Go"}</span><span class="l">${esc(REST.label)}</span><span class="spacer"></span><button class="primary" id="restClose">${REST.kind === "timer" ? "Done" : "Next set"}</button>`;
-      $("#restClose").addEventListener("click", stopRest);
+      $("#restClose").addEventListener("click", () => { stopRest(); const nx = $("#p-workout .ex.next"); if (nx && REST.kind !== "timer") nx.scrollIntoView({ behavior: "smooth", block: "center" }); });
       setTimeout(() => { if (REST.finished) stopRest(); }, 8000);
       clearInterval(REST.timer);
       return;
     }
-    bar.innerHTML = `<span class="t num">${mmss(left)}</span><span class="l">${REST.kind === "timer" ? "" : "rest, "}${esc(REST.label)}</span><span class="spacer"></span><button id="restPlus">+30 s</button><button id="restSkip">${REST.kind === "timer" ? "Stop" : "Skip"}</button>`;
-    $("#restPlus").addEventListener("click", () => { REST.end += 30000; scheduleRestAlarm(); draw(); });
-    $("#restSkip").addEventListener("click", stopRest);
+    const t = $("#restT"), b = $("#restBar");
+    if (t) t.textContent = mmss(left);
+    if (b) b.style.width = Math.max(0, Math.min(100, (1 - left / Math.max(1, REST.total)) * 100)).toFixed(1) + "%";
   };
+  bar.innerHTML = `<span class="t num" id="restT">${mmss(Math.ceil((REST.end - Date.now()) / 1000))}</span><span class="l">${REST.kind === "timer" ? "" : "rest, "}${esc(REST.label)}</span><span class="spacer"></span><button id="restPlus">+30 s</button><button id="restSkip">${REST.kind === "timer" ? "Stop" : "Skip"}</button>${REST.line ? `<span class="tipline">${esc(REST.line)}</span>` : ""}<div class="bar"><span id="restBar"></span></div>`;
+  $("#restPlus").addEventListener("click", () => { REST.end += 30000; REST.total += 30; scheduleRestAlarm(); draw(); });
+  $("#restSkip").addEventListener("click", stopRest);
   draw();
   REST.timer = setInterval(draw, 500);
 }
@@ -872,7 +1087,7 @@ function resumeRest() {
   const r = ls.get("ft-rest");
   if (!r || !W) { ls.del("ft-rest"); return; }
   if (r.end - Date.now() < -120000) { ls.del("ft-rest"); return; }   // long over, nothing to show
-  startRest(r.total, r.label, r.end, r.kind);
+  startRest(r.total, r.label, r.end, r.kind, r.line || "");
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && W && $("#timerbar").hidden && ls.get("ft-rest")) resumeRest(); });
 /* iPhones only allow sound after a tap, so the audio context is opened on the first touch and kept. */
@@ -940,6 +1155,7 @@ function finishSheet() {
   const sum = localSummary();
   openSheet(`<div class="handle"></div><h2>Finish ${esc(W.title)}</h2>
     <div class="summary"><div class="parts"><div><b>${sum.sets}</b><span>working sets</span></div><div><b>${n0(sum.volume)}</b><span>kg lifted</span></div><div><b>${sum.hard}</b><span>hard sets</span></div></div></div>
+    ${notesOn() ? `<p class="hint mt" style="margin-bottom:0">${esc(finishLine(sum))}</p>` : ""}
     <p class="hint mt">Calories and the effort score are worked out on the laptop once this syncs. If your watch gave you numbers, type them in.</p>
     <div class="f-row"><label class="field grow"><span>Calories from your watch, optional</span><input type="number" inputmode="numeric" id="f-kcal"></label>
     <label class="field grow"><span>Average heart rate, optional</span><input type="number" inputmode="numeric" id="f-hr"></label>
@@ -972,6 +1188,7 @@ async function showWorkoutSummary(cid) {
     openSheet(`<div class="handle"></div><h2>${esc(d.session ? d.session.title : "Workout")} done</h2>
       <div class="summary"><div class="row" style="align-items:baseline;gap:14px"><div class="big num">${d.effort ?? "-"}</div><div><div class="tiny muted">effort out of 100</div><div class="muted small">${n0(d.kcal_used)} kcal burned${d.kcal_wearable ? " (from your watch)" : " (estimated)"}</div></div></div>
       <div class="parts"><div><b>${d.work_sets}</b><span>sets</span></div><div><b>${n0(d.volume)}</b><span>kg lifted</span></div><div><b>${d.hard_sets}</b><span>hard sets</span></div></div>
+      ${notesOn() && effortLine(d.effort) ? `<p class="hint mt" style="margin-bottom:0">${esc(effortLine(d.effort))}</p>` : ""}
       ${parts.volume != null ? `<p class="hint mt">Effort parts: volume ${n1(parts.volume)}, hard sets ${n1(parts.hard_sets)}, calories ${n1(parts.calories)}${parts.ref_volume ? `. Your usual volume for this session is ${n0(parts.ref_volume)} kg` : ""}.</p>` : ""}
       ${d.prs && d.prs.length ? `<h3 class="mt">Personal bests</h3><ul class="prs">${d.prs.map(p => `<li><b>${esc(p.exercise)}</b>: ${esc(prText(p))}</li>`).join("")}</ul>` : ""}</div>
       <div class="row mt2"><button class="primary big" id="sumClose">Close</button></div>`, sh => $("#sumClose", sh).addEventListener("click", closeSheet));
@@ -1082,11 +1299,11 @@ async function renderFood() {
   const day = await foodDay(date);
   const tg = isToday && S.targets && S.targets.complete ? S.targets : null;
   const totals = day.totals;
-  const bar = tg ? `<div class="card"><div class="between"><div><span class="kicker muted small">Left today</span><div class="display num${tg.left < 0 ? " crit-ink" : ""}" style="font-size:34px;font-weight:600">${n0(tg.budget - totals.kcal)} <span class="muted" style="font-size:16px">kcal</span></div></div>
-      <div class="muted small">${n0(totals.kcal)} of ${n0(tg.budget)} eaten</div></div>
+  const bar = tg ? `<div class="card"><div class="ringrow">${ringSvg(tg.budget ? totals.kcal / tg.budget : 0, "sm" + (tg.budget - totals.kcal < 0 ? " over" : ""), `<b class="num${tg.budget - totals.kcal < 0 ? " crit-ink" : ""}">${n0(tg.budget - totals.kcal)}</b><span>left</span>`)}
+      <div class="sidekv"><div><b class="num fuel-ink">${n0(totals.kcal)}</b><span>eaten</span></div><div><b class="num">${n0(tg.budget)}</b><span>budget</span></div><div><b class="num">${n0(Math.max(0, tg.protein - totals.protein))} g</b><span>protein to go</span></div></div></div>
       <div class="macros"><div class="macro"><b>Protein</b><div class="meter fuel${totals.protein > tg.protein * 1.1 ? " over" : ""}"><span style="width:${Math.min(100, totals.protein / tg.protein * 100)}%"></span></div><span class="num">${n0(totals.protein)} / ${n0(tg.protein)} g</span></div>
       <div class="macro"><b>Carbs</b><div class="meter fuel"><span style="width:${Math.min(100, totals.carb / tg.carbs * 100)}%"></span></div><span class="num">${n0(totals.carb)} / ${n0(tg.carbs)} g</span></div>
-      <div class="macro"><b>Fat</b><div class="meter fuel"><span style="width:${Math.min(100, totals.fat / tg.fat * 100)}%"></span></div><span class="num">${n0(totals.fat)} / ${n0(tg.fat)} g</span></div></div></div>` :
+      <div class="macro"><b>Fat</b><div class="meter fuel"><span style="width:${Math.min(100, totals.fat / tg.fat * 100)}%"></span></div><span class="num">${n0(totals.fat)} / ${n0(tg.fat)} g</span></div></div>${foodTip(totals, tg)}</div>` :
     `<div class="card"><div class="between"><b>${n0(totals.kcal)} kcal</b><span class="muted small">${n0(totals.protein)} g protein, ${n0(totals.carb)} g carbs, ${n0(totals.fat)} g fat</span></div></div>`;
   const canScan = "BarcodeDetector" in window;
   root.innerHTML = `<div class="daynav mb"><button class="ghost" id="fdPrev" aria-label="Previous day">‹</button><h2>${isToday ? "Today" : fmtDay(date)}</h2><button class="ghost" id="fdNext" aria-label="Next day">›</button>${isToday ? "" : `<button class="ghost" id="fdToday">Today</button>`}</div>
@@ -1354,6 +1571,7 @@ async function renderProgress() {
   catch (e) { root.innerHTML = `<div class="card"><h2>Progress</h2><p class="hint">${esc(e.message)}</p></div>`; return; }
   const p = PROGRESS;
   root.innerHTML = `<div class="row mb"><div class="chips">${[30, 90, 180, 365].map(d => `<button class="chip${UI.progressDays === d ? " on" : ""}" data-days="${d}">${d === 365 ? "Year" : d + " days"}</button>`).join("")}</div></div>
+    ${(() => { const ss = p.sessions || [], vol = ss.reduce((a, x) => a + (x.volume || 0), 0), eff = ss.filter(x => x.effort != null), sets = ss.reduce((a, x) => a + (x.work_sets || 0), 0); return `<div class="card stats"><div><span class="l">Sessions</span><b class="num">${ss.length}</b><span class="f">in ${UI.progressDays === 365 ? "a year" : UI.progressDays + " days"}</span></div><div><span class="l">Lifted</span><b class="num">${vol >= 10000 ? n1(vol / 1000) + " t" : n0(vol) + " kg"}</b><span class="f">${plural(sets, "working set")}</span></div><div><span class="l">Effort</span><b class="num">${eff.length ? n0(eff.reduce((a, x) => a + x.effort, 0) / eff.length) : "-"}</b><span class="f">average of 100</span></div></div>`; })()}
     <div class="card"><h2>Strength on the main lifts</h2><p class="hint">Estimated one-rep max, best set each week. Hollow points come from sets over 12 reps, where the estimate is rough.</p><div class="legend" id="strLegend"></div><div id="strChart"></div>
       <div id="relStrength" class="mt"></div></div>
     <div class="card"><h2>Strength index</h2><p class="hint">Average gain across the four main lifts against your first three weeks. A dashed segment means a lift was not trained that week and its last value carries over.</p><div id="idxChart"></div></div>
@@ -1443,7 +1661,7 @@ function renderSettings() {
   const root = $("#p-settings");
   if (!S) { root.innerHTML = `<div class="card"><h2>Settings</h2><p class="hint">Settings need the laptop.</p></div>`; return; }
   const st = S.settings, tg = S.targets;
-  const field = (k, label, type, extra = "") => `<label class="field"><span>${label}</span><input type="${type}" id="s-${k}" value="${st[k] ?? ""}" ${extra}></label>`;
+  const field = (k, label, type, extra = "") => `<label class="field"><span>${label}</span><input type="${type}" id="s-${k}" value="${esc(st[k] ?? "")}" ${extra}></label>`;
   const days = st.train_days || [];
   const kit = st.cardio_kit || [];
   const fold = (key, title, sub, body) => `<details class="card fold"${UI.folds.has(key) ? " open" : ""} data-fold="${key}"><summary><h2>${title}</h2>${sub ? `<span class="muted small">${sub}</span>` : ""}</summary><div class="fold-body">${body}</div></details>`;
@@ -1452,7 +1670,7 @@ function renderSettings() {
   root.innerHTML = `
     <div class="card"><h2>You</h2><p class="hint">Used for the calorie maths only. Nothing leaves this device.</p>
       <div class="f-row"><label class="field narrow"><span>Sex</span><select id="s-sex"><option value="m"${st.sex === "m" ? " selected" : ""}>Male</option><option value="f"${st.sex === "f" ? " selected" : ""}>Female</option></select></label>
-      ${field("birth_date", "Birth date", "date")}${field("height_cm", "Height (cm)", "number", 'inputmode="decimal" step="0.5"')}${field("start_weight_kg", "Starting weight (kg)", "number", 'inputmode="decimal" step="0.1"')}</div></div>
+      ${field("birth_date", "Birth date", "date")}${field("height_cm", "Height (cm)", "number", 'inputmode="decimal" step="0.5"')}${field("start_weight_kg", "Starting weight (kg)", "number", 'inputmode="decimal" step="0.1"')}${field("display_name", "What to call you, optional", "text", 'autocomplete="given-name" maxlength="40"')}</div></div>
     <div class="card"><h2>Your goal</h2><p class="hint">${tg && tg.complete ? `Right now that means about <b>${n0(tg.budget)} kcal</b> a day with <b>${n0(tg.protein)} g protein</b>, ${tg.mode === "losing" ? "losing" : tg.mode === "gaining" ? "gaining" : "holding at"} ${tg.mode === "maintaining" ? "your target" : n1(Math.abs(tg.weekly_pace || 0)) + " kg a week"}.` : "Set a target weight and date and the app works out the daily numbers."}</p>
       <div class="f-row">${field("target_weight_kg", "Target weight (kg)", "number", 'inputmode="decimal" step="0.1"')}${field("target_date", "Target date", "date")}
       <label class="field narrow"><span>Daily life activity</span><select id="s-neat_factor">${[[1.2, "Mostly sitting"], [1.3, "Light, some walking"], [1.4, "On my feet a lot"]].map(([v, l]) => `<option value="${v}"${+st.neat_factor === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div>
@@ -1478,7 +1696,8 @@ function renderSettings() {
       <div class="cap">Theme</div><div class="chips mb" id="s-theme">${[["system", "Same as the device"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) => `<button type="button" class="chip${theme === k ? " on" : ""}" data-theme="${k}">${l}</button>`).join("")}</div>
       <div class="cap">Colour</div><div class="swatches" id="s-accent">${ACCENTS.map(([k, hex, name]) => `<button type="button" class="swatch${accent === k ? " on" : ""}" data-accent="${k}" style="--sw:${hex}" title="${name}" aria-label="${name}"></button>`).join("")}
         <label class="swatch custom${custom ? " on" : ""}" title="Pick your own" style="--sw:${custom ? accent : "transparent"}"><input type="color" id="s-accentPick" value="${custom ? accent : "#3E6B48"}" aria-label="Pick your own colour"></label></div>
-      <p class="hint mt">Remembered on this device. Buttons, tabs and the week's dots take the colour you pick; the charts keep their own.</p></div>
+      <p class="hint mt">Remembered on this device. Buttons, tabs and the week's dots take the colour you pick; the charts keep their own.</p>
+      <div class="row mt"><label class="switch"><input type="checkbox" id="s-notes" ${notesOn() ? "checked" : ""}><span class="slider"></span><span>A quote and a tip on Today, and a tip while you rest</span></label></div></div>
     ${fold("exlib", "Exercise library", `${(S.exercises || []).filter(e => e.active !== false && e.active !== 0).length} on`, `<p class="hint">Switch off anything your gym does not have and the plan stops picking it. Edit the cues to suit you, or add your own exercise.</p>
       <div class="row mb"><input type="search" id="exQ" placeholder="Search exercises" value="${esc(UI.exQ)}" style="max-width:260px"><button id="exAdd">Add an exercise</button></div><div id="exList" class="exlib"></div>`)}
     ${fold("foods", "Foods and meals", "", `<p class="hint">Foods you added or accepted from an online search. Hide anything wrong; the bundled list stays.</p><div id="myFoods"></div><div id="myMeals" class="mt"></div>`)}
@@ -1489,13 +1708,14 @@ function renderSettings() {
       <div class="row mt"><button id="csvSets">Sets CSV</button><button id="csvFood">Food CSV</button><button id="csvBody">Body CSV</button></div>
       <div class="row mt"><button class="danger" id="bkWipe">Start fresh</button><span class="muted small">Removes everything on this device. Export first.</span></div>
       <p class="hint mt" id="bkInfo"></p>`)}
-    ${fold("updates", "Updates", updateState().newer ? "one waiting" : "", `<p class="hint">New versions are published on GitHub. The app checks by itself when it opens, at most every six hours, and shows a banner when there is one. ${IS_ANDROID_APP ? "Updating downloads the new package and opens the installer; your data stays." : "Updating reloads the app into the newest build."}</p>
+    ${fold("updates", "Updates", updateState().newer ? "one waiting" : "", `<p class="hint">New versions are published on GitHub. The app checks by itself when it opens, at most every six hours, and shows a banner with what is new. ${IS_ANDROID_APP ? "Updating downloads the new package and opens the installer; your data stays." : "Updating reloads the app into the newest build."}</p>
       <div class="row"><label class="switch"><input type="checkbox" id="s-autoupdate" ${st.auto_update_check === false ? "" : "checked"}><span class="slider"></span><span>Check for updates automatically</span></label></div>
       <div class="row mt"><button id="upCheck">Check now</button><span class="muted small" id="upInfo"></span></div>
-      <p class="hint mt" id="upLast">${lastCheckedText()}</p>`)}`;
+      <p class="hint mt" id="upLast">${lastCheckedText()}</p>
+      ${BUNDLE.whats_new && BUNDLE.whats_new.notes && BUNDLE.whats_new.notes.length ? `<div class="cap mt">This version${appVersion() ? ", " + esc(appVersion()) : ""}${BUNDLE.whats_new.date ? ", " + esc(fmtShort(BUNDLE.whats_new.date)) : ""}</div><ul class="steps">${BUNDLE.whats_new.notes.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}`)}`;
 
   const bind = (k, parse, msg) => { const el = $("#s-" + k, root); if (!el) return; el.addEventListener("change", () => { const v = el.value === "" ? null : (parse ? parse(el.value) : el.value); saveSettings({ [k]: v }, msg); }); };
-  ["sex", "birth_date", "target_date", "experience", "usda_api_key"].forEach(k => bind(k));
+  ["sex", "birth_date", "target_date", "experience", "usda_api_key", "display_name"].forEach(k => bind(k));
   ["height_cm", "start_weight_kg", "target_weight_kg", "neat_factor", "deficit_cap", "protein_g_per_kg", "fat_g_per_kg", "kcal_floor", "session_minutes", "rest_default_sec"].forEach(k => bind(k, parseFloat));
   $$("#s-split .chip", root).forEach(b => b.addEventListener("click", () => saveSettings({ split: b.dataset.split }, "Plan rebuilt from today")));
   $$("#s-days .chip", root).forEach(b => b.addEventListener("click", () => {
@@ -1526,6 +1746,7 @@ function renderSettings() {
   const pick = $("#s-accentPick", root);
   pick.addEventListener("input", () => applyAccent(pick.value));
   pick.addEventListener("change", () => setAccent(pick.value));
+  $("#s-notes").addEventListener("change", e => { ls.set("ft-notes", e.target.checked ? "on" : "off"); toast(e.target.checked ? "Notes on" : "Notes off"); renderAll(); });
   $("#bkExport").addEventListener("click", async () => { try { const data = await api("GET", "/api/backup.json"); await downloadText(`fitness-backup-${todayIso()}.json`, "application/json", JSON.stringify(data)); } catch (e) { toast(e.message); } });
   $("#csvSets").addEventListener("click", () => exportCsv("sets"));
   $("#csvFood").addEventListener("click", () => exportCsv("food"));
@@ -1610,25 +1831,31 @@ async function renderBackupInfo(root) {
   const appVer = IS_ANDROID_APP && window.Android.appVersion ? window.Android.appVersion() : null;
   el.textContent = `${plural(counts.workouts, "workout")} stored. ${IS_ANDROID_APP ? "Android app " + (appVer || "") : swVersion ? "Installed for offline use, version " + swVersion : "Running in the browser"}, build ${S.version}.`;
 }
-/* Updates: the Android app fetches the latest GitHub release and installs it; the web app reloads into the newest
+/* Updates. The Android app fetches the latest GitHub release and installs it; the web app reloads into the newest
    build. The check runs by itself on start and when the app comes back to the front, at most every six hours, and
-   shows a banner; it never interrupts a workout and "Later" silences that version. */
+   shows a banner with what is new; it never interrupts a workout, and Later rests that version for three days. The
+   first open after an update lands shows what changed. */
 const REPO = "Shah-Ron/fitness-tracker";
 const UPDATE_EVERY_MS = 6 * 60 * 60 * 1000;
+const SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
+let BUNDLE = {};          // version.json of this build: its version and what is new in it
+let UPDATING = false;     // a web update is in flight, so the next controllerchange reloads straight away
 const verParts = v => String(v || "").replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
 function newerVersion(a, b) { const x = verParts(a), y = verParts(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; }
 function updateState() { return ls.get("ft-update", {}) || {}; }
+const appVersion = () => IS_ANDROID_APP && window.Android.appVersion ? window.Android.appVersion() : (S ? S.version : null);
 async function latestVersion() {
   if (IS_ANDROID_APP) {
     const cur = window.Android.appVersion ? window.Android.appVersion() : "0";
     const rel = await LocalApi.fetchJson(`https://api.github.com/repos/${REPO}/releases/latest`);
     const latest = String(rel.tag_name || "").replace(/^v/, "");
     const apk = (rel.assets || []).find(a => String(a.name || "").toLowerCase().endsWith(".apk"));
-    return { latest, cur, url: apk ? apk.browser_download_url : null, newer: !!(latest && apk && newerVersion(latest, cur)) };
+    const notes = String(rel.body || "").split(/\r?\n/).map(l => l.trim()).filter(l => /^[-*] /.test(l)).map(l => l.replace(/^[-*] /, "").replace(/\*\*/g, ""));
+    return { latest, cur, url: apk ? apk.browser_download_url : null, size: apk && apk.size ? n1(apk.size / 1048576) + " MB" : null, notes, published: rel.published_at ? String(rel.published_at).slice(0, 10) : null, newer: !!(latest && apk && newerVersion(latest, cur)) };
   }
-  const v = await (await fetch("./version.json?ts=" + Date.now(), { cache: "no-store" })).json();
-  const cur = S ? S.version : null;
-  return { latest: v.version || null, cur, url: null, newer: !!(v.version && cur && v.version !== cur) };
+  const v = await (await fetch("./version.json?fresh=1&ts=" + Date.now(), { cache: "no-store" })).json();
+  const cur = S ? S.version : null, e = v.whats_new || {};
+  return { latest: v.version || null, cur, url: null, size: null, notes: e.notes || [], title: e.title || null, published: e.date || null, newer: !!(v.version && cur && v.version !== cur) };
 }
 function lastCheckedText() {
   const st = updateState(); if (!st.at) return "Not checked yet.";
@@ -1641,21 +1868,59 @@ async function autoUpdateCheck(force) {
   if (!force && st.at && Date.now() - st.at < UPDATE_EVERY_MS) { updateNotice(); return; }
   try {
     const r = await latestVersion();
-    ls.set("ft-update", { at: Date.now(), latest: r.latest, cur: r.cur, url: r.url, newer: r.newer, dismissed: st.dismissed || null });
+    ls.set("ft-update", { at: Date.now(), latest: r.latest, cur: r.cur, url: r.url, size: r.size, notes: r.notes, title: r.title, published: r.published, newer: r.newer, dismissed: st.dismissed || null, dismissedAt: st.dismissedAt || null });
   } catch (e) { ls.set("ft-update", Object.assign(st, { at: Date.now(), error: e.message })); }
   updateNotice();
   const l = $("#upLast"); if (l) l.textContent = lastCheckedText();
 }
+/* Progress of an update, written into the banner when it is up, else into the Updates fold. */
+function updateSay(msg, pct) {
+  const el = $("#updState") || $("#upInfo"); if (!el) return;
+  el.hidden = false;
+  el.innerHTML = esc(msg) + (pct != null ? `<div class="meter" style="margin-top:6px"><span style="width:${Math.max(0, Math.min(100, pct))}%"></span></div>` : "");
+}
 async function applyUpdate(r) {
+  const now = $("#updNow");
   if (IS_ANDROID_APP) {
     if (!r.url) { toast("The latest release has no package to install"); return; }
-    try { const res = window.Android.installUpdate(r.url); toast(res === "started" ? "Downloading. The installer opens when it is ready; tap Install there." : res, null, 8000); }
-    catch (e) { toast(e.message); }
+    let res;
+    try { res = window.Android.installUpdate(r.url); } catch (e) { toast(e.message); return; }
+    if (res !== "started" && res !== "running") { toast(res, null, 6000); return; }
+    if (now) now.disabled = true;
+    updateSay("Downloading", 0);
+    if (!window.Android.updateStatus) { toast("Downloading. The installer opens when it is ready; tap Install there.", null, 8000); return; }
+    let polls = 0;
+    const poll = () => {
+      let st; try { st = JSON.parse(window.Android.updateStatus()); } catch (e) { st = { status: "unknown" }; }
+      if (st.status === "running" || st.status === "pending") {
+        updateSay(`Downloading${st.total > 0 ? `, ${n1(st.bytes / 1048576)} of ${n1(st.total / 1048576)} MB` : ""}`, st.total > 0 ? st.bytes / st.total * 100 : 0);
+        setTimeout(poll, 700);
+      } else if (st.status === "done") {
+        updateSay("Downloaded. The installer opens now; tap Install there, and your data stays.", 100);
+        try { window.Android.openInstaller(); } catch (e) {}
+        if (now) now.disabled = false;
+      } else if (st.status === "failed") {
+        updateSay(`The download failed${st.reason ? ", " + st.reason : ""}. Check the connection and try again.`);
+        if (now) { now.disabled = false; now.textContent = "Try again"; }
+      } else if (++polls < 80) setTimeout(poll, 700);
+      else { updateSay("Still downloading. The installer opens when it is done."); if (now) now.disabled = false; }
+    };
+    setTimeout(poll, 500);
     return;
   }
-  toast("Reloading into the new version");
-  try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
-  setTimeout(() => location.reload(), 1200);
+  UPDATING = true;
+  if (now) now.disabled = true;
+  updateSay("Fetching the new version");
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg) {
+      await reg.update();
+      const sw = reg.installing || reg.waiting;
+      if (sw && sw.state !== "activated") await new Promise(res => { const t = setTimeout(res, 25000); sw.addEventListener("statechange", () => { if (sw.state === "activated" || sw.state === "redundant") { clearTimeout(t); res(); } }); });
+    }
+  } catch (e) {}
+  updateSay("Reloading");
+  setTimeout(() => location.reload(), 300);
 }
 async function checkForUpdate() {
   const info = $("#upInfo"), btn = $("#upCheck");
@@ -1664,17 +1929,29 @@ async function checkForUpdate() {
   btn.disabled = true;
   try {
     const r = await latestVersion();
-    ls.set("ft-update", Object.assign(updateState(), { at: Date.now(), latest: r.latest, cur: r.cur, url: r.url, newer: r.newer, dismissed: null, error: null }));
+    ls.set("ft-update", Object.assign(updateState(), { at: Date.now(), latest: r.latest, cur: r.cur, url: r.url, size: r.size, notes: r.notes, title: r.title, published: r.published, newer: r.newer, dismissed: null, dismissedAt: null, error: null }));
     if (r.newer) {
-      info.textContent = IS_ANDROID_APP ? `Version ${r.latest} is available. You have ${r.cur}.` : "A newer version is available.";
+      info.textContent = IS_ANDROID_APP ? `Version ${r.latest} is available${r.size ? ", " + r.size : ""}. You have ${r.cur}.` : `A newer build is available${r.title ? ": " + r.title : ""}.`;
       btn.textContent = IS_ANDROID_APP ? `Install ${r.latest}` : "Reload into it"; btn.classList.add("primary");
-      btn.onclick = () => { applyUpdate(r); if (IS_ANDROID_APP) { info.textContent = "Downloading. The installer opens when it is ready; tap Install there."; btn.disabled = true; } };
+      btn.onclick = () => { applyUpdate(r); btn.disabled = true; };
     } else {
-      info.textContent = `You have the latest version (${r.cur || "?"}).`;
+      info.textContent = `You have the latest version${r.cur ? " (" + r.cur + ")" : ""}.`;
     }
     updateNotice();
   } catch (e) { info.textContent = "Could not check: " + e.message; }
   finally { btn.disabled = false; const l = $("#upLast"); if (l) l.textContent = lastCheckedText(); }
+}
+/* The first open after an update: a short sheet with what changed. Nothing on a first install. */
+function whatsNewOnce() {
+  const cur = appVersion(); if (!cur) return;
+  const seen = ls.get("ft-seen-version");
+  if (!seen) { ls.set("ft-seen-version", cur); return; }
+  if (seen === cur || W) return;
+  const e = BUNDLE.whats_new;
+  ls.set("ft-seen-version", cur);
+  if (!e || !e.notes || !e.notes.length) return;
+  setTimeout(() => openSheet(`<div class="handle"></div><h2>Updated to ${esc(cur)}</h2><p class="hint">${esc(e.title || "What is new")}${e.date ? ", " + esc(fmtShort(e.date)) : ""}.</p>
+    <ul class="steps">${e.notes.map(x => `<li>${esc(x)}</li>`).join("")}</ul><div class="row mt2"><button class="primary big" id="wnClose">Got it</button></div>`, sh => $("#wnClose", sh).addEventListener("click", closeSheet)), 900);
 }
 async function downloadText(name, mime, text) {
   if (IS_ANDROID_APP) { window.Android.saveFile(name, mime, text); toast(`Saved ${name} to Downloads`); return; }
@@ -1693,7 +1970,7 @@ async function downloadText(name, mime, text) {
 /* ---------------------------------------------------------- boot */
 (async () => {
   let version = "dev";
-  try { version = (await (await fetch("./version.json", { cache: "no-store" })).json()).version || "dev"; } catch (e) {}
+  try { BUNDLE = await (await fetch("./version.json", { cache: "no-store" })).json(); version = BUNDLE.version || "dev"; } catch (e) { BUNDLE = {}; }
   try { await LocalApi.init(version); }
   catch (e) { console.error(e); $("main").innerHTML = `<div class="card"><h2>Could not start</h2><p class="hint">${esc(e.message)}. Reload the app.</p></div>`; return; }
   saveW();
@@ -1701,6 +1978,7 @@ async function downloadText(name, mime, text) {
   switchTab(UI.tab);
   await load();
   if (W) { tickElapsed(); resumeRest(); }
+  whatsNewOnce();
   autoUpdateCheck();
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") autoUpdateCheck(); });
 })();

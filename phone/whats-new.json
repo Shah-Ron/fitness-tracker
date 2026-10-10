@@ -1,0 +1,71 @@
+[
+  {
+    "date": "2026-10-11",
+    "title": "A cleaner Today, personal bests as they happen, notes and tips, and better updates",
+    "notes": [
+      "Today greets you by name, shows calories left as a ring, and carries a short note and a tip for the day. Settings, Look switches the notes off.",
+      "Workout: a progress line for the session, the next exercise marked, finished exercises folded to one line, and a PR flag the moment a set beats your best.",
+      "The rest timer drains a bar as the rest runs out and shows a tip, or the personal best you just set.",
+      "Food shows the ring too, with how much protein is still to go and a tip that reacts to the day.",
+      "Progress opens with a summary row: sessions, kilograms lifted and average effort.",
+      "Updates: the banner lists what is new, Android shows the download as it happens, and the first open after an update tells you what changed."
+    ]
+  },
+  {
+    "date": "2026-10-10",
+    "title": "Pick your own colour, and a simpler, quieter app",
+    "notes": [
+      "Settings, Look: light, dark or the same as the device, and a colour of your own from seven swatches or a picker.",
+      "A fixed bottom bar with Today, Workout, Food, Plan and More, where More opens Progress, History and Settings.",
+      "Settings folded into short sections; Today's stats in one row; shorter labels on the week strip."
+    ]
+  },
+  {
+    "date": "2026-10-10",
+    "title": "More than one session a day, and the steppers redrawn",
+    "notes": [
+      "A day can hold more than one session, and Settings has a sessions-a-day choice.",
+      "The weight stepper is drawn as a dumbbell and the reps stepper as a tally that fills towards the target."
+    ]
+  },
+  {
+    "date": "2026-10-06",
+    "title": "Automatic update check, HIIT and Cardio-first splits",
+    "notes": [
+      "The app checks GitHub for a new version by itself and shows a banner with an Update button.",
+      "Two new training splits: HIIT, with interval sessions and a circuit, and Cardio first, with intervals, tempo and a long steady session."
+    ]
+  },
+  {
+    "date": "2026-10-04",
+    "title": "Every exercise asks for what it needs",
+    "notes": [
+      "Hold timers for planks and carries, cardio cards with timers for the machines, and plates a side on every barbell lift."
+    ]
+  },
+  {
+    "date": "2026-10-03",
+    "title": "Plates per side, a rest timer that survives leaving the app, USDA search and drinks",
+    "notes": [
+      "Barbell weights can be typed as the total or as plates each side.",
+      "The rest timer carries on where it was when you come back to the app.",
+      "Online search asks USDA FoodData Central for dishes and drinks, and a drinks list is bundled."
+    ]
+  },
+  {
+    "date": "2026-09-27",
+    "title": "How-to notes and videos, warm-up and cool-down routines, iPhone web app",
+    "notes": [
+      "Every exercise has a short description, form cues and a verified video.",
+      "Warm-up and cool-down routines on every session.",
+      "The web app installs on an iPhone from Safari's Share menu."
+    ]
+  },
+  {
+    "date": "2026-09-26",
+    "title": "First release",
+    "notes": [
+      "Workouts, a rotating four-week plan, food with calories and macros, progress charts and backups, all stored on the phone."
+    ]
+  }
+]

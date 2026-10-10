@@ -2,7 +2,9 @@
 
 Merges the three food lists into phone\\data\\foods.json, copies the exercise
 library, the programme template and the icons into phone\\, stamps the service
-worker with a version made from the app files, and writes phone\\version.json.
+worker with a version made from the app files, and writes phone\\version.json
+with the newest entry of phone\\whats-new.json, which the app shows as what is
+new in this build.
 The phone\\ folder is then a complete static app: publish it with GitHub Pages,
 serve it from any web server, or let the Android build copy it into the
 package as assets.
@@ -68,15 +70,20 @@ def main():
         src = os.path.join(ROOT, name)
         if os.path.exists(src):
             shutil.copy(src, os.path.join(PHONE, name))
-    app_files = ["index.html", "app.js", "engine.js", "store.js", "local-api.js", "sw.src.js", "manifest.webmanifest",
+    app_files = ["index.html", "app.js", "engine.js", "store.js", "local-api.js", "sw.src.js", "manifest.webmanifest", "whats-new.json",
                  os.path.join("data", "exercises.json"), os.path.join("data", "programme.json"), os.path.join("data", "foods.json")]
     version = sha([os.path.join(PHONE, f) for f in app_files if os.path.exists(os.path.join(PHONE, f))])
     with open(os.path.join(PHONE, "sw.src.js"), encoding="utf-8") as fh:
         sw = fh.read().replace("__BUILD__", version)
     with open(os.path.join(PHONE, "sw.js"), "w", encoding="utf-8") as fh:
         fh.write(sw)
+    notes = []
+    whats_new = os.path.join(PHONE, "whats-new.json")
+    if os.path.exists(whats_new):
+        with open(whats_new, encoding="utf-8") as fh:
+            notes = json.load(fh)
     with open(os.path.join(PHONE, "version.json"), "w", encoding="utf-8") as fh:
-        json.dump({"version": version}, fh)
+        json.dump({"version": version, "whats_new": notes[0] if notes else None}, fh, ensure_ascii=False)
     print(f"phone edition built: {len(rows)} foods, version {version}")
     return 0
 

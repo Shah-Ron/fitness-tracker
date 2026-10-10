@@ -27,6 +27,10 @@ self.addEventListener("fetch", event => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;       // Open Food Facts goes straight through
+  if (url.searchParams.has("fresh")) {                     // the update check asks the server, never the cache
+    event.respondWith(fetch(req).catch(() => new Response("{}", { status: 503, headers: { "Content-Type": "application/json" } })));
+    return;
+  }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const hit = await cache.match(req, { ignoreSearch: true });

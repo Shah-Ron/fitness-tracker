@@ -131,9 +131,15 @@ header.top { display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
 .notice .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
 .notice.warn .dot { background: var(--warn); } .notice.crit .dot { background: var(--crit); }
 #notice:empty { display: none; }
-.upd { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--accent-tint); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin: 10px 0; font-size: 14px; color: var(--ink-2); }
-.upd .spacer { flex: 1; }
+.upd { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; background: var(--accent-tint); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin: 0 0 14px; font-size: 14px; color: var(--ink-2); }
+.upd b { color: var(--ink); }
+.upd .acts { display: flex; gap: 6px; }
 .upd button { min-height: 36px; }
+.upd details { grid-column: 1 / -1; font-size: 13.5px; }
+.upd details > summary { cursor: pointer; color: var(--accent-ink); font-weight: 600; list-style: none; }
+.upd details > summary::-webkit-details-marker { display: none; }
+.upd ul { margin: 6px 0 0; padding-left: 18px; }
+.upd .state { grid-column: 1 / -1; font-size: 13px; }
 
 .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; color: var(--muted); }
 .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -160,6 +166,8 @@ nav.tiles { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 20px; borde
   .bottombar button { flex: 1 1 0; min-width: 0; border: 0; background: transparent; min-height: 52px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 600; color: var(--muted); font-family: var(--display); padding: 4px 2px; }
   .bottombar button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .bottombar button.on { color: var(--accent-ink); background: var(--accent-tint); }
+  .bottombar button { position: relative; }
+  .bottombar .live { position: absolute; top: 7px; left: calc(50% + 10px); width: 8px; height: 8px; border-radius: 50%; background: var(--burn); animation: pulse 1.6s ease-in-out infinite; }
   header.top { margin-bottom: 14px; }
 }
 .more { display: grid; gap: 8px; }
@@ -233,7 +241,7 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .day { all: unset; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; padding: 8px 2px; border-radius: 12px; border: 1px solid transparent; }
 .day:hover { background: var(--panel-2); }
 .day .d { font-size: 11.5px; color: var(--muted); font-weight: 600; }
-.day .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--axis); }
+.day .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--axis); display: grid; place-items: center; font-size: 9px; line-height: 1; font-weight: 700; color: var(--on-accent); }
 .day .dot.done { background: var(--accent); border-color: var(--accent); }
 .day .dot.skipped { border-color: var(--crit); background: var(--crit-tint); }
 .day .dot.planned { border-color: var(--accent); }
@@ -260,6 +268,36 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .stats .l { display: block; font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .stats b { display: block; font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1.2; margin-top: 2px; }
 .stats .f { display: block; font-size: 12px; color: var(--ink-2); }
+.greet { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 0 2px 12px; }
+.greet h2 { font-size: 22px; margin: 0; }
+.greet .date { color: var(--muted); font-size: 13.5px; }
+/* Calories as a ring: the arc is what you have eaten, the number inside is what is left. It draws itself on first paint. */
+.ringrow { display: flex; align-items: center; gap: 18px; }
+.ring { position: relative; width: 148px; height: 148px; flex: none; --circ: 276.5; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.ring .track { fill: none; stroke: var(--panel-3); stroke-width: 10; }
+.ring .arc { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .9s var(--ease); animation: ringIn .9s var(--ease); }
+.ring.over .arc { stroke: var(--crit); }
+.ring .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 14px; }
+.ring .in b { font-family: var(--display); font-size: 34px; font-weight: 600; line-height: 1; letter-spacing: -0.01em; }
+.ring .in span { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.ring.sm { width: 96px; height: 96px; }
+.ring.sm .track, .ring.sm .arc { stroke-width: 9; }
+.ring.sm .in b { font-size: 21px; } .ring.sm .in span { font-size: 11px; margin-top: 2px; }
+@keyframes ringIn { from { stroke-dashoffset: var(--circ); } }
+.sidekv { display: grid; gap: 4px; }
+.sidekv > div { display: flex; align-items: baseline; gap: 8px; }
+.sidekv b { font-family: var(--display); font-size: 20px; font-weight: 600; min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
+.sidekv span { color: var(--muted); font-size: 13px; }
+.card.note { border-left: 3px solid var(--accent); }
+.note .nk { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+.note .between button { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+.note .q { font-family: var(--display); font-size: 17px; line-height: 1.4; font-weight: 500; margin: 4px 0 2px; }
+.note .who { color: var(--muted); font-size: 13px; }
+.note .tip { font-size: 14px; color: var(--ink-2); padding-top: 8px; border-top: 1px dashed var(--grid); margin-top: 10px; }
+.note .tip b, .hint b.t, .tipb { color: var(--accent-ink); }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (max-width: 640px) { .greet { flex-direction: column; gap: 0; align-items: flex-start; margin-bottom: 10px; } .ring { width: 132px; height: 132px; } .ring .in b { font-size: 30px; } .sidekv b { font-size: 18px; min-width: 56px; } }
 
 /* ------------------------------------------------------------ workout */
 .wk-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -267,7 +305,16 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .wk-head .elapsed { font-family: var(--display); font-size: 18px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .section-head { font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; margin: 18px 0 8px; }
 .ex { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; }
-.ex.done { opacity: .82; }
+.ex.next { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.ex.done .ex-top h3 { color: var(--ink-2); }
+.ex.done .ex-top[data-toggle] { cursor: pointer; align-items: center; }
+.ex .done-sum { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 13.5px; color: var(--ink-2); flex-wrap: wrap; }
+.ex .done-sum .tick { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-size: 12px; flex: none; }
+.pill.pr { background: var(--burn-tint); color: var(--burn-ink); }
+.wk-prog { display: flex; align-items: center; gap: 10px; margin: -4px 0 14px; font-size: 12.5px; color: var(--muted); }
+.wk-prog .meter { flex: 1; height: 6px; }
+.set.logged.fresh { animation: setIn .4s var(--ease); }
+@keyframes setIn { from { transform: scale(.96); opacity: .3; } }
 .ex .ex-top { display: flex; align-items: flex-start; gap: 10px; }
 .ex .ex-top h3 { font-size: 17px; margin: 0; }
 .ex .ex-top .scheme { color: var(--muted); font-size: 13px; }
@@ -332,6 +379,10 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .timerbar .l { font-size: 12.5px; opacity: .8; }
 .timerbar button { background: rgba(255,255,255,.14); border-color: transparent; color: inherit; min-height: 40px; }
 .timerbar button.primary { background: var(--accent); color: var(--on-accent); }
+.timerbar { flex-wrap: wrap; overflow: hidden; padding-bottom: 12px; }
+.timerbar .tipline { flex-basis: 100%; font-size: 12.5px; opacity: .8; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.timerbar .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.14); }
+.timerbar .bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .5s linear; }
 @media (max-width: 640px) { .timerbar { bottom: calc(76px + env(safe-area-inset-bottom)); } }
 .howto { margin-top: 10px; padding: 12px 14px; background: var(--panel-2); border-radius: 12px; font-size: 14px; color: var(--ink-2); line-height: 1.5; }
 .howto p { margin: 0 0 8px; }
@@ -502,7 +553,7 @@ details.sub > .fold-body { padding-top: 8px; }
 
 <nav class="bottombar" id="bottombar" aria-label="Sections">
   <button data-go="today"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Today</button>
-  <button data-go="workout"><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg>Workout</button>
+  <button data-go="workout"><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg>Workout<span class="live" hidden></span></button>
   <button data-go="food"><svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M17 3c-2 2-3 5-3 8h3v10"/></svg>Food</button>
   <button data-go="plan"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Plan</button>
   <button id="moreBtn" data-more="progress history settings"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>More</button>

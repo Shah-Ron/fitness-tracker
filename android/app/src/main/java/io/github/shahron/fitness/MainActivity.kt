@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var pendingPermission: PermissionRequest? = null
     private var downloadId: Long = -1
+    private var installerShownFor: Long = -2
     private var customView: View? = null
     private var customCallback: WebChromeClient.CustomViewCallback? = null
 
@@ -77,7 +78,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateFile(): File = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), UPDATE_FILE)
 
+    /** What the update download is doing, for the banner: none, pending, running, done or failed, with bytes so far. */
+    private fun downloadStatus(): JSONObject {
+        val out = JSONObject().put("status", "none").put("bytes", 0).put("total", 0).put("reason", "")
+        if (downloadId < 0) return out
+        val c = getSystemService(DownloadManager::class.java).query(DownloadManager.Query().setFilterById(downloadId)) ?: return out
+        c.use {
+            if (!it.moveToFirst()) return out
+            val status = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+            val reason = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+            out.put("bytes", it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)))
+            out.put("total", it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)))
+            out.put("status", when (status) {
+                DownloadManager.STATUS_SUCCESSFUL -> "done"
+                DownloadManager.STATUS_FAILED -> "failed"
+                DownloadManager.STATUS_PENDING -> "pending"
+                else -> "running"
+            })
+            if (status == DownloadManager.STATUS_FAILED) out.put("reason", when (reason) {
+                DownloadManager.ERROR_INSUFFICIENT_SPACE -> "not enough space on the phone"
+                DownloadManager.ERROR_HTTP_DATA_ERROR, DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "GitHub did not answer properly"
+                DownloadManager.ERROR_CANNOT_RESUME -> "the connection dropped"
+                else -> "error $reason"
+            })
+        }
+        return out
+    }
+
     private fun installDownloadedUpdate() {
+        if (installerShownFor == downloadId) return
+        installerShownFor = downloadId
         val file = updateFile()
         if (!file.exists() || file.length() < 100_000) {
             Toast.makeText(this, "The update did not download. Try again.", Toast.LENGTH_LONG).show()
@@ -225,6 +255,8 @@ class MainActivity : AppCompatActivity() {
         /** Downloads a new package from GitHub; the installer opens when it lands. */
         @JavascriptInterface
         fun installUpdate(url: String): String {
+            val busy = downloadStatus().getString("status")
+            if (busy == "running" || busy == "pending") return "running"
             return try {
                 val file = updateFile()
                 if (file.exists()) file.delete()
@@ -303,6 +335,16 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 runOnUiThread { Toast.makeText(this@MainActivity, "Could not save: ${e.message}", Toast.LENGTH_LONG).show() }
             }
+        }
+
+        /** Progress of the update download as JSON, polled by the banner. */
+        @JavascriptInterface
+        fun updateStatus(): String = downloadStatus().toString()
+
+        /** Opens the installer on a finished download, for when the app was in the background when it landed. */
+        @JavascriptInterface
+        fun openInstaller() {
+            runOnUiThread { installDownloadedUpdate() }
         }
 
         /** Fetches JSON for the page (Open Food Facts), answering through window.__androidFetchDone. */

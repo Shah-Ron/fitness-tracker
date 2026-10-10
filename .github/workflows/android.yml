@@ -62,12 +62,21 @@ jobs:
           name: Fitness-Tracker.apk
           path: Fitness-Tracker.apk
 
+      - name: Release notes from whats-new.json
+        run: |
+          python3 - <<'EOF'
+          import json
+          e = json.load(open("phone/whats-new.json", encoding="utf-8"))[0]
+          lines = ["**What is new** (" + e.get("date", "") + "): " + e.get("title", ""), ""]
+          lines += ["- " + n for n in e["notes"]]
+          lines += ["", "**Android:** download **Fitness-Tracker.apk** on your phone and open it to install. If Android asks, allow installs from your browser for this one file. Updates install over the top and keep your data, and Settings, Updates fetches them from inside the app.",
+                    "", "**iPhone:** open https://shah-ron.github.io/fitness-tracker/ in Safari, tap Share, then Add to Home Screen. Updates arrive through that address; Settings, Updates reloads into the newest one."]
+          open("release-notes.md", "w", encoding="utf-8").write("\n".join(lines) + "\n")
+          EOF
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION_NAME }}
           name: Fitness Tracker ${{ env.VERSION_NAME }}
-          body: |
-            **Android:** download **Fitness-Tracker.apk** on your phone and open it to install. If Android asks, allow installs from your browser for this one file. Updates install over the top and keep your data, and Settings, Updates fetches them from inside the app.
-
-            **iPhone:** open https://shah-ron.github.io/fitness-tracker/ in Safari, tap Share, then Add to Home Screen. Updates arrive through that address; Settings, Updates reloads into the newest one.
+          body_path: release-notes.md
           files: Fitness-Tracker.apk

@@ -1,10 +1,10 @@
 /* Fitness Tracker service worker, phone edition.
    Everything the app needs is precached, so once it has loaded on the phone
-   it opens with no connection at all. The build stamps f4efe49132d1 so any change
+   it opens with no connection at all. The build stamps ad2292c2b953 so any change
    to the app rolls the cache. There is no server to talk to; nothing is proxied. */
 "use strict";
 
-const VERSION = "f4efe49132d1";
+const VERSION = "ad2292c2b953";
 const CACHE = "fitness-phone-" + VERSION;
 const FILES = ["./", "./index.html", "./app.js", "./engine.js", "./store.js", "./local-api.js", "./manifest.webmanifest",
   "./icon-180.png", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./version.json",
@@ -27,6 +27,10 @@ self.addEventListener("fetch", event => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;       // Open Food Facts goes straight through
+  if (url.searchParams.has("fresh")) {                     // the update check asks the server, never the cache
+    event.respondWith(fetch(req).catch(() => new Response("{}", { status: 503, headers: { "Content-Type": "application/json" } })));
+    return;
+  }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const hit = await cache.match(req, { ignoreSearch: true });
