@@ -82,13 +82,13 @@ const SWEEP = String(async () => {
       check(mode.time ? / s\b/.test(head) : !/\d s\b/.test(head), `header units "${head}"`);
       if (mode.weight === true) {
         check(!!w && w.placeholder === "kg", "needs a weight box");
-        const label = w ? w.parentElement.querySelector(".u").textContent : "";
+        const label = w ? w.closest(".stepper").querySelector(".u").textContent : "";
         if (mode.bar != null) check(w && w.dataset.side === String(mode.bar) && /a side/.test(label) && w.step === "1.25", `barbell row should be plates a side, got "${label}" step ${w && w.step}`);
         else if (ex.equipment === "assisted") check(/assist/.test(label), `assisted label "${label}"`);
         else if (mode.perHand) check(/kg each/.test(label), `per-hand label "${label}"`);
         else check(label === "kg", `label "${label}"`);
       } else if (mode.weight === "optional") {
-        check(!!w && w.placeholder === "+kg" && /added/.test(w.parentElement.querySelector(".u").textContent), "optional added weight box");
+        check(!!w && w.placeholder === "+kg" && /added/.test(w.closest(".stepper").querySelector(".u").textContent), "optional added weight box");
       } else {
         check(!w, "must not ask for weight");
       }

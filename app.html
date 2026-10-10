@@ -274,17 +274,26 @@ tbody tr.click { cursor: pointer; } tbody tr.click:hover td { background: var(--
 .stepper input { border: 0; border-radius: 0; text-align: center; font-family: var(--display); font-weight: 600; font-size: 17px; min-height: 100%; padding: 4px 2px; min-width: 0; }
 .stepper input:focus { outline: none; }
 .stepper .u { font-size: 11px; color: var(--muted); text-align: center; }
-/* Weight stepper as a dumbbell: a plate at each end carrying − and +, the handle carrying the number. The plates grow with the load. */
-.stepper.dumbbell { border: 0; background: none; overflow: visible; grid-template-columns: 48px 1fr 48px; align-items: center; min-height: 0; --grow: 1; }
-.stepper.dumbbell > button { min-height: 0; height: calc(46px * var(--grow)); max-height: 78px; width: 100%; border-radius: 9px; background: var(--ink); color: var(--plane); font-size: 22px; font-weight: 600; line-height: 1; box-shadow: inset 0 0 0 3px var(--plane), inset 0 0 0 5px var(--ink-2); transition: height .2s ease; }
-.stepper.dumbbell > div { min-height: 44px; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(180deg, var(--panel-2), var(--panel) 55%, var(--panel-2)); border-top: 2px solid var(--axis); border-bottom: 2px solid var(--axis); }
-.stepper.dumbbell input { background: transparent; }
-/* Reps stepper as a tally: round counters that grow with the count, and a row of ticks filling towards the target. */
-.stepper.reps { border: 0; background: none; overflow: visible; grid-template-columns: 56px 1fr 56px; align-items: center; min-height: 0; --grow: 1; --fill: 0%; }
-.stepper.reps > button { box-sizing: border-box; width: calc(36px * var(--grow)); height: calc(36px * var(--grow)); max-width: 56px; max-height: 56px; justify-self: center; border-radius: 50%; background: var(--accent-tint); color: var(--accent-ink); border: 2px solid var(--accent); font-size: 20px; font-weight: 600; line-height: 1; min-height: 0; transition: width .2s ease, height .2s ease; }
-.stepper.reps > div { min-height: 44px; display: flex; flex-direction: column; justify-content: center; border: 1px solid var(--axis); border-radius: 12px; background: var(--panel); }
-.stepper.reps .tally { height: 5px; margin: 3px 8px 5px; border-radius: 3px; background: repeating-linear-gradient(90deg, var(--grid) 0 6px, transparent 6px 9px); position: relative; overflow: hidden; }
-.stepper.reps .tally::before { content: ""; position: absolute; inset: 0; width: var(--fill); background: var(--accent); border-radius: 3px; transition: width .2s ease; }
+/* Weight as a dumbbell: thin iron plates at each end carry − and +, each with a collar where it meets the handle; the
+   handle runs between them and the number rides on it. The plates grow with the load. Reps as a counter: round buttons
+   at each end and the count in a ring that fills towards the target; the buttons grow with the count. */
+.stepper.dumbbell, .stepper.reps { border: 0; background: none; overflow: visible; grid-template-columns: 34px 1fr 34px; grid-template-rows: auto auto; column-gap: 0; row-gap: 2px; align-items: center; min-height: 0; --grow: 1; --fill: 0%; }
+.stepper.dumbbell > button, .stepper.reps > button { position: relative; z-index: 1; min-height: 0; padding: 0; line-height: 1; font-weight: 700; border: 0; }
+.stepper.dumbbell > button { width: 22px; height: calc(38px * var(--grow)); max-height: 60px; border-radius: 6px; background: var(--ink); color: var(--plane); font-size: 20px; box-shadow: inset 2px 0 0 rgba(255,255,255,.22), inset -2px 0 0 rgba(0,0,0,.28); transition: height .2s ease; }
+.stepper.dumbbell > button::after { content: ""; position: absolute; top: 24%; bottom: 24%; width: 7px; background: var(--ink); filter: brightness(1.3); }
+.stepper.dumbbell > button:first-child { justify-self: end; margin-right: 7px; }
+.stepper.dumbbell > button:first-child::after { right: -7px; border-radius: 0 3px 3px 0; }
+.stepper.dumbbell > button:nth-child(3) { justify-self: start; margin-left: 7px; }
+.stepper.dumbbell > button:nth-child(3)::after { left: -7px; border-radius: 3px 0 0 3px; }
+.stepper.dumbbell > .mid, .stepper.reps > .mid { position: relative; display: flex; align-items: center; justify-content: center; min-height: 48px; }
+.stepper.dumbbell > .mid::before { content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 6px); height: 12px; background: linear-gradient(180deg, var(--ink-2), var(--muted) 50%, var(--ink-2)); opacity: .75; }
+.stepper.dumbbell input, .stepper.reps input { position: relative; z-index: 1; width: 4.2ch; min-width: 52px; max-width: 100%; padding: 3px 6px; border-radius: 999px; background: var(--panel); border: 1.5px solid var(--ink-2); font-size: 18px; min-height: 0; line-height: 1.25; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+.stepper.dumbbell > .u, .stepper.reps > .u { grid-column: 1 / -1; font-size: 11px; line-height: 1.2; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stepper.reps { grid-template-columns: 32px 1fr 32px; }
+.stepper.reps > button { width: calc(28px * var(--grow)); height: calc(28px * var(--grow)); max-width: 40px; max-height: 40px; justify-self: center; border-radius: 50%; background: var(--panel); color: var(--accent-ink); border: 2px solid var(--accent); font-size: 18px; box-sizing: border-box; transition: width .2s ease, height .2s ease; }
+.stepper.reps > .mid { padding: 0 4px; }
+.stepper.reps input { width: 2.6ch; min-width: 40px; padding: 3px 4px; border: 3px solid transparent; background: linear-gradient(var(--panel), var(--panel)) padding-box, conic-gradient(var(--accent) var(--fill), var(--grid) 0) border-box; }
+.set.entry { grid-template-columns: 22px 1.15fr 1fr auto; }
 .sep { border: 0; border-top: 1px dashed var(--grid); margin: 6px 0; }
 .rpe { display: flex; gap: 4px; grid-column: 1 / -1; align-items: center; }
 .rpe span { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 4px; }
@@ -1101,7 +1110,7 @@ function roundLoad(x, ex) { const step = ex && ex.equipment === "dumbbell" && x 
 function warmRow(it, ex, n, w, reps) {
   return `<div class="set warm" data-warm="${it.id}"><span class="n">W${n}</span><div class="muted small" style="grid-column:2/4">Warm-up: ${reps} at ${fmtLoad(ex, w)}</div><button class="logbtn" data-logwarm="${it.id}" data-w="${w}" data-r="${reps}">✓</button></div>`;
 }
-function sideLabel(bar, side) { return `kg a side (${kg(bar + 2 * (parseFloat(side) || 0))} total)`; }
+function sideLabel(bar, side) { return `a side · ${kg(bar + 2 * (parseFloat(side) || 0))} total`; }
 function setEntryRow(it, ex, n, defW, defR, mode) {
   mode = mode || entryMode(ex);
   const side = perSideMode() && mode.bar != null, bar = mode.bar || 0;
@@ -1113,12 +1122,12 @@ function setEntryRow(it, ex, n, defW, defR, mode) {
   const totalW = shownW === "" ? 0 : side ? bar + 2 * (+shownW || 0) : +shownW || 0;
   const weightBox = !mode.weight
     ? `<div class="stepper" style="visibility:hidden" aria-hidden="true"><button type="button" tabindex="-1">−</button><div><input type="number" class="w" value="" disabled><div class="u"></div></div><button type="button" tabindex="-1">+</button></div>`
-    : `<div class="stepper dumbbell" style="--grow:${growW(totalW)}" title="Weight"><button data-step="w" data-d="-${stepW}" aria-label="Less weight">−</button><div><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="${optional ? "+kg" : "kg"}"><div class="u">${label}</div></div><button data-step="w" data-d="${stepW}" aria-label="More weight">+</button></div>`;
+    : `<div class="stepper dumbbell" style="--grow:${growW(totalW)}" title="Weight"><button data-step="w" data-d="-${stepW}" aria-label="Less weight">−</button><div class="mid"><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="${optional ? "+kg" : "kg"}"></div><button data-step="w" data-d="${stepW}" aria-label="More weight">+</button><div class="u">${label}</div></div>`;
   const stepR = mode.time ? 5 : 1, top = it.rep_high || 0;
   return `<div class="set entry" data-entry="${it.id}">
     <span class="n">${n}</span>
     ${weightBox}
-    <div class="stepper reps" data-top="${top}" style="--grow:${growR(defR)};--fill:${top ? Math.min(100, (+defR || 0) / top * 100) : 0}%" title="${mode.time ? "Seconds" : "Reps"}"><button data-step="r" data-d="-${stepR}" aria-label="Fewer">−</button><div><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${mode.time ? "s" : "reps"}"><div class="u">${mode.time ? "seconds" : "reps"}${mode.perSide ? " each side" : ""}</div><div class="tally"></div></div><button data-step="r" data-d="${stepR}" aria-label="More">+</button></div>
+    <div class="stepper reps" data-top="${top}" style="--grow:${growR(defR)};--fill:${top ? Math.min(100, (+defR || 0) / top * 100) : 0}%" title="${mode.time ? "Seconds" : "Reps"}"><button data-step="r" data-d="-${stepR}" aria-label="Fewer">−</button><div class="mid"><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${mode.time ? "s" : "reps"}"></div><button data-step="r" data-d="${stepR}" aria-label="More">+</button><div class="u">${mode.time ? "seconds" : "reps"}${mode.perSide ? " each side" : ""}</div></div>
     <button class="primary logbtn" data-log="${it.id}" aria-label="Log set">✓</button>
     ${mode.timer === "hold" ? holdRow(it, mode) : ""}
     <div class="rpe"><span>RPE</span>${[6, 7, 8, 9, 10].map(v => `<button type="button" data-rpe="${v}">${v}</button>`).join("")}<button type="button" data-rpehalf title="add a half">½</button></div>
@@ -1183,10 +1192,10 @@ function wireWorkout(root) {
     const inp = $(b.dataset.step === "w" ? "input.w" : "input.r", b.closest(".stepper"));
     const d = parseFloat(b.dataset.d);
     inp.value = Math.max(0, Math.round(((parseFloat(inp.value) || 0) + d) * 100) / 100);
-    if (inp.dataset.side) inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value);
+    if (inp.dataset.side) inp.closest(".stepper").querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value);
     styleStepper(b.closest(".stepper"));
   }));
-  $$("input.w[data-side]", root).forEach(inp => inp.addEventListener("input", () => { inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value); }));
+  $$("input.w[data-side]", root).forEach(inp => inp.addEventListener("input", () => { inp.closest(".stepper").querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value); }));
   $$(".stepper input", root).forEach(inp => inp.addEventListener("input", () => styleStepper(inp.closest(".stepper"))));
   $$("[data-rpe]", root).forEach(b => b.addEventListener("click", () => {
     const wrap = b.closest(".rpe");

@@ -546,7 +546,7 @@ function roundLoad(x, ex) { const step = ex && ex.equipment === "dumbbell" && x 
 function warmRow(it, ex, n, w, reps) {
   return `<div class="set warm" data-warm="${it.id}"><span class="n">W${n}</span><div class="muted small" style="grid-column:2/4">Warm-up: ${reps} at ${fmtLoad(ex, w)}</div><button class="logbtn" data-logwarm="${it.id}" data-w="${w}" data-r="${reps}">✓</button></div>`;
 }
-function sideLabel(bar, side) { return `kg a side (${kg(bar + 2 * (parseFloat(side) || 0))} total)`; }
+function sideLabel(bar, side) { return `a side · ${kg(bar + 2 * (parseFloat(side) || 0))} total`; }
 function setEntryRow(it, ex, n, defW, defR, mode) {
   mode = mode || entryMode(ex);
   const side = perSideMode() && mode.bar != null, bar = mode.bar || 0;
@@ -558,12 +558,12 @@ function setEntryRow(it, ex, n, defW, defR, mode) {
   const totalW = shownW === "" ? 0 : side ? bar + 2 * (+shownW || 0) : +shownW || 0;
   const weightBox = !mode.weight
     ? `<div class="stepper" style="visibility:hidden" aria-hidden="true"><button type="button" tabindex="-1">−</button><div><input type="number" class="w" value="" disabled><div class="u"></div></div><button type="button" tabindex="-1">+</button></div>`
-    : `<div class="stepper dumbbell" style="--grow:${growW(totalW)}" title="Weight"><button data-step="w" data-d="-${stepW}" aria-label="Less weight">−</button><div><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="${optional ? "+kg" : "kg"}"><div class="u">${label}</div></div><button data-step="w" data-d="${stepW}" aria-label="More weight">+</button></div>`;
+    : `<div class="stepper dumbbell" style="--grow:${growW(totalW)}" title="Weight"><button data-step="w" data-d="-${stepW}" aria-label="Less weight">−</button><div class="mid"><input type="number" inputmode="decimal" step="${stepW}" class="w"${side ? ` data-side="${bar}"` : ""} value="${shownW}" placeholder="${optional ? "+kg" : "kg"}"></div><button data-step="w" data-d="${stepW}" aria-label="More weight">+</button><div class="u">${label}</div></div>`;
   const stepR = mode.time ? 5 : 1, top = it.rep_high || 0;
   return `<div class="set entry" data-entry="${it.id}">
     <span class="n">${n}</span>
     ${weightBox}
-    <div class="stepper reps" data-top="${top}" style="--grow:${growR(defR)};--fill:${top ? Math.min(100, (+defR || 0) / top * 100) : 0}%" title="${mode.time ? "Seconds" : "Reps"}"><button data-step="r" data-d="-${stepR}" aria-label="Fewer">−</button><div><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${mode.time ? "s" : "reps"}"><div class="u">${mode.time ? "seconds" : "reps"}${mode.perSide ? " each side" : ""}</div><div class="tally"></div></div><button data-step="r" data-d="${stepR}" aria-label="More">+</button></div>
+    <div class="stepper reps" data-top="${top}" style="--grow:${growR(defR)};--fill:${top ? Math.min(100, (+defR || 0) / top * 100) : 0}%" title="${mode.time ? "Seconds" : "Reps"}"><button data-step="r" data-d="-${stepR}" aria-label="Fewer">−</button><div class="mid"><input type="number" inputmode="numeric" class="r" value="${defR ?? ""}" placeholder="${mode.time ? "s" : "reps"}"></div><button data-step="r" data-d="${stepR}" aria-label="More">+</button><div class="u">${mode.time ? "seconds" : "reps"}${mode.perSide ? " each side" : ""}</div></div>
     <button class="primary logbtn" data-log="${it.id}" aria-label="Log set">✓</button>
     ${mode.timer === "hold" ? holdRow(it, mode) : ""}
     <div class="rpe"><span>RPE</span>${[6, 7, 8, 9, 10].map(v => `<button type="button" data-rpe="${v}">${v}</button>`).join("")}<button type="button" data-rpehalf title="add a half">½</button></div>
@@ -628,10 +628,10 @@ function wireWorkout(root) {
     const inp = $(b.dataset.step === "w" ? "input.w" : "input.r", b.closest(".stepper"));
     const d = parseFloat(b.dataset.d);
     inp.value = Math.max(0, Math.round(((parseFloat(inp.value) || 0) + d) * 100) / 100);
-    if (inp.dataset.side) inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value);
+    if (inp.dataset.side) inp.closest(".stepper").querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value);
     styleStepper(b.closest(".stepper"));
   }));
-  $$("input.w[data-side]", root).forEach(inp => inp.addEventListener("input", () => { inp.parentElement.querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value); }));
+  $$("input.w[data-side]", root).forEach(inp => inp.addEventListener("input", () => { inp.closest(".stepper").querySelector(".u").textContent = sideLabel(+inp.dataset.side, inp.value); }));
   $$(".stepper input", root).forEach(inp => inp.addEventListener("input", () => styleStepper(inp.closest(".stepper"))));
   $$("[data-rpe]", root).forEach(b => b.addEventListener("click", () => {
     const wrap = b.closest(".rpe");
