@@ -388,6 +388,13 @@ const Engine = (() => {
       CARDIO_MACHINES.forEach(m => { if (!(prog.protocols || []).some(p => p.group === slot.protocol_group && (p.machine === m || p.machine === "any"))) problems.push(`${kind}/${slot.key}: no ${slot.protocol_group} protocol for the ${m}`); });
     }));
     Object.entries(prog.splits || {}).forEach(([k, sp]) => Object.values(sp.templates || {}).forEach(t => t.forEach(kind => { if (!(prog.sessions || {})[kind]) problems.push(`split ${k}: session ${kind} is not defined`); })));
+    const levels = Object.keys(prog.experience_levels || { beginner: 1 });
+    if (!(prog.rep_schemes || {}).beginner) problems.push("rep_schemes: beginner is missing");
+    levels.forEach(l => {
+      const s = (prog.rep_schemes || {})[l];
+      if (!s) { problems.push(`rep_schemes: no schemes for ${l}`); return; }
+      ["main1", "main2", "accessory", "core", "circuit", "metcon"].forEach(n => { const sc = s[n]; if (!sc || !(sc.sets > 0) || !(sc.rep_low > 0) || !(sc.rep_high >= sc.rep_low)) problems.push(`rep_schemes/${l}: ${n} needs sets, rep_low and rep_high`); });
+    });
     return problems;
   }
   const protocolsById = prog => Object.fromEntries((prog.protocols || []).map(p => [p.id, p]));
@@ -430,11 +437,25 @@ const Engine = (() => {
     return out;
   }
   const scheme = (prog, ts, name) => { const s = prog.rep_schemes[ts.experience] || prog.rep_schemes.beginner; return s[name] || s.accessory; };
+  /* The experience level shapes the week: sets, rep ranges and rests per scheme, the warm-up ramp, how many reps to
+     leave in reserve, and how hard the deload is. Anything a level leaves out falls back to the programme defaults. */
+  const LEVEL_DEFAULTS = { name: "Beginner", description: "", session_minutes: 60, warmup_sets: [[0.5, 8], [0.75, 4]], reserve: 2 };
+  function levelOf(prog, ts) {
+    const levels = prog.experience_levels || {};
+    const key = levels[(ts || {}).experience] ? ts.experience : "beginner";
+    const lv = levels[key] || {};
+    return Object.assign({ key }, LEVEL_DEFAULTS, lv, { deload: Object.assign({}, prog.deload || {}, lv.deload || {}) });
+  }
+  const levelPublic = (prog, settings) => { const l = levelOf(prog, trainSettings(settings || {})); return { key: l.key, name: l.name, description: l.description, session_minutes: l.session_minutes, warmup_sets: l.warmup_sets, reserve: l.reserve }; };
+  const levelsPublic = prog => Object.entries(prog.experience_levels || {}).map(([key, v]) => ({ key, name: v.name || key, description: v.description || "", session_minutes: v.session_minutes || 60 }));
+  const timedScheme = (prog, ts) => { const s = prog.rep_schemes[(ts || {}).experience] || prog.rep_schemes.beginner; const t = (s && s.timed) || prog.timed_scheme || {}; return { lo: t.rep_low || 30, hi: t.rep_high || 60 }; };
+  /* A deload drops sets by the level's delta but never below two (or the scheme's own count when that is smaller). */
+  const deloadSets = (sets, level) => Math.max(Math.min(sets, 2), sets + (+(level.deload.set_delta ?? -1)));
   const blankItem = (ord, kw) => Object.assign({ ord, section: null, slot_key: null, exercise_key: null, sets: null, rep_low: null, rep_high: null, rest_sec: null, minutes: null, protocol: null, rounds: null, optional: 0, note: null }, kw);
 
   function buildLiftingItems(kind, blockNo, weekSeed, isDeload, prevPicks, prevFinisher, ts, prog, exByKey) {
     const sess = prog.sessions[kind], protos = protocolsById(prog), kit = ts.cardio_kit;
-    const swapEvery = +ts.main1_swap_every_blocks || 2;
+    const swapEvery = +ts.main1_swap_every_blocks || 2, level = levelOf(prog, ts), tsc = timedScheme(prog, ts);
     const items = []; let n = 0;
     const add = kw => items.push(blankItem(++n, kw));
     const finPool = (prog.protocols || []).filter(p => p.group === "finisher" && kit.includes(p.machine)).map(p => p.id);
@@ -453,9 +474,9 @@ const Engine = (() => {
       const ex = exByKey[key];
       const sc = scheme(prog, ts, slot.scheme || slot.section);
       let sets = sc.sets, lo = sc.rep_low, hi = sc.rep_high;
-      if (ex.timed) { lo = (prog.timed_scheme || {}).rep_low || 30; hi = (prog.timed_scheme || {}).rep_high || 60; }
-      if (isDeload && ["main", "accessory", "core"].includes(slot.section)) sets = Math.max(1, sets + (+(prog.deload.set_delta ?? -1)));
-      add({ section: slot.section, slot_key: slot.key, exercise_key: key, sets, rep_low: lo, rep_high: hi, rest_sec: prog.rest_sec[slot.scheme || slot.section] || 60, optional: slot.optional ? 1 : 0 });
+      if (ex.timed) { lo = tsc.lo; hi = tsc.hi; }
+      if (isDeload && ["main", "accessory", "core"].includes(slot.section)) sets = deloadSets(sets, level);
+      add({ section: slot.section, slot_key: slot.key, exercise_key: key, sets, rep_low: lo, rep_high: hi, rest_sec: sc.rest_sec || prog.rest_sec[slot.scheme || slot.section] || 60, optional: slot.optional ? 1 : 0 });
     });
     if (fin) add({ section: "finisher", slot_key: "finisher", exercise_key: machine, protocol: finId, minutes: protocolMinutes(fin, isDeload), rounds: protocolRounds(fin, isDeload) });
     if (sess.cooldown) add({ section: "cooldown", slot_key: "cooldown", exercise_key: sess.cooldown, minutes: 3 });
@@ -465,7 +486,7 @@ const Engine = (() => {
      used this week, so a cardio-heavy week spreads over treadmill, bike and rower. Protocol slots pick a protocol for
      that machine (never the same one twice in a session), exercise slots pick a circuit move. */
   function buildCardioItems(kind, blockNo, weekSeed, isDeload, prevPicks, usedMachines, ts, prog, exByKey) {
-    const sess = prog.sessions[kind], protos = protocolsById(prog), kit = ts.cardio_kit;
+    const sess = prog.sessions[kind], protos = protocolsById(prog), kit = ts.cardio_kit, level = levelOf(prog, ts), tsc = timedScheme(prog, ts);
     const prevMachine = Object.values(prevPicks).map(p => p.exercise).find(k => kit.includes(k)) || null;
     const free = kit.filter(m => !(usedMachines || []).includes(m));
     const machine = pick(free.length ? free : kit, weekSeed, `${kind}:machine`, prevMachine);
@@ -492,9 +513,9 @@ const Engine = (() => {
         const key = pick(pool, weekSeed, `${kind}:${slot.key}`, (prevPicks[slot.key] || {}).exercise);
         const ex = exByKey[key], sc = scheme(prog, ts, slot.scheme || "circuit");
         let lo = sc.rep_low, hi = sc.rep_high, sets = sc.sets;
-        if (ex.timed) { lo = (prog.timed_scheme || {}).rep_low || 30; hi = (prog.timed_scheme || {}).rep_high || 60; }
-        if (isDeload) sets = Math.max(1, sets + (+(prog.deload.set_delta ?? -1)));
-        add({ section: slot.section, slot_key: slot.key, exercise_key: key, sets, rep_low: lo, rep_high: hi, rest_sec: prog.rest_sec[slot.scheme || "circuit"] || 30 });
+        if (ex.timed) { lo = tsc.lo; hi = tsc.hi; }
+        if (isDeload) sets = deloadSets(sets, level);
+        add({ section: slot.section, slot_key: slot.key, exercise_key: key, sets, rep_low: lo, rep_high: hi, rest_sec: sc.rest_sec || prog.rest_sec[slot.scheme || "circuit"] || 30 });
       }
     });
     if (sess.cooldown) add({ section: "cooldown", slot_key: sess.cooldown_slot || "cooldown", exercise_key: sess.cooldown, minutes: +(sess.cooldown_minutes || 3) });
@@ -637,8 +658,9 @@ const Engine = (() => {
   function regenerateFrom(db, fromDate, settings, prog, exByKey) {
     db.all("plan_weeks").filter(w => addDays(w.start_date, 6) >= fromDate).sort((a, b) => a.start_date.localeCompare(b.start_date)).forEach(w => rebuildWeek(db, w.id, settings, prog, exByKey, fromDate, fromDate));
   }
-  function swapItem(db, itemId, exerciseKey, prog, exByKey) {
+  function swapItem(db, itemId, exerciseKey, prog, exByKey, settings) {
     const item = db.get("plan_items", itemId); if (!item) throw new PlanError("That item does not exist.", 404);
+    const ts = trainSettings(settings || {}), tsc = timedScheme(prog, ts);
     const sess = db.get("plan_sessions", item.session_id);
     if (db.all("set_logs").some(s => s.plan_item_id === itemId)) throw new PlanError("You have already logged a set on this exercise today. Finish it or delete the set first.", 409);
     const current = item.exercise_id ? exOf(db, item.exercise_id) : null;
@@ -659,8 +681,8 @@ const Engine = (() => {
     }
     const ex = exByKey[exerciseKey];
     let lo = item.rep_low, hi = item.rep_high;
-    if (ex.timed) { lo = (prog.timed_scheme || {}).rep_low || 30; hi = (prog.timed_scheme || {}).rep_high || 60; }
-    else if (current && current.timed) { const sc = scheme(prog, trainSettings({}), ["main1", "main2"].includes(item.slot_key) ? item.slot_key : item.section); lo = sc.rep_low; hi = sc.rep_high; }
+    if (ex.timed) { lo = tsc.lo; hi = tsc.hi; }
+    else if (current && current.timed) { const sc = scheme(prog, ts, ["main1", "main2"].includes(item.slot_key) ? item.slot_key : item.section); lo = sc.rep_low; hi = sc.rep_high; }
     db.update("plan_items", itemId, { exercise_id: ex.id, rep_low: lo, rep_high: hi, target_weight: null, target_source: null, note: "swapped" });
     return ex;
   }
@@ -745,10 +767,11 @@ const Engine = (() => {
     if (hitAllHigh) return { weight: w, label: "hold_rpe" };
     return { weight: w, label: "hold_reps" };
   }
-  function targetText(ex, weight, label, lo, hi) {
+  const reserveWord = n => ({ 1: "one", 2: "two", 3: "three" })[n] || "two";
+  function targetText(ex, weight, label, lo, hi, reserve) {
     const unit = ex.timed ? "s" : "reps";
     return {
-      first: `First time. Find a weight you can do for ${lo + 2} ${unit} with two in reserve.`,
+      first: `First time. Find a weight you can do for ${lo + 2} ${unit} with ${reserveWord(reserve)} in reserve.`,
       guess: "A starting guess from a related lift. Adjust freely.",
       increase: "You hit every set last time. Go up.",
       hold_reps: "Same weight. Try for more reps.",
@@ -763,7 +786,7 @@ const Engine = (() => {
       add_reps: "Add a rep or two each set.",
     }[label] || "";
   }
-  function targetFor(db, ex, item, today, isDeload, excludeCid, exByKey, bw) {
+  function targetFor(db, ex, item, today, isDeload, excludeCid, exByKey, bw, level) {
     const lo = item.rep_low || 8, hi = item.rep_high || 12;
     const ref = referenceWorkout(db, ex.id, excludeCid);
     let weight = null, label = "first", last = null;
@@ -785,17 +808,17 @@ const Engine = (() => {
         }
       }
     }
-    if (isDeload && weight != null && label !== "first") { weight = roundLoad(weight * 0.9, ex.equipment); label = "deload"; }
-    return { weight, source: label, last, text: targetText(ex, weight, label, lo, hi) };
+    if (isDeload && weight != null && label !== "first") { weight = roundLoad(weight * (+((level || {}).deload || {}).load_factor || 0.9), ex.equipment); label = "deload"; }
+    return { weight, source: label, last, text: targetText(ex, weight, label, lo, hi, (level || {}).reserve) };
   }
-  function freezeTargets(db, sessionId, today, settings, exByKey) {
+  function freezeTargets(db, sessionId, today, settings, exByKey, prog) {
     const sess = db.get("plan_sessions", sessionId); if (!sess) return;
     const week = db.get("plan_weeks", sess.week_id);
-    const isDeload = !!(week && week.is_deload), bw = bodyweightOn(db, today, settings);
+    const isDeload = !!(week && week.is_deload), bw = bodyweightOn(db, today, settings), level = prog ? levelOf(prog, trainSettings(settings || {})) : null;
     db.all("plan_items").filter(i => i.session_id === sessionId && !i.target_source).forEach(it => {
       if (!["main", "accessory", "core"].includes(it.section) || !it.exercise_id) return;
       const ex = exOf(db, it.exercise_id); if (!ex) return;
-      const t = targetFor(db, ex, it, today, isDeload, null, exByKey, bw);
+      const t = targetFor(db, ex, it, today, isDeload, null, exByKey, bw, level);
       db.update("plan_items", it.id, { target_weight: t.weight, target_source: t.source });
     });
   }
@@ -803,7 +826,7 @@ const Engine = (() => {
   function sessionView(db, session, today, settings, prog, exByKey, bw, withTargets = true, excludeCid = null) {
     const s = Object.assign({}, session);
     const week = db.get("plan_weeks", s.week_id);
-    const isDeload = !!(week && week.is_deload), protos = protocolsById(prog);
+    const isDeload = !!(week && week.is_deload), protos = protocolsById(prog), level = levelOf(prog, trainSettings(settings || {}));
     let total = 0;
     s.items = db.all("plan_items").filter(i => i.session_id === s.id).sort((a, b) => a.ord - b.ord).map(i => {
       const it = Object.assign({}, i);
@@ -813,8 +836,8 @@ const Engine = (() => {
       total += it.est_minutes;
       if (it.protocol && protos[it.protocol]) { const p = protos[it.protocol]; it.protocol_text = p.text; it.protocol_detail = { work_sec: p.work_sec, rest_sec: p.rest_sec, intensity: p.intensity, machine: p.machine }; }
       if (withTargets && ex && ["main", "accessory", "core"].includes(it.section)) {
-        const t = targetFor(db, ex, it, today, isDeload, excludeCid, exByKey, bw);
-        it.target = it.target_source ? { weight: it.target_weight, source: it.target_source, last: t.last, text: targetText(ex, it.target_weight, it.target_source, it.rep_low || 8, it.rep_high || 12) } : t;
+        const t = targetFor(db, ex, it, today, isDeload, excludeCid, exByKey, bw, level);
+        it.target = it.target_source ? { weight: it.target_weight, source: it.target_source, last: t.last, text: targetText(ex, it.target_weight, it.target_source, it.rep_low || 8, it.rep_high || 12, level.reserve) } : t;
       }
       return it;
     });
@@ -832,7 +855,7 @@ const Engine = (() => {
     const sessions = db.all("plan_sessions").filter(s => s.week_id === week.id).sort((a, b) => a.date.localeCompare(b.date) || bySeq(a, b)).map(s => sessionView(db, s, today, settings, prog, exByKey, bw));
     const planned = sessions.filter(s => countsForAdherence(s.kind) && s.status !== "void");
     const ts = trainSettings(settings), splitDef = (prog.splits || {})[ts.split] || null;
-    return { week: Object.assign({}, week, { block_no: block.block_no, block_seed: block.seed }), sessions, split: ts.split, split_name: splitDef ? splitDef.name : "Upper / Lower", weeks_in_block: db.all("plan_weeks").filter(w => w.block_id === week.block_id).length, adherence: { done: planned.filter(s => s.status === "done").length, planned: planned.length } };
+    return { week: Object.assign({}, week, { block_no: block.block_no, block_seed: block.seed }), sessions, split: ts.split, split_name: splitDef ? splitDef.name : "Upper / Lower", level: ts.experience, level_name: levelOf(prog, ts).name, weeks_in_block: db.all("plan_weeks").filter(w => w.block_id === week.block_id).length, adherence: { done: planned.filter(s => s.status === "done").length, planned: planned.length } };
   }
   function adherenceByWeek(db) {
     const out = {};
@@ -852,7 +875,7 @@ const Engine = (() => {
     roundLoad, setLoad, setVolume, e1rm, hardRatio, liftingMet, cardioMet, kcal, liftMinutes, effortScore, cardioEffort,
     isCardioEx, isBarbellEx, barWeight, entryMode, migrateCardioSets,
     bodyLogs, bodyweightOn, recomputeWorkout, historyForExercise, bestsForExercise, prsForWorkout, weeklyMuscleSets, weeklyE1rm, strengthIndex,
-    validateSeed, protocolsById, protocolMinutes, trainSettings, templateFor, weekKinds, sessionsPerDay, isLifting, isCardioSession, buildCardioItems, pick, estMinutes, sessionMinutes, trimToBudget,
+    validateSeed, protocolsById, protocolMinutes, trainSettings, levelOf, levelPublic, levelsPublic, timedScheme, templateFor, weekKinds, sessionsPerDay, isLifting, isCardioSession, buildCardioItems, pick, estMinutes, sessionMinutes, trimToBudget,
     createBlock, ensurePlanThrough, sweepMissed, rebuildWeek, shuffleWeek, regenerateFrom, swapItem, moveSession, markRest,
     progression, targetFor, targetText, freezeTargets, weekForDate, sessionView, weekView, adherenceByWeek,
   };

@@ -7,11 +7,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -66,6 +68,9 @@ class MainActivity : AppCompatActivity() {
         const val REQ_CAMERA = 1
         const val REQ_NOTIFY = 2
         const val UPDATE_FILE = "Fitness-Tracker.apk"
+        /** The icon sets in AndroidManifest.xml: a swatch name plus _light or _dark. */
+        val ICON_KEYS = listOf("green", "blue", "teal", "violet", "rose", "amber", "graphite").flatMap { listOf("${it}_light", "${it}_dark") }
+        const val DEFAULT_ICON = "green_light"
     }
 
     /** When the update download finishes, open the Android installer on it. */
@@ -129,6 +134,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         web = WebView(this)
         setContentView(web)
+        applyStoredBars()
         createChannels()
         ContextCompat.registerReceiver(this, downloadDone, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_EXPORTED)
 
@@ -247,7 +253,65 @@ class MainActivity : AppCompatActivity() {
     private fun restPendingIntent(): PendingIntent =
         PendingIntent.getBroadcast(this, 7, Intent(this, RestAlarmReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+    /** The launcher icon is an activity alias per look; the enabled one is the icon on the home screen. */
+    private fun iconComponent(key: String) = ComponentName(this, "$packageName.Icon_$key")
+
+    private fun enabledIcon(): String {
+        val pm = packageManager
+        return ICON_KEYS.firstOrNull { key ->
+            when (pm.getComponentEnabledSetting(iconComponent(key))) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT -> key == DEFAULT_ICON
+                else -> false
+            }
+        } ?: DEFAULT_ICON
+    }
+
+    private fun switchIcon(key: String) {
+        if (key !in ICON_KEYS || enabledIcon() == key) return
+        val pm = packageManager
+        pm.setComponentEnabledSetting(iconComponent(key), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+        for (other in ICON_KEYS) if (other != key) {
+            pm.setComponentEnabledSetting(iconComponent(other), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+        }
+    }
+
+    /** The system bars take the page's colours: the accent over the status bar in the light theme, the page background otherwise. */
+    private fun applyBars(status: String, nav: String, navDarkIcons: Boolean) {
+        try {
+            window.statusBarColor = Color.parseColor(status)
+            window.navigationBarColor = Color.parseColor(nav)
+            val c = WindowInsetsControllerCompat(window, window.decorView)
+            c.isAppearanceLightStatusBars = false
+            c.isAppearanceLightNavigationBars = navDarkIcons
+        } catch (e: IllegalArgumentException) { }
+    }
+
+    /** The colours the page last asked for, applied before it loads so the bars do not flash green. */
+    private fun applyStoredBars() {
+        val p = getSharedPreferences("look", Context.MODE_PRIVATE)
+        val status = p.getString("status", null) ?: return
+        applyBars(status, p.getString("nav", status) ?: status, p.getBoolean("navDark", true))
+    }
+
     inner class Bridge {
+        /** The launcher icon in use, so the page can keep it in step with the look. */
+        @JavascriptInterface
+        fun iconKey(): String = enabledIcon()
+
+        /** Switches the launcher icon to a look's set: a swatch name plus _light or _dark. */
+        @JavascriptInterface
+        fun setIcon(key: String) {
+            runOnUiThread { switchIcon(key) }
+        }
+
+        /** Colours the status and navigation bars like the page, and remembers them for the next start. */
+        @JavascriptInterface
+        fun setBars(status: String, nav: String, navDarkIcons: Boolean) {
+            getSharedPreferences("look", Context.MODE_PRIVATE).edit().putString("status", status).putString("nav", nav).putBoolean("navDark", navDarkIcons).apply()
+            runOnUiThread { applyBars(status, nav, navDarkIcons) }
+        }
+
         /** The installed version, as on the GitHub release tag without the leading v. */
         @JavascriptInterface
         fun appVersion(): String = BuildConfig.VERSION_NAME

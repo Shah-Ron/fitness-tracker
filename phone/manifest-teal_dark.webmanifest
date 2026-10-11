@@ -1,0 +1,30 @@
+{
+  "id": "./",
+  "name": "Fitness Tracker",
+  "short_name": "Fitness",
+  "description": "Workouts, food and progress, stored on this phone.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#171C1C",
+  "theme_color": "#171C1C",
+  "icons": [
+    {
+      "src": "./icons/teal_dark-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/teal_dark-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/teal_dark-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

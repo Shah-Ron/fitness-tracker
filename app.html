@@ -823,12 +823,46 @@ function accentPalette(hex, dark) {
   const ink = hslRgb(h, s, dark ? Math.min(l + .1, .86) : Math.max(l - .05, .18));
   return { accent: rgbHex(rgb), ink: rgbHex(ink), tint: `rgba(${rgb.map(Math.round).join(",")},${dark ? ".16" : ".12"})`, on: rgbHex(onAccent) };
 }
+/* The neutral tokens carry a whisper of the accent's hue: the stylesheet's greys lean green to suit the built-in
+   green, so another colour retints them (same lightness and saturation, the new hue) in both themes. */
+const NEUTRALS = { plane: ["#F2F1EC", "#171C1A"], panel: ["#FFFFFF", "#212826"], "panel-2": ["#F6F5F0", "#2A332F"], "panel-3": ["#ECEBE4", "#333D38"], ink: ["#1E2A26", "#ECEFEA"], "ink-2": ["#47554F", "#BCC5BF"], muted: ["#6B776F", "#8F9B94"], grid: ["#E3E4DD", "#313A36"], axis: ["#C9CDC4", "#414C46"] };
 function applyAccent(hex) {
-  const st = document.documentElement.style, dark = isDark();
-  if (!hexRgb(hex)) ["--accent", "--accent-ink", "--accent-tint", "--on-accent"].forEach(k => st.removeProperty(k));
-  else { const p = accentPalette(hex, dark); st.setProperty("--accent", p.accent); st.setProperty("--accent-ink", p.ink); st.setProperty("--accent-tint", p.tint); st.setProperty("--on-accent", p.on); }
+  const st = document.documentElement.style, dark = isDark(), rgb = hexRgb(hex);
+  if (!rgb) ["--accent", "--accent-ink", "--accent-tint", "--on-accent"].concat(Object.keys(NEUTRALS).map(k => "--" + k)).forEach(k => st.removeProperty(k));
+  else {
+    const p = accentPalette(hex, dark); st.setProperty("--accent", p.accent); st.setProperty("--accent-ink", p.ink); st.setProperty("--accent-tint", p.tint); st.setProperty("--on-accent", p.on);
+    const h = rgbHsl(rgb)[0];
+    Object.entries(NEUTRALS).forEach(([k, pair]) => { const [, s, l] = rgbHsl(hexRgb(pair[dark ? 1 : 0])); st.setProperty("--" + k, rgbHex(hslRgb(h, s, l))); });
+  }
+  const cs = getComputedStyle(document.documentElement), plane = cs.getPropertyValue("--plane").trim(), accent = cs.getPropertyValue("--accent").trim();
   const meta = $('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? getComputedStyle(document.documentElement).getPropertyValue("--plane").trim() : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  if (meta) meta.content = dark ? plane : accent;
+  if (IS_ANDROID_APP && window.Android.setBars) { try { window.Android.setBars(dark ? plane : accent, plane, !dark); } catch (e) {} }
+  syncIcon();
+}
+/* The home-screen icon follows the look: seven icon sets, one a swatch, each in a light and a dark version, with a
+   manifest to match. A colour of your own takes the nearest swatch. The Android app switches its launcher icon
+   through the bridge; the web app points its manifest at the matching set and Chrome refreshes the icon on a later
+   launch; an iPhone keeps whichever icon was current when the app was added. */
+const iconOn = () => ls.get("ft-icon") !== "off";
+function iconSwatch(hex) {
+  const rgb = hexRgb(hex); if (!rgb) return "green";
+  const [h, s] = rgbHsl(rgb); if (s < .14) return "graphite";
+  let best = "green", gap = 361;
+  ACCENTS.forEach(([, sw, name]) => { if (name === "Graphite") return; const d = Math.abs(h - rgbHsl(hexRgb(sw))[0]), dd = Math.min(d, 360 - d); if (dd < gap) { gap = dd; best = name.toLowerCase(); } });
+  return best;
+}
+const iconKey = () => (iconOn() ? `${iconSwatch(ls.get("ft-accent"))}_${isDark() ? "dark" : "light"}` : "green_light");
+let iconTimer = null;
+function syncIcon() {
+  const key = iconKey(), m = $('link[rel="manifest"]');
+  const base = m && m.getAttribute("href").startsWith("./") ? "./" : "/";
+  if (m) m.href = `${base}manifest-${key}.webmanifest`;
+  const ic = $('link[rel="icon"]'); if (ic) ic.href = `${base}icons/${key}-192.png`;
+  const ap = $('link[rel="apple-touch-icon"]'); if (ap) ap.href = `${base}icons/${key}-180.png`;
+  if (!IS_ANDROID_APP || !window.Android.setIcon) return;
+  clearTimeout(iconTimer);                                 // the colour picker fires on every nudge; switch once it settles
+  iconTimer = setTimeout(() => { if (ls.get("ft-icon-key") !== key) { try { window.Android.setIcon(key); ls.set("ft-icon-key", key); } catch (e) {} } }, 800);
 }
 function applyTheme(t) {
   if (!t || t === "system") { document.documentElement.removeAttribute("data-theme"); ls.del("ft-theme"); }
@@ -1366,8 +1400,9 @@ function renderItem(it) {
   const rows = [];
   const showWarm = it.slot_key === "main1" && mode.kind === "weight_reps" && it.target && it.target.weight && !done.some(s => s.is_warmup) && !done.length;
   if (showWarm) {
-    rows.push(warmRow(it, ex, 1, Math.max(barOf(ex), roundLoad(it.target.weight * 0.5, ex)), 8));
-    rows.push(warmRow(it, ex, 2, Math.max(barOf(ex), roundLoad(it.target.weight * 0.75, ex)), 4));
+    // The ramp comes from the experience level: two sets for a beginner, up to four for an advanced lifter.
+    let prevW = null;
+    ((T && T.level && T.level.warmup_sets) || [[0.5, 8], [0.75, 4]]).forEach(([f, r]) => { const w = Math.max(barOf(ex), roundLoad(it.target.weight * f, ex)); if (w === prevW) return; prevW = w; rows.push(warmRow(it, ex, rows.length + 1, w, r)); });
   }
   const working = done.filter(s => !s.is_warmup);
   const complete = skipped || working.length >= planned;
@@ -1855,7 +1890,7 @@ async function renderPlan() {
   const w = wk.week, today = todayIso();
   root.innerHTML = `<div class="week-nav">
       <button class="ghost" id="wkPrev" aria-label="Previous week">‹</button>
-      <div><h2>Block ${w.block_no}, week ${w.week_no} of ${wk.weeks_in_block}${w.is_deload ? ' <span class="pill">deload</span>' : ""}${wk.split_name ? ` <span class="pill accent">${esc(wk.split_name)}</span>` : ""}</h2><div class="muted small">${fmtShort(w.start_date)} to ${fmtShort(addDays(w.start_date, 6))}, ${wk.adherence.done} of ${wk.adherence.planned} done</div></div>
+      <div><h2>Block ${w.block_no}, week ${w.week_no} of ${wk.weeks_in_block}${w.is_deload ? ' <span class="pill">deload</span>' : ""}${wk.split_name ? ` <span class="pill accent">${esc(wk.split_name)}</span>` : ""}${wk.level_name ? ` <span class="pill">${esc(wk.level_name)}</span>` : ""}</h2><div class="muted small">${fmtShort(w.start_date)} to ${fmtShort(addDays(w.start_date, 6))}, ${wk.adherence.done} of ${wk.adherence.planned} done</div></div>
       <button class="ghost" id="wkNext" aria-label="Next week">›</button>
       <span class="spacer"></span>
       ${UI.planDate.slice(0, 10) !== today && !(w.start_date <= today && addDays(w.start_date, 6) >= today) ? `<button id="wkToday">This week</button>` : ""}
@@ -2330,6 +2365,8 @@ function renderSettings() {
     <div class="card"><h2>Training</h2><p class="hint">Changes rebuild the sessions you have not started yet, from today. Sessions already done stay as they were.</p>
       <div class="cap">Training split</div><div class="chips mb" id="s-split">${(S.splits || []).map(sp => `<button type="button" class="chip${(st.split || "upper_lower") === sp.key ? " on" : ""}" data-split="${sp.key}" title="${esc(sp.description || "")}">${esc(sp.name)}</button>`).join("")}</div>
       ${(() => { const sp = (S.splits || []).find(x => x.key === (st.split || "upper_lower")); return sp ? `<p class="hint">${esc(sp.description || "")}${sp.days && sp.days.length ? ` Works with ${sp.days.join(", ")} training days.` : ""}</p>` : ""; })()}
+      <div class="cap">Experience</div><div class="chips mb" id="s-exp">${((S.levels && S.levels.length) ? S.levels : [{ key: "beginner", name: "Beginner" }]).map(l => `<button type="button" class="chip${(st.experience || "beginner") === l.key ? " on" : ""}" data-exp="${l.key}" title="${esc(l.description || "")}">${esc(l.name)}</button>`).join("")}</div>
+      ${(() => { const l = (S.levels || []).find(x => x.key === (st.experience || "beginner")); if (!l) return ""; const mins = +st.session_minutes || 60; return `<p class="hint">${esc(l.description || "")}${l.session_minutes > mins ? ` Yours are set to ${mins}, so the plan trims accessories to fit. <button type="button" class="link" id="s-expMin">Allow ${l.session_minutes} minutes</button>` : ""}</p>`; })()}
       <div class="cap">Days you can train</div><div class="chips mb" id="s-days">${WEEKDAYS.map((d, i) => `<button type="button" class="chip${days.includes(i + 1) ? " on" : ""}" data-day="${i + 1}">${d}</button>`).join("")}</div>
       <div class="cap">Sessions a day</div><div class="chips mb" id="s-spd">${[1, 2, 3].map(n => `<button type="button" class="chip${(+st.sessions_per_day || 1) === n ? " on" : ""}" data-spd="${n}">${n}</button>`).join("")}</div>
       <p class="hint">Two or three spreads the week over your training days, for a morning and an evening visit. A missed session can always be pulled into today as well.</p>
@@ -2338,15 +2375,16 @@ function renderSettings() {
       <p class="hint">${(st.barbell_entry || "total") === "per_side" ? "You type the plates on one side and the app adds the bar: 20 kg, or 10 kg for an EZ bar. Targets and history show both figures." : "You type the whole weight including the bar. Switch to plates each side if that is how you think at the rack."}
         ${typeof LocalApi !== "undefined" ? (st.barbell_converted_at ? ` Stored barbell weights were converted to totals on ${fmtDate(st.barbell_converted_at)}.` : ` If you have been logging plates per side until now, <button class="link" id="s-convertBar">convert what is stored</button> so your history and targets line up.`) : ""}</p>
       <details class="sub"${UI.folds.has("training") ? " open" : ""} data-fold="training"><summary>More</summary><div class="fold-body">
-      <div class="f-row">${field("session_minutes", "Minutes per session", "number", 'inputmode="numeric" step="5" min="30" max="120"')}${field("rest_default_sec", "Default rest (seconds)", "number", 'inputmode="numeric" step="15"')}
-      <label class="field narrow"><span>Experience</span><select id="s-experience"><option value="beginner"${st.experience === "beginner" ? " selected" : ""}>Beginner</option></select></label></div>
+      <div class="f-row">${field("session_minutes", "Minutes per session", "number", 'inputmode="numeric" step="5" min="30" max="120"')}${field("rest_default_sec", "Default rest (seconds)", "number", 'inputmode="numeric" step="15"')}</div>
       <div class="row"><label class="switch"><input type="checkbox" id="s-awake" ${st.keep_awake !== false ? "checked" : ""}><span class="slider"></span><span>Keep the screen on during a workout</span></label></div>
       <div class="row mt"><button id="s-regen" class="ghost">Rebuild the plan from today</button></div></div></details></div>
     <div class="card"><h2>Look</h2>
       <div class="cap">Theme</div><div class="chips mb" id="s-theme">${[["system", "Same as the device"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) => `<button type="button" class="chip${theme === k ? " on" : ""}" data-theme="${k}">${l}</button>`).join("")}</div>
       <div class="cap">Colour</div><div class="swatches" id="s-accent">${ACCENTS.map(([k, hex, name]) => `<button type="button" class="swatch${accent === k ? " on" : ""}" data-accent="${k}" style="--sw:${hex}" title="${name}" aria-label="${name}"></button>`).join("")}
         <label class="swatch custom${custom ? " on" : ""}" title="Pick your own" style="--sw:${custom ? accent : "transparent"}"><input type="color" id="s-accentPick" value="${custom ? accent : "#3E6B48"}" aria-label="Pick your own colour"></label></div>
-      <p class="hint mt">Remembered on this device. Buttons, tabs and the week's dots take the colour you pick; the charts keep their own.</p>
+      <p class="hint mt">Remembered on this device. Buttons, tabs, the week's dots and the shade of the page take the colour you pick; the charts keep their own.</p>
+      <div class="row mt"><label class="switch"><input type="checkbox" id="s-icon" ${iconOn() ? "checked" : ""}><span class="slider"></span><span>Match the app icon to this look</span></label></div>
+      <p class="hint">${IS_ANDROID_APP ? "The icon changes straight away. Some launchers take it off the home screen when it changes; add it back from the app list." : "The web app refreshes its icon the next time Chrome checks, within a day or so. An iPhone keeps the icon it was added with."}</p>
       <div class="row mt"><label class="switch"><input type="checkbox" id="s-notes" ${notesOn() ? "checked" : ""}><span class="slider"></span><span>A quote and a tip on Today, and a tip while you rest</span></label></div></div>
     ${fold("exlib", "Exercise library", `${(S.exercises || []).filter(e => e.active !== false && e.active !== 0).length} on`, `<p class="hint">Switch off anything your gym does not have and the plan stops picking it. Edit the cues to suit you, or add your own exercise.</p>
       <div class="row mb"><input type="search" id="exQ" placeholder="Search exercises" value="${esc(UI.exQ)}" style="max-width:260px"><button id="exAdd">Add an exercise</button></div><div id="exList" class="exlib"></div>`)}
@@ -2361,9 +2399,12 @@ function renderSettings() {
       <div class="row"><label class="switch"><input type="checkbox" id="s-stay" ${st.stay_running ? "checked" : ""}><span class="slider"></span><span>Keep running in the background</span></label><span class="spacer"></span><button class="danger" id="s-stop">Stop the server</button></div>`)}`;
 
   const bind = (k, parse, msg) => { const el = $("#s-" + k, root); if (!el) return; el.addEventListener("change", () => { const v = el.value === "" ? null : (parse ? parse(el.value) : el.value); saveSettings({ [k]: v }, msg); }); };
-  ["sex", "birth_date", "target_date", "experience", "usda_api_key", "display_name"].forEach(k => bind(k));
+  ["sex", "birth_date", "target_date", "usda_api_key", "display_name"].forEach(k => bind(k));
   ["height_cm", "start_weight_kg", "target_weight_kg", "neat_factor", "deficit_cap", "protein_g_per_kg", "fat_g_per_kg", "kcal_floor", "session_minutes", "rest_default_sec"].forEach(k => bind(k, parseFloat));
   $$("#s-split .chip", root).forEach(b => b.addEventListener("click", () => saveSettings({ split: b.dataset.split }, "Plan rebuilt from today")));
+  $$("#s-exp .chip", root).forEach(b => b.addEventListener("click", () => saveSettings({ experience: b.dataset.exp }, "Plan rebuilt from today")));
+  const expMin = $("#s-expMin", root);
+  if (expMin) expMin.addEventListener("click", () => { const l = (S.levels || []).find(x => x.key === (st.experience || "beginner")); if (l) saveSettings({ session_minutes: l.session_minutes }, "Plan rebuilt from today"); });
   $$("#s-days .chip", root).forEach(b => b.addEventListener("click", () => {
     const on = $$("#s-days .chip.on", root).map(x => +x.dataset.day); const d = +b.dataset.day;
     const next = on.includes(d) ? on.filter(x => x !== d) : on.concat([d]).sort();
@@ -2393,6 +2434,7 @@ function renderSettings() {
   pick.addEventListener("input", () => applyAccent(pick.value));
   pick.addEventListener("change", () => setAccent(pick.value));
   $("#s-notes").addEventListener("change", e => { ls.set("ft-notes", e.target.checked ? "on" : "off"); toast(e.target.checked ? "Notes on" : "Notes off"); renderAll(); });
+  $("#s-icon").addEventListener("change", e => { ls.set("ft-icon", e.target.checked ? "on" : "off"); syncIcon(); toast(e.target.checked ? "The icon follows the look" : "The icon stays green"); });
   $("#s-stay").addEventListener("change", e => saveSettings({ stay_running: e.target.checked }));
   $("#s-stop").addEventListener("click", async () => { if (!confirm("Stop the server? The phone will not be able to sync until you start it again.")) return; try { await api("POST", "/api/stop"); $("main").innerHTML = `<div class="card"><h2>Stopped</h2><p class="hint">Fitness Tracker has stopped. Double-click the .exe to start it again.</p></div>`; } catch (e) { toast(e.message); } });
   $("#restoreFile").addEventListener("change", async e => {

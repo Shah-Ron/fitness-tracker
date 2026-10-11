@@ -63,7 +63,7 @@ const LocalApi = (() => {
       let row;
       if (ex) row = db.update("workouts", cid, fields);
       else row = db.insert("workouts", Object.assign({ client_id: cid, session_id: null, started_at: E.nowIso(), ended_at: null, session_rpe: null, work_sets: 0, hard_sets: 0, volume: 0, lift_minutes: 0, kcal_est: 0, kcal_wearable: null, hr_avg: null, effort: null, effort_parts: null, notes: null }, fields));
-      if (!ex && row.session_id) E.freezeTargets(db, row.session_id, row.date, s, EX_BY_KEY);
+      if (!ex && row.session_id) E.freezeTargets(db, row.session_id, row.date, s, EX_BY_KEY, PROG);
       E.recomputeWorkout(db, cid, s, PROG);
       if (row.session_id) updateSessionStatus(row.session_id, row.date);
       return { ok: true, id: cid };
@@ -212,7 +212,7 @@ const LocalApi = (() => {
     const adh = E.adherenceByWeek(db);
     let streak = 0;
     for (let i = adh.length - 1; i >= 0; i--) { const wk = adh[i]; if (wk.week > d) continue; if (wk.planned && wk.done / wk.planned >= 0.8) streak++; else if (wk.week <= E.addDays(d, -7)) break; }
-    return { app: "fitness-tracker", version: VERSION, build: VERSION, today: d, settings: s, splits: splitsPublic(), profile_complete: E.profileComplete(s), targets: tg, weight: wb, food: fd,
+    return { app: "fitness-tracker", version: VERSION, build: VERSION, today: d, settings: s, splits: splitsPublic(), levels: E.levelsPublic(PROG), profile_complete: E.profileComplete(s), targets: tg, weight: wb, food: fd,
       daily: { water_ml: daily.water_ml, sleep_h: daily.sleep_h, steps: daily.steps }, session_today: sessionToday, sessions_today: sessionsToday, week, strip,
       in_progress: inProgress ? { client_id: inProgress.client_id, session_id: inProgress.session_id, date: inProgress.date, started_at: inProgress.started_at } : null,
       recent_prs: last ? E.prsForWorkout(db, last.client_id, s) : [], weeks_streak: streak, phone: null, exercises: db.all("exercises").map(exPublic) };
@@ -225,7 +225,7 @@ const LocalApi = (() => {
     const bests = {};
     sessions.forEach(x => x.items.forEach(it => { if (it.exercise_id && !bests[it.exercise_id]) { const ex = db.get("exercises", it.exercise_id); if (ex && ex.pattern !== "mobility" && !ex.pattern.startsWith("cardio")) bests[String(it.exercise_id)] = E.bestsForExercise(db, it.exercise_id, ex, bw); } }));
     const ip = db.all("workouts").filter(w => !w.ended_at).sort((a, b) => String(b.started_at).localeCompare(String(a.started_at)))[0];
-    return { date: d, sessions, bests, bodyweight: bw, in_progress: ip ? workoutDetail(ip.client_id) : null, protocols: PROG.protocols || [], rest_default_sec: s.rest_default_sec || 90, warmup_moves: PROG.warmup_moves, cooldown_stretches: PROG.cooldown_stretches };
+    return { date: d, sessions, bests, bodyweight: bw, in_progress: ip ? workoutDetail(ip.client_id) : null, protocols: PROG.protocols || [], level: E.levelPublic(PROG, s), rest_default_sec: s.rest_default_sec || 90, warmup_moves: PROG.warmup_moves, cooldown_stretches: PROG.cooldown_stretches };
   }
   function workoutDetail(cid) {
     const w = db.get("workouts", cid); if (!w) throw new BadRequest("That workout does not exist", 404);
@@ -473,7 +473,7 @@ const LocalApi = (() => {
       else if (["carb_floor_g", "kcal_floor", "water_target_ml", "sleep_target_h", "steps_target", "rest_default_sec", "session_minutes"].includes(k)) v = num(v, k, 0, 100000, true);
       else if (k === "train_days") { if (!Array.isArray(v) || !v.length) throw new BadRequest("Pick at least one training day"); v = Array.from(new Set(v.map(Number).filter(x => x >= 1 && x <= 7))).sort((a, b) => a - b); if (v.length < 3) throw new BadRequest("Pick at least three training days"); }
       else if (k === "cardio_kit") { if (!Array.isArray(v)) throw new BadRequest("cardio_kit must be a list"); v = v.filter(m => ["treadmill", "bike", "rower"].includes(m)); if (!v.length) throw new BadRequest("Keep at least one cardio machine"); }
-      else if (k === "experience") v = choice(v, "experience", Object.keys(PROG.rep_schemes));
+      else if (k === "experience") v = choice(v, "experience", Object.keys(PROG.experience_levels || PROG.rep_schemes));
       else if (k === "split") v = choice(v, "split", Object.keys(PROG.splits || { upper_lower: 1 }));
       else if (k === "main1_swap_every_blocks") v = int(v, k, 1, 6);
       else if (k === "stay_running" || k === "keep_awake" || k === "auto_update_check") v = !!v;
@@ -578,7 +578,7 @@ const LocalApi = (() => {
       if (api === "exercises") return createExercise(body);
       if (api === "plan/shuffle") { E.shuffleWeek(db, int(body.week_id, "week_id", 1), settings(), PROG, EX_BY_KEY, today()); return { ok: true }; }
       if (api === "plan/regenerate") { E.regenerateFrom(db, today(), settings(), PROG, EX_BY_KEY); return { ok: true }; }
-      if (api === "plan/swap") { const ex = E.swapItem(db, int(body.item_id, "item_id", 1), body.exercise_key || null, PROG, EX_BY_KEY); return { ok: true, exercise: exPublic(ex) }; }
+      if (api === "plan/swap") { const ex = E.swapItem(db, int(body.item_id, "item_id", 1), body.exercise_key || null, PROG, EX_BY_KEY, settings()); return { ok: true, exercise: exPublic(ex) }; }
       if (api === "plan/move") { E.moveSession(db, int(body.session_id, "session_id", 1), today()); return { ok: true }; }
       if (api === "plan/rest") { E.markRest(db, int(body.session_id, "session_id", 1)); return { ok: true }; }
       if (api === "restore") { await Store.restore(body); refreshExercises(); return { ok: true }; }

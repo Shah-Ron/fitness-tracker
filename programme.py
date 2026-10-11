@@ -82,6 +82,18 @@ def validate_seed(prog, exercises_by_key):
             for kind in template:
                 if kind not in prog.get("sessions", {}):
                     problems.append(f"split {name}: session {kind} is not defined")
+    levels = list((prog.get("experience_levels") or {"beginner": {}}).keys())
+    if "beginner" not in prog.get("rep_schemes", {}):
+        problems.append("rep_schemes: beginner is missing")
+    for lv in levels:
+        schemes = prog.get("rep_schemes", {}).get(lv)
+        if not schemes:
+            problems.append(f"rep_schemes: no schemes for {lv}")
+            continue
+        for name in ("main1", "main2", "accessory", "core", "circuit", "metcon"):
+            sc = schemes.get(name) or {}
+            if not (sc.get("sets", 0) > 0 and sc.get("rep_low", 0) > 0 and sc.get("rep_high", 0) >= sc.get("rep_low", 0)):
+                problems.append(f"rep_schemes/{lv}: {name} needs sets, rep_low and rep_high")
     return problems
 
 
@@ -183,11 +195,54 @@ def _scheme(prog, ts, name):
     return schemes.get(name) or schemes["accessory"]
 
 
+LEVEL_DEFAULTS = {"name": "Beginner", "description": "", "session_minutes": 60, "warmup_sets": [[0.5, 8], [0.75, 4]], "reserve": 2}
+
+
+def level_of(prog, ts):
+    """The experience level shapes the week: sets, rep ranges and rests per scheme, the warm-up ramp, how many reps
+    to leave in reserve, and how hard the deload is. Anything a level leaves out falls back to the programme defaults."""
+    levels = prog.get("experience_levels") or {}
+    key = (ts or {}).get("experience")
+    key = key if key in levels else "beginner"
+    lv = levels.get(key) or {}
+    out = {"key": key}
+    out.update(LEVEL_DEFAULTS)
+    out.update(lv)
+    deload = dict(prog.get("deload") or {})
+    deload.update(lv.get("deload") or {})
+    out["deload"] = deload
+    return out
+
+
+def level_public(prog, settings):
+    lv = level_of(prog, train_settings(settings or {}))
+    return {k: lv.get(k) for k in ("key", "name", "description", "session_minutes", "warmup_sets", "reserve")}
+
+
+def levels_public(prog):
+    return [{"key": k, "name": v.get("name", k), "description": v.get("description", ""), "session_minutes": v.get("session_minutes", 60)}
+            for k, v in (prog.get("experience_levels") or {}).items()]
+
+
+def timed_scheme(prog, ts):
+    """Seconds to hold a plank or a carry at this level: (low, high)."""
+    schemes = prog["rep_schemes"].get((ts or {}).get("experience")) or prog["rep_schemes"]["beginner"]
+    t = schemes.get("timed") or prog.get("timed_scheme") or {}
+    return t.get("rep_low", 30), t.get("rep_high", 60)
+
+
+def deload_sets(sets, level):
+    """A deload drops sets by the level's delta but never below two (or the scheme's own count when that is smaller)."""
+    return max(min(sets, 2), sets + int(level["deload"].get("set_delta", -1)))
+
+
 def build_lifting_items(conn, kind, block_no, week_seed, is_deload, prev_picks, prev_finisher, ts, prog, ex_by_key):
     sess = prog["sessions"][kind]
     protos = protocols_by_id(prog)
     kit = ts["cardio_kit"]
     swap_every = int(ts.get("main1_swap_every_blocks") or 2)
+    level = level_of(prog, ts)
+    lo_t, hi_t = timed_scheme(prog, ts)
     items = []
     ordn = 0
 
@@ -227,13 +282,13 @@ def build_lifting_items(conn, kind, block_no, week_seed, is_deload, prev_picks, 
             key = pick(pool, week_seed, f"{kind}:{slot['key']}", prev)
         ex = ex_by_key[key]
         scheme = _scheme(prog, ts, slot.get("scheme") or slot["section"])
-        rest = prog["rest_sec"].get(slot.get("scheme") or slot["section"], 60)
+        rest = scheme.get("rest_sec") or prog["rest_sec"].get(slot.get("scheme") or slot["section"], 60)
         sets = scheme["sets"]
         lo, hi = scheme["rep_low"], scheme["rep_high"]
         if ex.get("timed"):
-            lo, hi = prog.get("timed_scheme", {}).get("rep_low", 30), prog.get("timed_scheme", {}).get("rep_high", 60)
+            lo, hi = lo_t, hi_t
         if is_deload and slot["section"] in ("main", "accessory", "core"):
-            sets = max(1, sets + int(prog["deload"].get("set_delta", -1)))
+            sets = deload_sets(sets, level)
         add(section=slot["section"], slot_key=slot["key"], exercise_key=key, sets=sets, rep_low=lo, rep_high=hi,
             rest_sec=rest, optional=1 if slot.get("optional") else 0)
 
@@ -255,6 +310,8 @@ def build_cardio_items(conn, kind, block_no, week_seed, is_deload, prev_picks, u
     sess = prog["sessions"][kind]
     protos = protocols_by_id(prog)
     kit = ts["cardio_kit"]
+    level = level_of(prog, ts)
+    lo_t, hi_t = timed_scheme(prog, ts)
     prev_machine = next((p.get("exercise") for p in prev_picks.values() if p.get("exercise") in kit), None)
     free = [m for m in kit if m not in (used_machines or [])]
     machine = pick(free or kit, week_seed, f"{kind}:machine", prev_machine)
@@ -297,12 +354,12 @@ def build_cardio_items(conn, kind, block_no, week_seed, is_deload, prev_picks, u
             scheme = _scheme(prog, ts, slot.get("scheme") or "circuit")
             lo, hi = scheme["rep_low"], scheme["rep_high"]
             if ex.get("timed"):
-                lo, hi = prog.get("timed_scheme", {}).get("rep_low", 30), prog.get("timed_scheme", {}).get("rep_high", 60)
+                lo, hi = lo_t, hi_t
             sets = scheme["sets"]
             if is_deload:
-                sets = max(1, sets + int(prog["deload"].get("set_delta", -1)))
+                sets = deload_sets(sets, level)
             add(section=slot["section"], slot_key=slot["key"], exercise_key=key, sets=sets, rep_low=lo, rep_high=hi,
-                rest_sec=prog["rest_sec"].get(slot.get("scheme") or "circuit", 30))
+                rest_sec=scheme.get("rest_sec") or prog["rest_sec"].get(slot.get("scheme") or "circuit", 30))
     if sess.get("cooldown"):
         add(section="cooldown", slot_key=sess.get("cooldown_slot") or "cooldown", exercise_key=sess["cooldown"],
             minutes=float(sess.get("cooldown_minutes") or 3))
@@ -592,7 +649,7 @@ def regenerate_from(conn, from_date, settings, prog, ex_by_key):
         rebuild_week(conn, w["id"], settings, prog, ex_by_key, from_date=from_date)
 
 
-def swap_item(conn, item_id, exercise_key, prog, ex_by_key):
+def swap_item(conn, item_id, exercise_key, prog, ex_by_key, settings=None):
     item = conn.execute("""SELECT pi.*, ps.kind, ps.week_id FROM plan_items pi JOIN plan_sessions ps ON ps.id = pi.session_id
                            WHERE pi.id = ?""", (item_id,)).fetchone()
     if not item:
@@ -624,11 +681,13 @@ def swap_item(conn, item_id, exercise_key, prog, ex_by_key):
             raise PlanError("There is nothing to swap this for.", 400)
         exercise_key = options[zlib.crc32(f"{item_id}|{len(options)}".encode()) % len(options)]
     ex = ex_by_key[exercise_key]
+    ts = train_settings(settings or {})
+    lo_t, hi_t = timed_scheme(prog, ts)
     lo, hi = item["rep_low"], item["rep_high"]
     if ex.get("timed"):
-        lo, hi = prog.get("timed_scheme", {}).get("rep_low", 30), prog.get("timed_scheme", {}).get("rep_high", 60)
+        lo, hi = lo_t, hi_t
     elif current and conn.execute("SELECT timed FROM exercises WHERE id = ?", (item["exercise_id"],)).fetchone()["timed"]:
-        scheme = _scheme(prog, train_settings({}), item["slot_key"] if item["slot_key"] in ("main1", "main2") else item["section"])
+        scheme = _scheme(prog, ts, item["slot_key"] if item["slot_key"] in ("main1", "main2") else item["section"])
         lo, hi = scheme["rep_low"], scheme["rep_high"]
     conn.execute("UPDATE plan_items SET exercise_id = ?, rep_low = ?, rep_high = ?, target_weight = NULL, target_source = NULL, note = 'swapped' WHERE id = ?",
                  (ex["id"], lo, hi, item_id))
@@ -780,7 +839,7 @@ def progression(ex, sets, rep_low, rep_high, planned_sets):
     return w, "hold_reps"
 
 
-def target_for(conn, ex, item, today, is_deload=False, exclude_client_id=None, ex_by_key=None, bw=None):
+def target_for(conn, ex, item, today, is_deload=False, exclude_client_id=None, ex_by_key=None, bw=None, level=None):
     """Target weight and its explanation for one plan item.
 
     Returns {weight, source, last: {date, sets}, text}.
@@ -817,15 +876,19 @@ def target_for(conn, ex, item, today, is_deload=False, exclude_client_id=None, e
                         weight = round_load(float(ex["carry"]) * best / (1 + rep_low / 30.0), ex.get("equipment"))
                         label = "guess"
     if is_deload and weight is not None and label not in ("first",):
-        weight = round_load(weight * 0.9, ex.get("equipment"))
+        weight = round_load(weight * float(((level or {}).get("deload") or {}).get("load_factor") or 0.9), ex.get("equipment"))
         label = "deload"
-    return {"weight": weight, "source": label, "last": last, "text": target_text(ex, weight, label, rep_low, rep_high)}
+    return {"weight": weight, "source": label, "last": last,
+            "text": target_text(ex, weight, label, rep_low, rep_high, (level or {}).get("reserve", 2))}
 
 
-def target_text(ex, weight, label, rep_low, rep_high):
+RESERVE_WORDS = {1: "one", 2: "two", 3: "three"}
+
+
+def target_text(ex, weight, label, rep_low, rep_high, reserve=2):
     unit = "s" if ex.get("timed") else "reps"
     texts = {
-        "first": f"First time. Find a weight you can do for {rep_low + 2} {unit} with two in reserve.",
+        "first": f"First time. Find a weight you can do for {rep_low + 2} {unit} with {RESERVE_WORDS.get(reserve, 'two')} in reserve.",
         "guess": "A starting guess from a related lift. Adjust freely.",
         "increase": "You hit every set last time. Go up.",
         "hold_reps": "Same weight. Try for more reps.",
@@ -848,6 +911,7 @@ def freeze_targets(conn, session_id, today, settings, ex_map, ex_by_key, prog):
                            WHERE ps.id = ?""", (session_id,)).fetchone()
     is_deload = bool(week and week["is_deload"])
     bw = bodyweight_on(conn, today, settings)
+    level = level_of(prog, train_settings(settings or {}))
     for it in conn.execute("SELECT * FROM plan_items WHERE session_id = ? AND target_source IS NULL", (session_id,)).fetchall():
         it = dict(it)
         if it["section"] not in ("main", "accessory", "core") or not it.get("exercise_id"):
@@ -855,7 +919,7 @@ def freeze_targets(conn, session_id, today, settings, ex_map, ex_by_key, prog):
         ex = ex_map.get(it["exercise_id"])
         if not ex:
             continue
-        t = target_for(conn, ex, it, today, is_deload, ex_by_key=ex_by_key, bw=bw)
+        t = target_for(conn, ex, it, today, is_deload, ex_by_key=ex_by_key, bw=bw, level=level)
         conn.execute("UPDATE plan_items SET target_weight = ?, target_source = ? WHERE id = ?", (t["weight"], t["source"], it["id"]))
 
 
@@ -873,6 +937,7 @@ def session_view(conn, session, today, settings, prog, ex_map, ex_by_key, bw, wi
     week = conn.execute("SELECT is_deload, week_no FROM plan_weeks WHERE id = ?", (session["week_id"],)).fetchone()
     is_deload = bool(week and week["is_deload"])
     protos = protocols_by_id(prog)
+    level = level_of(prog, train_settings(settings or {}))
     items = []
     total = 0.0
     for it in conn.execute("SELECT * FROM plan_items WHERE session_id = ? ORDER BY ord", (session["id"],)).fetchall():
@@ -886,11 +951,11 @@ def session_view(conn, session, today, settings, prog, ex_map, ex_by_key, bw, wi
             it["protocol_detail"] = {k: protos[it["protocol"]].get(k) for k in ("work_sec", "rest_sec", "intensity", "machine")}
         if with_targets and ex and it["section"] in ("main", "accessory", "core"):
             if it.get("target_source"):
-                t = target_for(conn, ex, it, today, is_deload, exclude_client_id=exclude_client_id, ex_by_key=ex_by_key, bw=bw)
+                t = target_for(conn, ex, it, today, is_deload, exclude_client_id=exclude_client_id, ex_by_key=ex_by_key, bw=bw, level=level)
                 it["target"] = {"weight": it["target_weight"], "source": it["target_source"], "last": t["last"],
-                                "text": target_text(ex, it["target_weight"], it["target_source"], it["rep_low"] or 8, it["rep_high"] or 12)}
+                                "text": target_text(ex, it["target_weight"], it["target_source"], it["rep_low"] or 8, it["rep_high"] or 12, level.get("reserve", 2))}
             else:
-                it["target"] = target_for(conn, ex, it, today, is_deload, exclude_client_id=exclude_client_id, ex_by_key=ex_by_key, bw=bw)
+                it["target"] = target_for(conn, ex, it, today, is_deload, exclude_client_id=exclude_client_id, ex_by_key=ex_by_key, bw=bw, level=level)
         items.append(it)
     session["items"] = items
     session["est_minutes"] = round(total, 1)
@@ -927,6 +992,7 @@ def week_view(conn, d, today, settings, prog, ex_map, ex_by_key):
     split_def = prog.get("splits", {}).get(ts.get("split") or "upper_lower")
     return {"week": dict(week), "sessions": sessions, "weeks_in_block": weeks_in_block, "split": ts.get("split"),
             "split_name": split_def["name"] if split_def else "Upper / Lower",
+            "level": ts.get("experience"), "level_name": level_of(prog, ts)["name"],
             "adherence": {"done": len(done), "planned": len(planned)}}
 
 

@@ -655,6 +655,98 @@ class ProgrammeTests(unittest.TestCase):
                         est = programme.session_minutes(items(conn, sess["id"]), ft.PROG["set_overhead_sec"])
                         self.assertLessEqual(est, 60, f"{sess['kind']} on {sess['date']} takes {est} min")
 
+    # ---- experience levels
+
+    def test_experience_levels_shape_the_week(self):
+        """Beginner, intermediate and advanced set the sets, rep ranges and rests; beginner is the default."""
+        self.assertEqual([lv["key"] for lv in programme.levels_public(ft.PROG)], ["beginner", "intermediate", "advanced"])
+        self.assertEqual(programme.TRAIN_DEFAULTS["experience"], "beginner")
+        self.assertEqual(programme.level_public(ft.PROG, {})["key"], "beginner")
+        self.assertEqual(programme.level_public(ft.PROG, {"experience": "elite"})["key"], "beginner")
+        self.assertEqual(programme.level_public(ft.PROG, {"experience": "advanced"})["warmup_sets"], [[0.4, 8], [0.6, 5], [0.8, 3], [0.9, 1]])
+        got = {}
+        for lv in ("beginner", "intermediate", "advanced"):
+            conn = fresh_conn()
+            s = ft.get_settings(conn)
+            s["programme_start"] = ISO(MONDAY)
+            s["experience"] = lv
+            make_block(conn, s)
+            its = items(conn, next(x for x in sessions(conn, weeks(conn)[0]["id"]) if x["kind"] == "upper_a")["id"])
+            m, a = item(its, "main1"), item(its, "acc1")
+            got[lv] = (m["sets"], m["rep_low"], m["rep_high"], m["rest_sec"], a["sets"], a["rep_low"], a["rep_high"], a["rest_sec"])
+        self.assertEqual(got["beginner"], (3, 6, 10, 150, 3, 10, 15, 60))
+        self.assertEqual(got["intermediate"], (4, 5, 8, 150, 3, 8, 12, 75))
+        self.assertEqual(got["advanced"], (4, 4, 6, 180, 4, 8, 12, 60))
+        self.assertEqual(programme.timed_scheme(ft.PROG, {"experience": "advanced"}), (60, 90))
+        self.assertEqual(programme.timed_scheme(ft.PROG, {}), (30, 60))
+
+    def test_advanced_deload_halves_the_work_but_keeps_two_sets(self):
+        conn = fresh_conn()
+        s = ft.get_settings(conn)
+        s["programme_start"] = ISO(MONDAY)
+        s["experience"] = "advanced"
+        make_block(conn, s)
+        wk = weeks(conn)
+        w1 = items(conn, next(x for x in sessions(conn, wk[0]["id"]) if x["kind"] == "lower_a")["id"])
+        w4 = items(conn, next(x for x in sessions(conn, wk[3]["id"]) if x["kind"] == "lower_a")["id"])
+        self.assertEqual((item(w1, "main1")["sets"], item(w4, "main1")["sets"]), (4, 2))
+        self.assertEqual((item(w1, "core1")["sets"], item(w4, "core1")["sets"]), (3, 2))
+
+    def test_deload_target_and_first_time_hint_follow_the_level(self):
+        conn = fresh_conn()
+        w = add_workout(conn, TODAY - timedelta(days=7))
+        add_sets(conn, w, "barbell_bench_press", [(10, 40, 7)] * 3)
+        bench = ft.EX_BY_KEY["barbell_bench_press"]
+        beginner = programme.level_of(ft.PROG, {"experience": "beginner"})
+        inter = programme.level_of(ft.PROG, {"experience": "intermediate"})
+        self.assertEqual(programme.target_for(conn, bench, self._item(), TODAY, is_deload=True, level=beginner)["weight"], 37.5)
+        self.assertEqual(programme.target_for(conn, bench, self._item(), TODAY, is_deload=True, level=inter)["weight"], 35.0)
+        self.assertIn("one in reserve", programme.target_for(conn, ft.EX_BY_KEY["back_squat"], self._item(), TODAY, level=inter)["text"])
+        self.assertIn("two in reserve", programme.target_for(conn, ft.EX_BY_KEY["back_squat"], self._item(), TODAY)["text"])
+
+    def test_each_level_fits_its_own_minutes_and_sixty(self):
+        for lv in ("intermediate", "advanced"):
+            own = ft.PROG["experience_levels"][lv]["session_minutes"]
+            for budget in (own, 60):
+                conn = fresh_conn()
+                s = ft.get_settings(conn)
+                s["experience"] = lv
+                s["session_minutes"] = budget
+                for wk in plan_weeks(conn, s, 8):
+                    for sess in sessions(conn, wk["id"]):
+                        if sess["kind"] == "rest":
+                            continue
+                        its = items(conn, sess["id"])
+                        est = programme.session_minutes(its, ft.PROG["set_overhead_sec"])
+                        self.assertLessEqual(est, budget, f"{lv}/{sess['kind']} at {budget}: {est} min")
+                        if programme.is_lifting(sess["kind"], ft.PROG):
+                            self.assertTrue(any(i["slot_key"] == "main1" for i in its))
+
+    def test_swap_keeps_the_level_rep_range(self):
+        conn = fresh_conn()
+        s = ft.get_settings(conn)
+        s["programme_start"] = ISO(MONDAY)
+        s["experience"] = "advanced"
+        make_block(conn, s)
+        core = item(items(conn, next(x for x in sessions(conn, weeks(conn)[0]["id"]) if x["kind"] == "lower_a")["id"]), "core1")
+        conn.execute("UPDATE plan_items SET exercise_id = ?, rep_low = 60, rep_high = 90 WHERE id = ?", (ex_id("plank"), core["id"]))
+        programme.swap_item(conn, core["id"], "dead_bug", ft.PROG, ft.EX_BY_KEY, s)
+        row = conn.execute("SELECT rep_low, rep_high FROM plan_items WHERE id = ?", (core["id"],)).fetchone()
+        self.assertEqual((row["rep_low"], row["rep_high"]), (12, 20))
+
+    def test_experience_setting_accepts_the_three_levels(self):
+        conn = fresh_conn()
+        for lv in ("intermediate", "advanced", "beginner"):
+            ft.update_settings(conn, ft.get_settings(conn), {"experience": lv})
+            self.assertEqual(ft.get_settings(conn)["experience"], lv)
+        with self.assertRaises(ft.BadRequest):
+            ft.update_settings(conn, ft.get_settings(conn), {"experience": "elite"})
+
+    def test_seed_check_flags_a_level_without_a_scheme(self):
+        broken = json.loads(json.dumps(ft.PROG))
+        del broken["rep_schemes"]["advanced"]["main2"]
+        self.assertTrue(any("advanced" in p for p in programme.validate_seed(broken, ft.EX_BY_KEY)))
+
     def test_every_split_fits_and_cardio_days_are_timed(self):
         """HIIT, cardio-first and the lifting splits: 3 to 6 days, 8 weeks, every session under an hour."""
         machines = set(programme.CARDIO_MACHINES)

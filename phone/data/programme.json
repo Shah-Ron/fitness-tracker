@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "set_overhead_sec": 40,
   "rest_sec": {
     "main1": 150,
@@ -14,32 +14,200 @@
       "main1": {
         "sets": 3,
         "rep_low": 6,
-        "rep_high": 10
+        "rep_high": 10,
+        "rest_sec": 150
       },
       "main2": {
         "sets": 3,
         "rep_low": 8,
-        "rep_high": 12
+        "rep_high": 12,
+        "rest_sec": 90
       },
       "accessory": {
         "sets": 3,
         "rep_low": 10,
-        "rep_high": 15
+        "rep_high": 15,
+        "rest_sec": 60
       },
       "core": {
         "sets": 3,
         "rep_low": 10,
-        "rep_high": 15
+        "rep_high": 15,
+        "rest_sec": 45
       },
       "circuit": {
         "sets": 3,
         "rep_low": 10,
-        "rep_high": 15
+        "rep_high": 15,
+        "rest_sec": 30
       },
       "metcon": {
         "sets": 4,
         "rep_low": 12,
-        "rep_high": 15
+        "rep_high": 15,
+        "rest_sec": 30
+      },
+      "timed": {
+        "rep_low": 30,
+        "rep_high": 60
+      }
+    },
+    "intermediate": {
+      "main1": {
+        "sets": 4,
+        "rep_low": 5,
+        "rep_high": 8,
+        "rest_sec": 150
+      },
+      "main2": {
+        "sets": 3,
+        "rep_low": 6,
+        "rep_high": 10,
+        "rest_sec": 120
+      },
+      "accessory": {
+        "sets": 3,
+        "rep_low": 8,
+        "rep_high": 12,
+        "rest_sec": 75
+      },
+      "core": {
+        "sets": 3,
+        "rep_low": 10,
+        "rep_high": 15,
+        "rest_sec": 45
+      },
+      "circuit": {
+        "sets": 3,
+        "rep_low": 12,
+        "rep_high": 20,
+        "rest_sec": 30
+      },
+      "metcon": {
+        "sets": 5,
+        "rep_low": 12,
+        "rep_high": 15,
+        "rest_sec": 30
+      },
+      "timed": {
+        "rep_low": 45,
+        "rep_high": 75
+      }
+    },
+    "advanced": {
+      "main1": {
+        "sets": 4,
+        "rep_low": 4,
+        "rep_high": 6,
+        "rest_sec": 180
+      },
+      "main2": {
+        "sets": 4,
+        "rep_low": 6,
+        "rep_high": 10,
+        "rest_sec": 120
+      },
+      "accessory": {
+        "sets": 4,
+        "rep_low": 8,
+        "rep_high": 12,
+        "rest_sec": 60
+      },
+      "core": {
+        "sets": 3,
+        "rep_low": 12,
+        "rep_high": 20,
+        "rest_sec": 45
+      },
+      "circuit": {
+        "sets": 4,
+        "rep_low": 12,
+        "rep_high": 20,
+        "rest_sec": 30
+      },
+      "metcon": {
+        "sets": 5,
+        "rep_low": 15,
+        "rep_high": 20,
+        "rest_sec": 30
+      },
+      "timed": {
+        "rep_low": 60,
+        "rep_high": 90
+      }
+    }
+  },
+  "experience_levels": {
+    "beginner": {
+      "name": "Beginner",
+      "description": "Under a year of steady lifting. Three sets, moderate reps, two reps left in the tank and rests of one to two and a half minutes. Sessions run about an hour.",
+      "session_minutes": 60,
+      "warmup_sets": [
+        [
+          0.5,
+          8
+        ],
+        [
+          0.75,
+          4
+        ]
+      ],
+      "reserve": 2,
+      "deload": {
+        "set_delta": -1,
+        "load_factor": 0.9
+      }
+    },
+    "intermediate": {
+      "name": "Intermediate",
+      "description": "One to three years in. Four sets of five to eight on the first lift, tighter rep ranges, one rep in reserve and longer rests. Sessions run about 70 minutes.",
+      "session_minutes": 70,
+      "warmup_sets": [
+        [
+          0.5,
+          8
+        ],
+        [
+          0.7,
+          5
+        ],
+        [
+          0.85,
+          3
+        ]
+      ],
+      "reserve": 1,
+      "deload": {
+        "set_delta": -1,
+        "load_factor": 0.85
+      }
+    },
+    "advanced": {
+      "name": "Advanced",
+      "description": "Three years or more. Four sets of four to six on the main lift, four sets on accessories, long rests, and a deload every fourth week that halves the work. Sessions run about 75 minutes.",
+      "session_minutes": 75,
+      "warmup_sets": [
+        [
+          0.4,
+          8
+        ],
+        [
+          0.6,
+          5
+        ],
+        [
+          0.8,
+          3
+        ],
+        [
+          0.9,
+          1
+        ]
+      ],
+      "reserve": 1,
+      "deload": {
+        "set_delta": -2,
+        "load_factor": 0.85
       }
     }
   },

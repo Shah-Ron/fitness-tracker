@@ -861,6 +861,91 @@ describe("HIIT and cardio-first splits", () => {
   });
 });
 
+describe("experience levels", () => {
+  const LEVELS = ["beginner", "intermediate", "advanced"];
+  const firstDays = n => [1, 2, 3, 4, 5, 6].slice(0, n);
+  const minutesOf = items => E.sessionMinutes(items, PROG.set_overhead_sec || 40);
+  it("three levels are offered and beginner is the default", () => {
+    assert.deepEqual(E.levelsPublic(PROG).map(l => l.key), LEVELS);
+    assert.equal(E.TRAIN_DEFAULTS.experience, "beginner");
+    assert.equal(E.levelPublic(PROG, {}).key, "beginner");
+    assert.equal(E.levelPublic(PROG, { experience: "elite" }).key, "beginner");
+    assert.deepEqual(E.levelPublic(PROG, { experience: "advanced" }).warmup_sets, [[0.4, 8], [0.6, 5], [0.8, 3], [0.9, 1]]);
+  });
+
+  it("each level sets the sets, rep ranges and rests of the week", () => {
+    const got = {};
+    for (const lv of LEVELS) {
+      const { db, exByKey, settings } = fresh({ programme_start: MONDAY, experience: lv });
+      makeBlock(db, settings, exByKey);
+      const its = itemsOf(db, kindOf(db, weeks(db)[0].id, "upper_a").id);
+      const m = item(its, "main1"), a = item(its, "acc1");
+      got[lv] = [m.sets, m.rep_low, m.rep_high, m.rest_sec, a.sets, a.rep_low, a.rep_high, a.rest_sec];
+    }
+    assert.deepEqual(got.beginner, [3, 6, 10, 150, 3, 10, 15, 60]);
+    assert.deepEqual(got.intermediate, [4, 5, 8, 150, 3, 8, 12, 75]);
+    assert.deepEqual(got.advanced, [4, 4, 6, 180, 4, 8, 12, 60]);
+  });
+
+  it("timed holds get longer with experience", () => {
+    assert.deepEqual(E.timedScheme(PROG, { experience: "beginner" }), { lo: 30, hi: 60 });
+    assert.deepEqual(E.timedScheme(PROG, {}), { lo: 30, hi: 60 });
+    assert.deepEqual(E.timedScheme(PROG, { experience: "advanced" }), { lo: 60, hi: 90 });
+  });
+
+  it("the advanced deload halves the main work but never goes below two sets", () => {
+    const { db, exByKey, settings } = fresh({ programme_start: MONDAY, experience: "advanced" });
+    makeBlock(db, settings, exByKey);
+    const wk = weeks(db);
+    const w1 = itemsOf(db, kindOf(db, wk[0].id, "lower_a").id), w4 = itemsOf(db, kindOf(db, wk[3].id, "lower_a").id);
+    assert.deepEqual([item(w1, "main1").sets, item(w4, "main1").sets], [4, 2]);
+    assert.deepEqual([item(w1, "core1").sets, item(w4, "core1").sets], [3, 2]);
+  });
+
+  it("the deload target and the first-time hint follow the level", () => {
+    const { db, exByKey } = fresh();
+    const w = addWorkout(db, day(-7));
+    addSets(db, exByKey, w, "barbell_bench_press", repeat([10, 40, 7], 3));
+    const bench = exByKey.barbell_bench_press;
+    const beginner = E.levelOf(PROG, { experience: "beginner" }), inter = E.levelOf(PROG, { experience: "intermediate" });
+    assert.equal(E.targetFor(db, bench, ITEM, TODAY, true, null, exByKey, 80, beginner).weight, 37.5);
+    assert.equal(E.targetFor(db, bench, ITEM, TODAY, true, null, exByKey, 80, inter).weight, 35);
+    assert.equal(E.targetFor(db, bench, ITEM, TODAY, true, null, exByKey, 80).weight, 37.5);
+    assert.match(E.targetFor(db, exByKey.back_squat, ITEM, TODAY, false, null, exByKey, 80, inter).text, /one in reserve/);
+    assert.match(E.targetFor(db, exByKey.back_squat, ITEM, TODAY, false, null, exByKey, 80, beginner).text, /two in reserve/);
+  });
+
+  for (const lv of ["intermediate", "advanced"]) {
+    const mins = PROG.experience_levels[lv].session_minutes;
+    it(`${lv}: every session over 8 weeks fits ${mins} minutes at its own length, and 60 when trimmed`, () => {
+      for (const budget of [mins, 60]) {
+        const { db, exByKey, settings } = fresh({ experience: lv, session_minutes: budget, train_days: firstDays(5) });
+        for (const wk of planWeeks(db, settings, exByKey, 8)) for (const sess of sessionsOf(db, wk.id).filter(x => x.kind !== "rest")) {
+          const its = itemsOf(db, sess.id);
+          assert.ok(minutesOf(its) <= budget + 0.01, `${lv}/${sess.kind} at ${budget}: ${minutesOf(its)} min`);
+          if (E.isLifting(sess.kind, PROG)) assert.ok(its.some(i => i.slot_key === "main1"), `${sess.kind} keeps its main lift`);
+        }
+      }
+    });
+  }
+
+  it("a swap keeps the level's rep range when a timed core move becomes a reps one", () => {
+    const { db, exByKey, settings } = fresh({ programme_start: MONDAY, experience: "advanced" });
+    makeBlock(db, settings, exByKey);
+    const core = item(itemsOf(db, kindOf(db, weeks(db)[0].id, "lower_a").id), "core1");
+    db.update("plan_items", core.id, { exercise_id: exByKey.plank.id, rep_low: 60, rep_high: 90 });
+    E.swapItem(db, core.id, "dead_bug", PROG, exByKey, settings);
+    const after = db.get("plan_items", core.id);
+    assert.deepEqual([after.rep_low, after.rep_high], [12, 20]);
+  });
+
+  it("the seed check flags a level missing a scheme", () => {
+    const broken = JSON.parse(JSON.stringify(PROG));
+    delete broken.rep_schemes.advanced.main2;
+    assert.ok(E.validateSeed(broken, EXJ_BY_KEY).some(p => /advanced/.test(p)));
+  });
+});
+
 describe("more than one session a day", () => {
   const block = over => { const f = fresh(Object.assign({ programme_start: MONDAY }, over)); makeBlock(f.db, f.settings, f.exByKey); return f; };
   const onDate = (db, d) => db.all("plan_sessions").filter(x => x.date === d).sort((a, b) => a.seq - b.seq);

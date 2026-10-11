@@ -22,6 +22,7 @@ import http.client
 import io
 import json
 import os
+import re
 import secrets
 import socket
 import sqlite3
@@ -965,6 +966,7 @@ def build_state(conn, settings, loopback):
         "app": APP_ID, "version": APP_VERSION, "build": build_stamp(), "today": d.isoformat(),
         "settings": public_settings(settings), "profile_complete": nutrition.profile_complete(settings),
         "splits": [{"key": k, "name": v.get("name", k), "description": v.get("description", ""), "days": sorted(int(d) for d in v.get("templates", {}))} for k, v in PROG.get("splits", {}).items()],
+        "levels": programme.levels_public(PROG),
         "targets": tg, "weight": wb, "food": fd,
         "daily": dict(daily) if daily else {"water_ml": None, "sleep_h": None, "steps": None},
         "session_today": session_today, "sessions_today": sessions_today, "week": week, "strip": strip,
@@ -997,7 +999,8 @@ def today_payload(conn, settings):
     in_progress = conn.execute("SELECT * FROM workouts WHERE deleted = 0 AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1").fetchone()
     detail = workout_detail(conn, in_progress["client_id"], settings) if in_progress else None
     return {"date": d.isoformat(), "sessions": sessions, "bests": bests, "bodyweight": bw, "in_progress": detail,
-            "protocols": PROG.get("protocols", []), "rest_default_sec": settings.get("rest_default_sec") or 90,
+            "protocols": PROG.get("protocols", []), "level": programme.level_public(PROG, settings),
+            "rest_default_sec": settings.get("rest_default_sec") or 90,
             "warmup_moves": PROG.get("warmup_moves"), "cooldown_stretches": PROG.get("cooldown_stretches")}
 
 
@@ -1275,7 +1278,7 @@ def update_settings(conn, settings, patch):
             if not v:
                 raise BadRequest("Keep at least one cardio machine")
         elif k == "experience":
-            v = v_choice(v, "experience", tuple(PROG["rep_schemes"].keys()))
+            v = v_choice(v, "experience", tuple((PROG.get("experience_levels") or PROG["rep_schemes"]).keys()))
         elif k == "split":
             v = v_choice(v, "split", tuple(PROG.get("splits", {"upper_lower": 1}).keys()))
         elif k == "barbell_entry":
@@ -1675,6 +1678,13 @@ class Handler(BaseHTTPRequestHandler):
             if name == "sw.js":
                 data = data.replace(b"__BUILD__", build_stamp().encode("ascii"))
             return self._send(200, data, ctype, extra)
+        if verb == "GET" and (re.fullmatch(r"/manifest-[a-z]+_(?:light|dark)\.webmanifest", path) or re.fullmatch(r"/icons/[a-z]+_(?:light|dark)-(?:180|192|512|maskable-512)\.png", path)):
+            # The icon sets for the other looks live with the phone edition; the page points its manifest at them.
+            p = os.path.join(HERE, "phone", *path.lstrip("/").split("/"))
+            if not os.path.exists(p):
+                return self._json({"error": "not found"}, 404)
+            with open(p, "rb") as fh:
+                return self._send(200, fh.read(), "image/png" if path.endswith(".png") else "application/manifest+json", extra)
         if verb == "GET" and path == "/ca.crt":
             if not os.path.exists(CA_PEM):
                 return self._send(404, "No certificate authority yet. Run tools\\make_cert.bat on the laptop.", "text/plain; charset=utf-8")
@@ -1818,7 +1828,7 @@ class Handler(BaseHTTPRequestHandler):
                 conn.commit()
                 return self._json({"ok": True})
             if api == "plan/swap":
-                ex = programme.swap_item(conn, v_int(body.get("item_id"), "item_id", 1), body.get("exercise_key"), PROG, EX_BY_KEY)
+                ex = programme.swap_item(conn, v_int(body.get("item_id"), "item_id", 1), body.get("exercise_key"), PROG, EX_BY_KEY, settings)
                 conn.commit()
                 return self._json({"ok": True, "exercise": programme._exercise_public(ex)})
             if api == "plan/move":
